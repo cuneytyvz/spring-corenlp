@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Historical Istanbul</title>
+    <meta name="description" content="Historical Istanbul">
+
+    <script src="static/semantic/js/lib/d3.v3.min.js"></script>
+
+    <link rel="stylesheet" href="static/semantic/js/lib/jquery-ui.css">
+    <script src="static/semantic/js/lib/jquery.min.js"></script>
+    <script src="static/semantic/js/lib/jquery-ui.js"></script>
+    <script src="static/semantic/js/lib/underscore-min.js"></script>
+    <script src="static/semantic/js/lib/angular.min.js"></script>
+
+    <!--Leaflet-->
+    <link rel="stylesheet" href="static/semantic/js/lib/leaflet.css"/>
+    <script src="static/semantic/js/lib/leaflet.js"></script>
+
+    <!--Bootstrap -->
+    <link rel="stylesheet" href="static/semantic/js/lib/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"-->
+    <!--integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">-->
+    <script src="static/semantic/js/lib/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="static/semantic/style/historical_istanbul.css?v=1">
+    <script src="static/semantic/js/lib/xml2json.js"></script>
+    <script src="static/common/util.js"></script>
+    <script src="static/semantic/js/lod-utils.js"></script>
+    <script src="static/semantic/js/historical_istanbul.js"></script>
+</head>
+
+
+<body ng-app="app" ng-controller="Controller">
+<span id="ruler"></span>
+
+<div class="wrapper">
+    <header>
+        <div id="searchbox" class="searchbox form-inline">
+            <img src="static/semantic/img/buyutec.png" class="buyutec" style="margin-right: 10px;"/>
+
+            <div name="searchForm" class="form-inline pl-4">
+                <input type="text" class="form-control" id="searchinput" name="searchinput" value="">
+                <input type="button" class="btn btn-default" value="Save" ng-click="savePlace()">
+            </div>
+        </div>
+    </header>
+
+    <div id="core" class="core clearfix">
+        <section class="space">
+            <div id="map" class="map">
+
+            </div>
+        </section>
+
+        <section class="right">
+            <div class="right_inner">
+                <div>
+                    <label class="right-label">node:</label>
+
+                    <div class="my-text">{{selectedPlace.name}}</div>
+                </div>
+
+                <div>
+                    <label class="right-label">description:</label>
+
+                    <div class="my-text description">{{selectedPlace.description}}</div>
+                    <!--<hr style="border-top: 1px solid white;">-->
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+</body>
+</html>
+
+<script type="text/javascript">
+    var map = L.map('map').setView([41.05104, 29.00132], 13);
+
+    var HOT = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
+    });
+
+    //    var STANDARD = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    //        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    //    });
+
+    HOT.addTo(map);
+</script>
+
+<script>
+</script>
+
+<script>
+
+
+</script>

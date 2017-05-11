@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>KnowledgeBase</title>
+    <meta name="description" content="KnowledgeBase">
+
+    <script src="static/knowledge-base/js/lib/d3.v3.min.js"></script>
+
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/jquery-ui.css">
+    <script src="static/knowledge-base/js/lib/jquery.min.js"></script>
+    <script src="static/knowledge-base/js/lib/jquery-ui.js"></script>
+    <script src="static/knowledge-base/js/lib/underscore-min.js"></script>
+    <script src="static/knowledge-base/js/lib/angular.min.js"></script>
+
+    <!--Leaflet-->
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/leaflet.css"/>
+    <script src="static/knowledge-base/js/lib/leaflet.js"></script>
+
+    <!--Bootstrap -->
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"-->
+    <!--integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">-->
+    <script src="static/knowledge-base/js/lib/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="static/knowledge-base/style/style.css?v=1">
+    <link rel="stylesheet" href="static/knowledge-base/style/my-common.css?v=1">
+    <script src="static/knowledge-base/js/lib/xml2json.js"></script>
+    <script src="static/common/util.js"></script>
+    <script src="static/knowledge-base/js/lod-utils.js"></script>
+    <script src="static/knowledge-base/js/wikidata.js"></script>
+    <script src="static/knowledge-base/js/dbpedia.js"></script>
+    <script src="static/knowledge-base/js/knowledge-base.js"></script>
+</head>
+
+
+<body ng-app="app" ng-controller="Controller">
+
+<div class="wrapper">
+    <header>
+        <div id="searchbox" class="searchbox form-inline">
+            <img src="static/semantic/img/buyutec.png" class="buyutec" style="margin-right: 10px;"/>
+
+            <div name="searchForm" class="form-inline pl-4">
+                <input type="text" class="form-control" id="searchinput" name="searchinput" value="">
+            </div>
+        </div>
+    </header>
+
+    <div class="core clearfix">
+        <section class="space container">
+            <div class="row">
+                <div class="col-3">
+                    <form>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Entity</label>
+                                <input type="text" class="form-control" id="entity-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <input type="text" class="form-control" id="category-input">
+                            </div>
+                            <div class="form-group">
+                                <input type="button" class="btn btn-default blue" value="Save" ng-click="saveEntity()">
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="col-md-9">
+                    <ul>
+                        <li style="list-style: none;" ng-repeat="e in entities"><a href ng-click="showEntity(e)">{{e.name}}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="right">
+            <div class="right_inner">
+                <div>
+                    <label class="right-label mb-15">node:</label>
+
+                    <div class="my-text">{{selectedEntity.name}}</div>
+                </div>
+
+                <div>
+                    <label class="right-label mb-15">description:</label>
+
+                    <div class="my-text description">{{selectedEntity.description}}</div>
+                    <!--<hr style="border-top: 1px solid white;">-->
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+</body>
+</html>
