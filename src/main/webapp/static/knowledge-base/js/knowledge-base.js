@@ -13,6 +13,8 @@ app.controller('Controller', function ($scope, $http, $q, $sce) {
         }, printError);
 
     var cache = {};
+
+
     $("#entity-input").autocomplete({
         minLength: 2,
         source: function (request, response) {
@@ -43,21 +45,34 @@ app.controller('Controller', function ($scope, $http, $q, $sce) {
 
             dbpedia.getItem($http, ui.item.uri, function (item) {
                 $scope.selectedEntity = item;
-//                $scope.entities.push(item);
 
-                wikidata.getItem($http, $q, item.wikidataId, function (item) {
-                    $scope.selectedEntity.properties = $scope.selectedEntity.properties.concat(item.properties);
-                    $scope.entities.push(item);
+                wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
+                    $scope.selectedEntity.properties = $scope.selectedEntity.properties.concat(wikidataItem.properties);
+                    $scope.selectedEntity.description = wikidataItem.description;
+                    $scope.entities.push($scope.selectedEntity);
                 });
             });
         }, change: function (event, ui) { // not-selected
             if (ui.item === null) {
-                $scope.selectedEntity = {name: $("#entity-input").val()};
+                if (isUrl($("#entity-input").val())) {
+                    $scope.selectedEntity = {
+                        name: $("#entity-input").val(),
+                        description: $("#entity-input").val(),
+                        entityType: 'web-page'
+                    };
 
-                if (isUrl($scope.selectedEntity.name)) {
-                    $scope.selectedEntity.entityType = 'web-page';
+//                    $http.jsonp( $scope.selectedEntity.description)
+//                        .then(function (response) {
+//                            $scope.selectedEntity.name = response.data;
+//                        },
+//                        function (err) {
+//                            console.error("ERROR: " + JSON.stringify(err));
+//                        });
                 } else {
-                    $scope.selectedEntity.entityType = 'non-semantic-web';
+                    $scope.selectedEntity = {
+                        description: $("#entity-input").val(),
+                        entityType: 'non-semantic-web'
+                    }
                 }
             }
         }

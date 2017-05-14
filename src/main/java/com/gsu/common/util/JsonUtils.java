@@ -11,6 +11,8 @@ public class JsonUtils {
 
     public static String toJson(Object object) throws JsonProcessingException {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+
         return ow.writeValueAsString(object);
     }
+
 }

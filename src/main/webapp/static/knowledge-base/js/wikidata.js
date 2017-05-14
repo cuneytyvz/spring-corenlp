@@ -94,25 +94,32 @@ var wikidata = (function () {
                     var datatype = item.claims[propertyId][0].mainsnak.datatype;
                     if (datatype == "wikibase-item" ||
                         datatype == "wikibase-property") {
-                        ids.push(item.claims[propertyId][0].mainsnak.datavalue.value.id);
+                        for (var i = 0; i < item.claims[propertyId].length; i++) {
+                            ids.push(item.claims[propertyId][i].mainsnak.datavalue.value.id);
+                        }
                     }
                 }
 
                 getLabels($http, $q, ids, function (labels) {
 
                     for (var propertyId in item.claims) {
-                        var p = {
-                            source: 'wikidata',
-                            uri: 'https://www.wikidata.org/wiki/Property:' + propertyId,
-                            datatype: item.claims[propertyId][0].mainsnak.datatype,
-                            name: labels[propertyId].labels["en"].value,
-                            description: labels[propertyId].descriptions["en"].value,
-                            subproperties: []
-                        };
-
                         for (var i = 0; i < item.claims[propertyId].length; i++) {
+                            var p = {
+                                source: 'wikidata',
+                                uri: 'https://www.wikidata.org/wiki/Property:' + propertyId,
+                                datatype: item.claims[propertyId][0].mainsnak.datatype,
+                                name: labels[propertyId].labels["en"].value,
+                                description: labels[propertyId].descriptions["en"].value,
+                                subproperties: []
+                            };
+
                             var claim = item.claims[propertyId][i];
                             var value = claim.mainsnak.datavalue.value;
+
+                            if ((p.datatype == "wikibase-item" || p.datatype == "wikibase-property")
+                                && Object.keys(labels[value.id].labels).length === 0) {
+                                break;
+                            }
 
                             if (p.datatype == "wikibase-item") {
                                 p.value = value.id;
@@ -151,9 +158,9 @@ var wikidata = (function () {
                                 p.subproperties.push({ name: 'upperbound', value: value.upperbound});
                                 p.subproperties.push({name: 'lowerbound', value: value.lowerbound});
                             }
-                        }
 
-                        entity.properties.push(p);
+                            entity.properties.push(p);
+                        }
                     }
 
                     onSuccess(entity);

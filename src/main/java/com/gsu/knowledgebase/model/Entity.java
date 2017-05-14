@@ -16,6 +16,7 @@ public class Entity implements Serializable {
     private String entityType;
     private Long categoryId;
     private List<Property> properties = new ArrayList<>();
+    private Long webPageEntityId;
 
     public Entity() {
     }
@@ -28,6 +29,7 @@ public class Entity implements Serializable {
         categoryId = rs.getLong("e.category_id");
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
+        webPageEntityId = rs.getLong("e.web_page_entity_id");
     }
 
     public Long getId() {
@@ -92,5 +94,13 @@ public class Entity implements Serializable {
 
     public void setEntityType(String entityType) {
         this.entityType = entityType;
+    }
+
+    public Long getWebPageEntityId() {
+        return webPageEntityId;
+    }
+
+    public void setWebPageEntityId(Long webPageEntityId) {
+        this.webPageEntityId = webPageEntityId;
     }
 }

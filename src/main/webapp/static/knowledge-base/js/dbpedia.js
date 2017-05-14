@@ -32,7 +32,7 @@ var dbpedia = (function () {
                 var item = response.data[uri];
 
                 var entity = {
-                    name: _.find(item['http://xmlns.com/foaf/0.1/name'], {lang: 'en'}).value,
+                    name: _.find(item['http://www.w3.org/2000/01/rdf-schema#label'], {lang: 'en'}).value,
                     description: _.find(item['http://dbpedia.org/ontology/abstract'], {lang: 'en'}).value,
                     entityType: 'semantic-web',
                     dbpediaUri: uri,
@@ -54,12 +54,17 @@ var dbpedia = (function () {
                                 name: lodUtils.getTypeNameFromUri(property),
                                 lang: item[property][i].lang ? item[property][i].lang : null,
                                 datatype: item[property][i].datatype ? item[property][i].datatype : null,
+                                propertyType: item[property][i].type ? item[property][i].type : null,
                                 value: item[property][i].value ? item[property][i].value : null,
                                 uri: property,
                                 source: 'dbpedia'
                             };
 
-                            console.log('datatype : ' + p.datatype);
+                            if (p.propertyType == 'uri') {
+                                p.valueLabel = p.value.split('/')[p.value.split('/').length - 1]
+
+                            }
+
                             entity.properties.push(p);
                         }
                     }

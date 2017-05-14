@@ -12,6 +12,7 @@ public class Property {
     private Long id;
     private Long entityId;
     private String name;
+    private String propertyType;
     private String source;
     private String description;
     private String lang;
@@ -35,6 +36,7 @@ public class Property {
         entityId = rs.getLong("pr.entity_id");
         source = rs.getString("pr.source");
         description = rs.getString("pr.description");
+        propertyType= rs.getString("pr.property_type");
     }
 
     public Long getId() {
@@ -131,5 +133,13 @@ public class Property {
 
     public void setValueLabel(String valueLabel) {
         this.valueLabel = valueLabel;
+    }
+
+    public String getPropertyType() {
+        return propertyType;
+    }
+
+    public void setPropertyType(String propertyType) {
+        this.propertyType = propertyType;
     }
 }

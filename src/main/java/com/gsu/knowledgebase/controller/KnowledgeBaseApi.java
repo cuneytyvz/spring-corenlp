@@ -5,6 +5,8 @@ import com.gsu.knowledgebase.model.Entity;
 import com.gsu.knowledgebase.model.Property;
 import com.gsu.knowledgebase.model.Subproperty;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
+import com.gsu.knowledgebase.service.DBPedia;
+import com.gsu.knowledgebase.service.WebPageAnnotator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -13,17 +15,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-/**
- * Created by cnytync on 21/12/14.
- */
 @Controller("KnowledgeBaseApi")
 @RequestMapping(value = "/knowledgeBase/api")
 public class KnowledgeBaseApi {
 
     @Autowired
     private KnowledgeBaseDao knowledgeBaseDao;
+
+    @Autowired
+    private WebPageAnnotator webPageAnnotator;
+
+    @Autowired
+    private DBPedia dbPedia;
 
     @RequestMapping(value = "/saveEntity", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -38,16 +45,46 @@ public class KnowledgeBaseApi {
 
         Long id = knowledgeBaseDao.saveEntity(entity);
 
-        for (Property property : entity.getProperties()) {
-            property.setEntityId(id);
+        if (entity.getEntityType().equals("web-page")) {
+            List<String> uris = webPageAnnotator.annotateWebPage(entity.getName());
+            for (String dbpediaUri : uris) {
+                Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
+                webPageEntity.setWebPageEntityId(id);
 
-            Long propertyId = knowledgeBaseDao.saveProperty(property);
-            for(Subproperty subproperty : property.getSubproperties()) {
-                subproperty.setPropertyId(propertyId);
+                Long webPageEntityId = knowledgeBaseDao.saveEntity(webPageEntity);
+                for (Property property : webPageEntity.getProperties()) {
+                    property.setEntityId(webPageEntityId);
+                }
 
-                knowledgeBaseDao.saveSubproperty(subproperty);
+                knowledgeBaseDao.saveProperties(webPageEntity.getProperties());
+
+                List<Subproperty> subproperties = new ArrayList<>();
+                for (Property property : webPageEntity.getProperties()) {
+                    for (Subproperty subproperty : property.getSubproperties()) {
+                        subproperty.setPropertyId(property.getId());
+                        subproperties.add(subproperty);
+                    }
+                }
+
+                knowledgeBaseDao.saveSubproperties(subproperties);
             }
         }
+
+        for (Property property : entity.getProperties()) {
+            property.setEntityId(id);
+        }
+
+        knowledgeBaseDao.saveProperties(entity.getProperties());
+
+        List<Subproperty> subproperties = new ArrayList<>();
+        for (Property property : entity.getProperties()) {
+            for (Subproperty subproperty : property.getSubproperties()) {
+                subproperty.setPropertyId(property.getId());
+                subproperties.add(subproperty);
+            }
+        }
+
+        knowledgeBaseDao.saveSubproperties(subproperties);
 
         return id;
     }

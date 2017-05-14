@@ -28,7 +28,7 @@ public class KnowledgeBaseDao {
     public Long saveEntity(Entity entity) throws Exception {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?";
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?";
 
         Connection conn = null;
 
@@ -52,7 +52,11 @@ public class KnowledgeBaseDao {
 
             ps.setTimestamp(7, DateUtils.getCurrentTimeStamp());
             ps.setString(8, entity.getEntityType());
-
+            if (entity.getWebPageEntityId() == null) {
+                ps.setNull(9, Types.BIGINT);
+            } else {
+                ps.setLong(9, entity.getWebPageEntityId());
+            }
             ps.execute();
 
             ps.close();
@@ -73,7 +77,7 @@ public class KnowledgeBaseDao {
     public Long saveProperty(Property property) {
 
         String sql = "insert into PROPERTY set id = ?, description = ?, name = ?, lang = ?, value = ?, " +
-                " uri = ?, datatype = ?, source = ?, entity_id = ?, value_label = ?";
+                " uri = ?, datatype = ?, source = ?, entity_id = ?, value_label = ?, property_type = ?";
 
         Connection conn = null;
 
@@ -93,12 +97,58 @@ public class KnowledgeBaseDao {
             ps.setString(8, property.getSource());
             ps.setLong(9, property.getEntityId());
             ps.setString(10, property.getValueLabel());
+            ps.setString(11, property.getPropertyType());
 
             ps.execute();
 
             ps.close();
 
             return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void saveProperties(List<Property> properties) {
+
+        String sql = "insert into PROPERTY set id = ?, description = ?, name = ?, lang = ?, value = ?, " +
+                " uri = ?, datatype = ?, source = ?, entity_id = ?, value_label = ?, property_type = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            for (Property property : properties) {
+                Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "property", "id");
+                property.setId(id);
+
+                ps.setLong(1, id);
+                ps.setString(2, property.getDescription());
+                ps.setString(3, property.getName());
+                ps.setString(4, property.getLang());
+                ps.setString(5, property.getValue());
+                ps.setString(6, property.getUri());
+                ps.setString(7, property.getDatatype());
+                ps.setString(8, property.getSource());
+                ps.setLong(9, property.getEntityId());
+                ps.setString(10, property.getValueLabel());
+                ps.setString(11, property.getPropertyType());
+
+                ps.execute();
+            }
+
+            ps.close();
+
+            return;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -145,8 +195,46 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public void saveSubproperties(List<Subproperty> subproperties) {
+
+        String sql = "insert into subproperty set id = ?, property_id = ?, name = ?, value = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            for (Subproperty subproperty : subproperties) {
+                Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "subproperty", "id");
+                subproperty.setId(id);
+
+                ps.setLong(1, id);
+                ps.setLong(2, subproperty.getPropertyId());
+                ps.setString(3, subproperty.getName());
+                ps.setString(4, subproperty.getValue());
+
+                ps.execute();
+            }
+
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public Collection<Entity> findAllEntities() {
-        String sql = "select * from entity e left join property pr on pr.entity_id = e.id;";
+        String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
+                " where entity_type <> 'web-page-annotation';";
 
         Connection conn = null;
 
