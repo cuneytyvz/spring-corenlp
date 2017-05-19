@@ -2,13 +2,11 @@ package com.gsu.interpreter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Interpreter {
     public static void main(String args[]) throws Exception {
@@ -46,13 +44,10 @@ public class Interpreter {
             String[] lines = contents.split(System.getProperty("line.separator"));
 
             // HERE is where the processing/compiling occurs
+            List<String> parsed = new Parser().parse(contents);
 
             // write to file
-            PrintWriter writer = new PrintWriter(base + "/compiled/" + jf.getRelativePath(), "UTF-8");
-            for (String line : lines) {
-                writer.println(line);
-            }
-            writer.close();
+            writeToFile(base + "/compiled/" + jf.getRelativePath(),parsed);
 
         }
 
@@ -61,13 +56,23 @@ public class Interpreter {
         }
     }
 
+    public static void writeToFile(String path, List<String> lines) throws Exception {
+        PrintWriter writer = new PrintWriter(path, "UTF-8");
+
+        for (String line : lines) {
+            writer.println(line);
+        }
+
+        writer.close();
+    }
+
     public static void createParentFolder(String base) {
         File f = new File(base + "/compiled/");
 
         if (f.mkdir()) {
-            System.out.println("directory was created successfully");
+//            System.out.println("directory was created successfully");
         } else {
-            System.out.println("failed trying to create the directory");
+//            System.out.println("failed trying to create the directory");
         }
     }
 
@@ -75,9 +80,9 @@ public class Interpreter {
         File f = new File(base + "/compiled/" + root.getName().replaceAll("\\.", "/"));
 
         if (f.mkdir()) {
-            System.out.println("directory was created successfully");
+//            System.out.println("directory was created successfully");
         } else {
-            System.out.println("failed trying to create the directory");
+//            System.out.println("failed trying to create the directory");
         }
 
         for (JavaPackage jp : root.getJavaPackages()) {

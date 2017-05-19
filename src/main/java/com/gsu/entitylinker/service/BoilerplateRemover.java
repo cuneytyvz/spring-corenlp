@@ -13,7 +13,6 @@ import java.net.URI;
  * Created by cnytync on 07/05/2017.
  */
 public class BoilerplateRemover {
-
     public static void main(String args[]) throws Exception {
 //        Document doc = Jsoup.connect("https://www.theguardian.com/film/2016/jan/14/alan-rickman-giant-of-british-film-and-theatre-dies-at-69").get();
 //        String text = ArticleExtractor.INSTANCE.getText(doc.html());
@@ -28,6 +27,8 @@ public class BoilerplateRemover {
 //            // block.getText() gives you the block's text
 //
 //        }
+
+        //Property p={id:propId,name:propName};
 
     }
 }

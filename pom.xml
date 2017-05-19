@@ -354,6 +354,14 @@
             <version>4.7</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.antlr/antlr-runtime -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+
+
         <!--<dependency>-->
         <!--<groupId>edu.stanford.nlp</groupId>-->
         <!--<artifactId>stanford-corenlp</artifactId>-->

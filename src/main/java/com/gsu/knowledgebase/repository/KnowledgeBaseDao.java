@@ -81,6 +81,8 @@ public class KnowledgeBaseDao {
 
         Connection conn = null;
 
+//        Property p={id:propId,name:propName};
+
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
