@@ -1,7 +1,6 @@
 var dbpedia = (function () {
 
     // Keep this variable private inside this closure scope
-
     var prefixSearch = function ($http, term, onSuccess) {
 
         $http.get("http://lookup.dbpedia.org/api/search/PrefixSearch?QueryString=" + term)
@@ -61,8 +60,7 @@ var dbpedia = (function () {
                             };
 
                             if (p.propertyType == 'uri') {
-                                p.valueLabel = p.value.split('/')[p.value.split('/').length - 1]
-
+                                p.valueLabel = p.value.split('/')[p.value.split('/').length - 1];
                             }
 
                             entity.properties.push(p);
@@ -85,5 +83,4 @@ var dbpedia = (function () {
         prefixSearch: prefixSearch,
         getItem: getItem
     }
-})
-();
+})();

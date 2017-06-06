@@ -14,9 +14,11 @@ public class Entity implements Serializable {
     private String dbpediaUri;
     private String wikidataId;
     private String entityType;
+    private String webUri;
     private Long categoryId;
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
+    private List<Entity> annotationEntities = new ArrayList<>();
 
     public Entity() {
     }
@@ -30,6 +32,7 @@ public class Entity implements Serializable {
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
         webPageEntityId = rs.getLong("e.web_page_entity_id");
+        webUri = rs.getString("e.web_uri");
     }
 
     public Long getId() {
@@ -102,5 +105,21 @@ public class Entity implements Serializable {
 
     public void setWebPageEntityId(Long webPageEntityId) {
         this.webPageEntityId = webPageEntityId;
+    }
+
+    public List<Entity> getAnnotationEntities() {
+        return annotationEntities;
+    }
+
+    public void setAnnotationEntities(List<Entity> annotationEntities) {
+        this.annotationEntities = annotationEntities;
+    }
+
+    public String getWebUri() {
+        return webUri;
+    }
+
+    public void setWebUri(String webUri) {
+        this.webUri = webUri;
     }
 }

@@ -13,9 +13,6 @@ import java.io.File;
 import java.net.URLDecoder;
 import java.util.*;
 
-/**
- * Created by cnytync on 21/12/14.
- */
 @Controller("EntityLinkerAppController")
 @RequestMapping(value = "/api")
 public class AppController {

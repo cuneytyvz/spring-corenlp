@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Controller("KnowledgeBaseApi")
 @RequestMapping(value = "/knowledgeBase/api")
@@ -43,13 +41,30 @@ public class KnowledgeBaseApi {
             return null;
         }
 
+        String title = webPageAnnotator.getWebPageTitle(entity.getWebUri());
+        entity.setName(title);
+
         Long id = knowledgeBaseDao.saveEntity(entity);
 
+
         if (entity.getEntityType().equals("web-page")) {
-            List<String> uris = webPageAnnotator.annotateWebPage(entity.getName());
+            List<String> uris = webPageAnnotator.annotateWebPage(entity.getWebUri());
+
+            Map<String, Entity> webPageEntities = new HashMap<>();
             for (String dbpediaUri : uris) {
-                Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
-                webPageEntity.setWebPageEntityId(id);
+                try {
+                    Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
+                    webPageEntity.setWebPageEntityId(id);
+
+                    webPageEntities.put(webPageEntity.getName(), webPageEntity);
+                } catch (Exception e) {
+                    System.err.println("Error at dbPedia.getEntityByUri");
+                    e.printStackTrace();
+                }
+            }
+
+            for (String key : webPageEntities.keySet()) {
+                Entity webPageEntity = webPageEntities.get(key);
 
                 Long webPageEntityId = knowledgeBaseDao.saveEntity(webPageEntity);
                 for (Property property : webPageEntity.getProperties()) {
@@ -95,6 +110,12 @@ public class KnowledgeBaseApi {
     @ResponseBody
     Object getAllEntities() throws Exception {
         Collection<Entity> entities = knowledgeBaseDao.findAllEntities();
+
+        for (Entity e : entities) {
+            if (e.getEntityType().equals("web-page")) {
+                e.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(e.getId()));
+            }
+        }
 
         return entities;
     }

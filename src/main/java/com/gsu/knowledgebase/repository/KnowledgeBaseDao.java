@@ -11,10 +11,7 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class KnowledgeBaseDao {
@@ -28,7 +25,7 @@ public class KnowledgeBaseDao {
     public Long saveEntity(Entity entity) throws Exception {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?";
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?";
 
         Connection conn = null;
 
@@ -57,6 +54,9 @@ public class KnowledgeBaseDao {
             } else {
                 ps.setLong(9, entity.getWebPageEntityId());
             }
+
+            ps.setString(10, entity.getWebUri());
+
             ps.execute();
 
             ps.close();
@@ -364,6 +364,49 @@ public class KnowledgeBaseDao {
             ps.close();
 
             return entity;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<Entity> findAnnotationEntities(Long webPageEntityId) {
+        String sql = "select * from entity e left join property pr on pr.entity_id = e.id where e.web_page_entity_id = ?;";
+
+        Connection conn = null;
+
+        Entity entity = null;
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, webPageEntityId);
+
+            Map<Long, Entity> map = new HashMap<>();
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                entity = new Entity(rs);
+
+                if (map.get(entity.getId()) != null) {
+                    Property property = new Property(rs);
+                    map.get(entity.getId()).getProperties().add(property);
+                } else {
+                    Property property = new Property(rs);
+                    entity.getProperties().add(property);
+
+                    map.put(entity.getId(), entity);
+                }
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {

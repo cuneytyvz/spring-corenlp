@@ -33,10 +33,9 @@
     <script src="static/knowledge-base/js/knowledge-base.js"></script>
 </head>
 
-
 <body ng-app="app" ng-controller="Controller">
 
-<div class="wrapper">
+<div class="wrapper" style="display: none;">
     <header>
         <div id="searchbox" class="searchbox form-inline">
             <img src="static/semantic/img/buyutec.png" class="buyutec" style="margin-right: 10px;"/>
@@ -54,11 +53,11 @@
                     <form>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Entity</label>
+                                <label class="blue">Entity</label>
                                 <input type="text" class="form-control" id="entity-input">
                             </div>
                             <div class="form-group">
-                                <label>Category</label>
+                                <label class="blue">Category</label>
                                 <input type="text" class="form-control" id="category-input">
                             </div>
                             <div class="form-group">
@@ -68,11 +67,50 @@
                     </form>
                 </div>
 
-                <div class="col-md-9">
-                    <ul>
-                        <li style="list-style: none;" ng-repeat="e in entities"><a href ng-click="showEntity(e)">{{e.name}}</a>
-                        </li>
-                    </ul>
+                <div class="col-md-5">
+                    <div class="col-md-12" class="entity-box">
+                        <ul>
+                            <li style="list-style: none;" ng-repeat="e in entities">
+                                <a href ng-click="showEntity(e)">{{e.name}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <br/><br/><br/>
+
+                    <div class="col-md-12">
+                        <hr style="border-color: white;">
+                    </div>
+                    <br/>
+
+                    <div class="col-md-12" class="web-page-box">
+                        <ul>
+                            <li style="list-style: none;" ng-repeat="e in webPages">
+                                <a href ng-click="showEntity(e)">{{e.name}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4 property-box" ng-show="selectedEntity.entityType != 'web-page'">
+                    <label class="blue">
+                        Properties
+                    </label>
+
+                    <div ng-repeat="property in selectedEntity.properties">
+                        <label class="property-label">Name : </label>
+                        <label class="property-value">{{property.name}}</label>
+                        <br>
+                        <label class="property-label">Value : </label>
+                        <label class="property-value">{{property.value}}</label>
+                    </div>
+                </div>
+                <div class="col-md-4 property-box" ng-show="selectedEntity.entityType == 'web-page'">
+                    <label class="blue">
+                        Entities
+                    </label>
+
+                    <div ng-repeat="entity in selectedEntity.annotationEntities">
+                        <label class="property-value">{{entity.name}}</label>
+                    </div>
                 </div>
             </div>
 
@@ -81,16 +119,15 @@
         <section class="right">
             <div class="right_inner">
                 <div>
-                    <label class="right-label mb-15">node:</label>
+                    <label class="info-label mb-15">node:</label>
 
-                    <div class="my-text">{{selectedEntity.name}}</div>
+                    <div class="info-text">{{selectedEntity.name}}</div>
                 </div>
 
                 <div>
-                    <label class="right-label mb-15">description:</label>
+                    <label class="info-label mb-15">description:</label>
 
-                    <div class="my-text description">{{selectedEntity.description}}</div>
-                    <!--<hr style="border-top: 1px solid white;">-->
+                    <div class="info-text description">{{selectedEntity.description}}</div>
                 </div>
 
             </div>

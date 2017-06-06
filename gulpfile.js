@@ -28,7 +28,7 @@ gulp.task('hello', function() {
 
 gulp.task('compile2', function() {
     return gulp.src('./**/**')
-        .pipe(run('cd src/main/java'))
+        .pipe(run('cd src/main/java;'))
         .pipe(run('java com.gsu.interpreter.Interpreter'));
 //        .pipe(gulp.dest('output'));
 

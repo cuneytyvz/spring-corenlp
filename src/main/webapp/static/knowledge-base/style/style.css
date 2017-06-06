@@ -99,18 +99,26 @@ div.searchbox {
     margin-left: 15px;
 }
 
-.right-label {
-    color: #006bff;
-    font-weight: bold;
-    font-family: Cafeta, serif;
-}
-
 .blue {
     color: #006bff;
 }
 
 .cafeta {
-    font-family: Cafeta, serif;
+    font-family: "Times New Roman";
+}
+
+.info-label {
+    color: #006bff;
+    font-weight: bold;
+    font-family: "Times New Roman";
+}
+
+.info-text {
+    margin-top: -15px;
+    margin-left: 15px;
+    color: white;
+    font-size: 18px;
+    font-family: "Times New Roman";
 }
 
 .description {
@@ -118,17 +126,36 @@ div.searchbox {
     overflow-y: scroll;
 }
 
-.my-text {
-    margin-top: -15px;
-    margin-left: 15px;
-    color: white;
-    font-size: 18px;
-    font-family: Cafeta, serif;
+.property-label {
+    font-size: 10pt;
+    color: #006bff;
+    font-family: "Times New Roman";
 }
 
-label {
+.property-value {
+    font-size: 9pt;
+    color: white;
+    font-weight: 500;
+    font-family: "Times New Roman";
+}
+
+.property-box {
+    overflow-x : scroll;
+    overflow-y : scroll;
+    max-height : 400px;
+}
+
+.entity-box {
+    overflow-y: scroll; max-height: 250px;
+}
+
+.web-page-box {
+    overflow-y: scroll; max-height: 250px;
+}
+
+label.blue {
     color: #006bff;
-    font-family: Cafeta, serif;
+    font-family: "Times New Roman";
 }
 
 /* for autocomplete */

@@ -7,19 +7,40 @@ import com.google.gson.JsonParser;
 import com.gsu.knowledgebase.model.Entity;
 import com.gsu.knowledgebase.model.Property;
 import org.apache.commons.io.IOUtils;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DBPedia {
 
     public static void main(String args[]) throws Exception {
         new DBPedia().getEntityByUri("http://dbpedia.org/resource/Bayesian_network");
+    }
+
+    public Entity getEntityByUri2(String uri) {
+        String req = "http://live.dbpedia.org/sparql";
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(req)
+                .queryParam("query",
+                        uri)
+                .queryParam("format", "application/json-ld");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.ALL));
+        HttpEntity<String> httpEntity = new HttpEntity<String>(headers);
+
+        HttpEntity<Entity> response =
+                new RestTemplate().exchange(builder.build().encode().toUri(), HttpMethod.GET, httpEntity, Entity.class);
+
+        return response.getBody();
     }
 
     public Entity getEntityByUri(String uri) throws Exception {
@@ -31,16 +52,21 @@ public class DBPedia {
                 "&" +
                 "format=application%2Fjson-ld";
 
+
         String str = IOUtils.toString(new URI(req));
+
+
         JsonObject json = new JsonParser().parse(str).getAsJsonObject();
 
         JsonObject item = json.getAsJsonObject(uri);
 
         JsonArray arr = item.getAsJsonArray("http://dbpedia.org/ontology/abstract");
-        for (int i = 0; i < arr.size(); i++) {
-            JsonObject o = arr.get(i).getAsJsonObject();
-            if (getAsString(o, "lang").equals("en")) {
-                entity.setDescription(getAsString(o, "value"));
+        if (arr != null) {
+            for (int i = 0; i < arr.size(); i++) {
+                JsonObject o = arr.get(i).getAsJsonObject();
+                if (getAsString(o, "lang").equals("en")) {
+                    entity.setDescription(getAsString(o, "value"));
+                }
             }
         }
 
@@ -98,5 +124,4 @@ public class DBPedia {
             return o.getAsJsonPrimitive(propertyName).getAsString();
         }
     }
-
 }

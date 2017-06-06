@@ -2,18 +2,24 @@ var app = angular.module('app', []);
 
 app.controller('Controller', function ($scope, $http, $q, $sce) {
 
+    $scope.items = [];
     $scope.entities = [];
+    $scope.webPages = [];
     $http.get('knowledgeBase/api/getAllEntities')
         .then(function (response) {
             response.data.forEach(function (item) {
+                $scope.items.push(item);
 
-                $scope.entities.push(item);
+                if (item.entityType == 'web-page') {
+                    $scope.webPages.push(item);
+                } else {
+                    $scope.entities.push(item);
+                }
 
             });
         }, printError);
 
     var cache = {};
-
 
     $("#entity-input").autocomplete({
         minLength: 2,
@@ -49,15 +55,15 @@ app.controller('Controller', function ($scope, $http, $q, $sce) {
                 wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                     $scope.selectedEntity.properties = $scope.selectedEntity.properties.concat(wikidataItem.properties);
                     $scope.selectedEntity.description = wikidataItem.description;
-                    $scope.entities.push($scope.selectedEntity);
+                    $scope.items.push($scope.selectedEntity);
                 });
             });
         }, change: function (event, ui) { // not-selected
             if (ui.item === null) {
                 if (isUrl($("#entity-input").val())) {
                     $scope.selectedEntity = {
-                        name: $("#entity-input").val(),
-                        description: $("#entity-input").val(),
+                        name: '',
+                        webUri: $("#entity-input").val(),
                         entityType: 'web-page'
                     };
 
@@ -112,6 +118,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce) {
         $http.post('knowledgeBase/api/saveEntity', $scope.selectedEntity)
             .then(function (response) {
                 $scope.saveResponse = 'Saved';
+                location.reload();
             }, function (err) {
                 printError(err);
                 $scope.saveResponse = err;
@@ -121,4 +128,8 @@ app.controller('Controller', function ($scope, $http, $q, $sce) {
 
 app.config(function ($sceDelegateProvider, $sceProvider) {
     $sceProvider.enabled(false);
+});
+
+$(document).ready(function() {
+    $('.wrapper').show();
 });
