@@ -10,4 +10,9 @@ public class HomeController {
     public String home() {
         return "static/knowledge-base/index.html";
     }
+
+    @RequestMapping("/translation")
+    public String translation() {
+        return "static/knowledge-base/hover-translation.html";
+    }
 }

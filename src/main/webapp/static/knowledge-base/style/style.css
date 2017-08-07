@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    background-color: #e8e8e8;
+    background-color: #f4f4e9;;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -32,7 +32,7 @@ body {
 
 header {
     display: block;
-    background-color: #006bff;
+    background-color: #e1d5ad;
     height: 50px;
 }
 
@@ -53,7 +53,7 @@ div.core {
     display: block;
     clear: both;
     margin: 0;
-    padding: 10px 10px 10px 10px;
+    padding: 0px 10px 10px 10px;
     height: 100%;
 }
 
@@ -69,7 +69,7 @@ section.space {
 section.right {
     float: left;
     width: 20%;
-    background-color: #e8e8e8;
+    background-color: #dfddc8;
     margin: 0;
     margin-bottom: 10px;
     height: 100%;
@@ -100,7 +100,7 @@ div.searchbox {
 }
 
 .blue {
-    color: #006bff;
+    color: #555758;
 }
 
 .cafeta {
@@ -108,17 +108,33 @@ div.searchbox {
 }
 
 .info-label {
-    color: #006bff;
+    color: #555758;
     font-weight: bold;
     font-family: "Times New Roman";
 }
 
+.info-title {
+    margin-top: 5px;
+    color: white;
+    font-size: 18px;
+    font-family: "Times New Roman";
+}
+
 .info-text {
-    margin-top: -15px;
+    margin-top: -5px;
     margin-left: 15px;
     color: white;
     font-size: 18px;
     font-family: "Times New Roman";
+}
+
+.info-text > a {
+    font-size: 14px;
+}
+
+.info-image > img {
+    width: 100%;
+    border: 1px solid #555758;
 }
 
 .description {
@@ -128,37 +144,90 @@ div.searchbox {
 
 .property-label {
     font-size: 10pt;
-    color: #006bff;
+    color: #555758;
     font-family: "Times New Roman";
 }
 
 .property-value {
-    font-size: 9pt;
-    color: white;
+    font-size: 10pt;
+    color: #565350;
     font-weight: 500;
     font-family: "Times New Roman";
 }
 
 .property-box {
-    overflow-x : scroll;
-    overflow-y : scroll;
-    max-height : 400px;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    height: 300px;
+}
+
+.property-divider {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    border: 0;
+    border-top: 1px solid #555758;
+}
+
+.entity-divider {
+    border-color: #555758;
 }
 
 .entity-box {
-    overflow-y: scroll; max-height: 250px;
+    overflow-y: scroll;
+    max-height: 250px;
 }
 
 .web-page-box {
-    overflow-y: scroll; max-height: 250px;
+    overflow-y: scroll;
+    max-height: 250px;
 }
 
 label.blue {
-    color: #006bff;
+    color: #555758;
     font-family: "Times New Roman";
 }
 
 /* for autocomplete */
 .ui-menu-item {
     z-index: 999;
+}
+
+.fa.fa-spinner.fa-spin {
+    z-index: 999;
+    position: absolute;
+    left: 50%;
+    top: 50%
+}
+
+.overlay {
+    position: absolute; /* Sit on top of the page content */
+    /*display: none; *//* Hidden by default */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(93, 74, 41, 0.22);
+    /*background-color: rgba(0,0,0,0.5); *//* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+.form-group {
+    margin-bottom: 5px !important;
+}
+
+.external-link img {
+    height: 30px;
+}
+
+.link-box {
+    margin-top: 10px;
+    margin-left: 0px;
+}
+
+.right-save-button {
+    margin-left: 15px;
+    margin-top: 5px;
 }

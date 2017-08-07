@@ -66,6 +66,23 @@ var wikidata = (function () {
             });
     };
 
+    var getImageUrl = function ($http, fileName, onSuccess) {
+
+        $http.jsonp("https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&iiurlwidth=250&titles=File:" + fileName)
+            .then(function (response) {
+                console.log("Data: " + response + "\nStatus: " + status);
+
+                var obj = response.data.query.pages;
+                obj[Object.keys(obj)[0]];
+
+                onSuccess(obj[Object.keys(obj)[0]].imageinfo[0].url);
+            },
+            function (err) {
+                console.error("ERROR: " + JSON.stringify(err));
+            });
+
+    };
+
     var getItem = function ($http, $q, id, onSuccess) {
         var uri = 'https://www.wikidata.org/w/api.php?action=wbgetentities' +
             '&ids=' + id + '&languages=en&format=json';
@@ -73,6 +90,11 @@ var wikidata = (function () {
         $http.jsonp(uri)
             .then(function (response) {
                 var abstract = '';
+
+                if (!response.data.entities) {
+                    onSuccess(null);
+                    return
+                }
 
                 var item = response.data.entities[id];
 
@@ -163,7 +185,21 @@ var wikidata = (function () {
                         }
                     }
 
-                    onSuccess(entity);
+                    if (!entity.image || entity.image == '') {
+                        var fileName = _.find(entity.properties, {uri: 'https://www.wikidata.org/wiki/Property:P18'});
+
+                        if (fileName) {
+                            getImageUrl($http, fileName.value, function (img) {
+                                entity.image = img;
+                                onSuccess(entity)
+                            });
+                        } else {
+                            onSuccess(entity);
+                        }
+                    } else {
+                        onSuccess(entity);
+                    }
+
                 });
             },
             function (err) {
@@ -173,6 +209,7 @@ var wikidata = (function () {
 
     return {
         prefixSearch: prefixSearch,
-        getItem: getItem
+        getItem: getItem,
+        getImageUrl: getImageUrl
     }
 })();

@@ -22,7 +22,7 @@ public class CollocationFinder {
     /**
      * @param corpus as list of filenames (absolute path)
      */
-    public List<Collocation> findCollocations(ArrayList<String> corpus) throws Exception {
+    public List<Collocation> findCollocations(List<String> corpus) throws Exception {
         Map<Word, Integer> allWordFrequencies = new HashMap<>();
         HashMap<String, Collocation> collocations = new HashMap<>();
 
@@ -53,7 +53,7 @@ public class CollocationFinder {
     }
 
     public List<Collocation> findSubsequentWords(List<CoreMap> sentences) {
-        boolean firstWord2 = true, firstWord3 = true;
+        boolean firstWord = true;
         List<Collocation> collocations = new ArrayList<>();
         Collocation collocation = new Collocation();
 
@@ -66,11 +66,11 @@ public class CollocationFinder {
                 String wordString = token.get(CoreAnnotations.LemmaAnnotation.class);
                 Word word = new Word(wordString, pos);
 
-                if (firstWord2) {
+                if (firstWord) {
                     collocation = new Collocation();
                     collocation.getWords().add(word);
 
-                    firstWord2 = false;
+                    firstWord = false;
                 } else {
                     collocation.getWords().add(word);
 
@@ -83,12 +83,47 @@ public class CollocationFinder {
                         collocations.set(index, c);
                     }
 
-                    firstWord2 = true;
+                    firstWord = true;
                 }
             }
         }
 
         return collocations;
+    }
+
+    public List<Word> findWordFrequencies(List<String> corpus) throws Exception {
+        List<Word> words = new ArrayList<>();
+
+        for (String file : corpus) { //
+
+            System.out.println("Analysing file " + file);
+
+            String text = pdf.getTextFromPdf(file);
+            List<CoreMap> sentences = coreNlp.getSentences(text);
+
+            for (CoreMap sentence : sentences) {
+
+                for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
+                    // this is the POS tag of the token
+                    String pos = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+                    // Retrieve and add the lemma for each word into the list of lemmas
+                    String wordString = token.get(CoreAnnotations.LemmaAnnotation.class);
+                    Word word = new Word(wordString, pos);
+
+                    int index = words.indexOf(word);
+                    if (index == -1) {
+                        words.add(word);
+                    } else {
+                        Word w = words.get(index);
+                        w.incrementFrequency();
+                        words.set(index, w);
+                    }
+
+                }
+            }
+        }
+
+        return words;
     }
 
     public HashMap<String, Collocation> filter(HashMap<String, Collocation> collocations) {

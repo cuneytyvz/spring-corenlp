@@ -33,24 +33,28 @@ import java.util.*;
 public class CoreNlp {
 
     private static String MODEL = "/Users/cnytync/IdeaProjects/java/spring-corenlp/classifiers/english.muc.7class.distsim.crf.ser.gz";
+    private static String FRENCH_MODEL = "/Users/cnytync/Programming/libs/stanford-corenlp-full-2015-12-09/french/stanford-french-corenlp-2016-01-14-models.jar";
     private static CRFClassifier<CoreLabel> classifier;
     private static StanfordCoreNLP pipeline;
     private static OpenIE openIE;
     private Properties props = new Properties();
     private WordNetConnection wnc;
 
-    @PostConstruct
+//    @PostConstruct
     public void init() {
-//        props.setProperty("annotators", "tokenize,ssplit,pos,lemma"); // tokenize,ssplit,pos,lemma,depparse,natlog,openie
-//        classifier = CRFClassifier.getClassifierNoExceptions(MODEL);
-//        pipeline = new StanfordCoreNLP(props);
-//        openIE = new OpenIE(props);
-//        wnc = new WordNetConnection() {
-//            @Override
-//            public boolean wordNetContains(String s) {
-//                return false;
-//            }
-//        };
+        props.setProperty("annotators", "tokenize,ssplit,pos,lemma"); // tokenize,ssplit,pos,lemma,depparse,natlog,openie
+//        props.setProperty("segment.model",FRENCH_MODEL);
+        props.setProperty("parse.model","edu/stanford/nlp/models/parser/nndep/UD_French.gz");
+        props.setProperty("pos.model","edu/stanford/nlp/models/pos-tagger/french/french.tagger");
+        classifier = CRFClassifier.getClassifierNoExceptions(MODEL);
+        pipeline = new StanfordCoreNLP(props);
+        openIE = new OpenIE(props);
+        wnc = new WordNetConnection() {
+            @Override
+            public boolean wordNetContains(String s) {
+                return false;
+            }
+        };
     }
 
     public List<Map.Entry<Word, Integer>> getWordFrequencies(String text) {

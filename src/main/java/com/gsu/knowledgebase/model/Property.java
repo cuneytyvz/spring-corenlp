@@ -21,6 +21,8 @@ public class Property {
     private String value;
     private String valueLabel;
     private String uri;
+    private Boolean visible;
+    private Long metaPropertyId;
     private List<Subproperty> subproperties = new ArrayList<>();
 
     public Property() {
@@ -36,7 +38,7 @@ public class Property {
         entityId = rs.getLong("pr.entity_id");
         source = rs.getString("pr.source");
         description = rs.getString("pr.description");
-        propertyType= rs.getString("pr.property_type");
+        propertyType = rs.getString("pr.property_type");
     }
 
     public Long getId() {
@@ -141,5 +143,21 @@ public class Property {
 
     public void setPropertyType(String propertyType) {
         this.propertyType = propertyType;
+    }
+
+    public Boolean getVisible() {
+        return visible;
+    }
+
+    public void setVisible(Boolean visible) {
+        this.visible = visible;
+    }
+
+    public Long getMetaPropertyId() {
+        return metaPropertyId;
+    }
+
+    public void setMetaPropertyId(Long metaPropertyId) {
+        this.metaPropertyId = metaPropertyId;
     }
 }

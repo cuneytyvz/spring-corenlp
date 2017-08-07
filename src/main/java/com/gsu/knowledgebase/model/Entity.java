@@ -11,10 +11,13 @@ public class Entity implements Serializable {
     private Long id;
     private String name;
     private String description;
+    private String shortDescription;
     private String dbpediaUri;
     private String wikidataId;
+    private String wikipediaUri;
     private String entityType;
     private String webUri;
+    private String image;
     private Long categoryId;
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
@@ -27,12 +30,15 @@ public class Entity implements Serializable {
         id = rs.getLong("e.id");
         name = rs.getString("e.name");
         description = rs.getString("e.description");
+        shortDescription = rs.getString("e.short_description");
         dbpediaUri = rs.getString("e.dbpedia_uri");
         categoryId = rs.getLong("e.category_id");
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
         webPageEntityId = rs.getLong("e.web_page_entity_id");
         webUri = rs.getString("e.web_uri");
+        image = rs.getString("e.image");
+        wikipediaUri = rs.getString("e.wikipedia_uri");
     }
 
     public Long getId() {
@@ -121,5 +127,29 @@ public class Entity implements Serializable {
 
     public void setWebUri(String webUri) {
         this.webUri = webUri;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getWikipediaUri() {
+        return wikipediaUri;
+    }
+
+    public void setWikipediaUri(String wikipediaUri) {
+        this.wikipediaUri = wikipediaUri;
+    }
+
+    public String getShortDescription() {
+        return shortDescription;
+    }
+
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
     }
 }

@@ -1,9 +1,12 @@
 var dbpedia = (function () {
 
+    var lookupUri = "http://lookup.dbpedia-spotlight.org/api/search/PrefixSearch?QueryClass=&MaxHits=5&QueryString=";
+//    var lookupUri = "http://lookup.dbpedia.org/api/search/PrefixSearch?QueryString=";
+
     // Keep this variable private inside this closure scope
     var prefixSearch = function ($http, term, onSuccess) {
 
-        $http.get("http://lookup.dbpedia.org/api/search/PrefixSearch?QueryString=" + term)
+        $http.get(lookupUri + term)
             .then(function (response) {
                 console.log("\nStatus: " + response.status);
 
@@ -30,11 +33,22 @@ var dbpedia = (function () {
             .then(function (response) {
                 var item = response.data[uri];
 
+                if (!item) {
+                    onSuccess(null);
+                    return;
+                }
+
+                var image = item['http://xmlns.com/foaf/0.1/depiction'] ? item['http://xmlns.com/foaf/0.1/depiction'][0].value : "";
+                var description = item['http://dbpedia.org/ontology/abstract'] ? _.find(item['http://dbpedia.org/ontology/abstract'], {lang: 'en'}).value : "";
+                var wikipediaUri = item['http://xmlns.com/foaf/0.1/isPrimaryTopicOf'] ? item['http://xmlns.com/foaf/0.1/isPrimaryTopicOf'][0].value : "";
+
                 var entity = {
                     name: _.find(item['http://www.w3.org/2000/01/rdf-schema#label'], {lang: 'en'}).value,
-                    description: _.find(item['http://dbpedia.org/ontology/abstract'], {lang: 'en'}).value,
+                    description: description,
+                    image: image,
                     entityType: 'semantic-web',
                     dbpediaUri: uri,
+                    wikipediaUri: wikipediaUri,
                     properties: []
                 };
 
@@ -43,7 +57,7 @@ var dbpedia = (function () {
                 });
 
                 if (wikidata_uri !== null) {
-                    entity.wikidataId = wikidata_uri[0].value.split('/')[wikidata_uri[0].value.split('/').length - 1];
+                    entity.wikidataId = wikidata_uri[0] && wikidata_uri[0].value ? wikidata_uri[0].value.split('/')[wikidata_uri[0].value.split('/').length - 1] : "";
                 }
 
                 for (var property in item) {

@@ -15,6 +15,7 @@
 
     <!--Leaflet-->
     <link rel="stylesheet" href="static/knowledge-base/js/lib/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="static/knowledge-base/js/lib/leaflet.js"></script>
 
     <!--Bootstrap -->
@@ -78,7 +79,7 @@
                     <br/><br/><br/>
 
                     <div class="col-md-12">
-                        <hr style="border-color: white;">
+                        <hr class="entity-divider">
                     </div>
                     <br/>
 
@@ -90,26 +91,51 @@
                         </ul>
                     </div>
                 </div>
-                <div class="col-md-4 property-box" ng-show="selectedEntity.entityType != 'web-page'">
-                    <label class="blue">
-                        Properties
-                    </label>
-
-                    <div ng-repeat="property in selectedEntity.properties">
-                        <label class="property-label">Name : </label>
-                        <label class="property-value">{{property.name}}</label>
-                        <br>
-                        <label class="property-label">Value : </label>
-                        <label class="property-value">{{property.value}}</label>
+                <div class="col-md-4 property-box" ng-show="selectedEntity.entityType != 'web-page'"
+                     ng-class="propertyBoxClass">
+                    <div ng-if="propertiesLoading" class="overlay">
+                        <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
                     </div>
-                </div>
-                <div class="col-md-4 property-box" ng-show="selectedEntity.entityType == 'web-page'">
-                    <label class="blue">
-                        Entities
-                    </label>
+                    <div>
+                        <label class="blue">
+                        <span ng-if="selectedEntities.length > 2">
+                            <a href="#" ng-click="openLastSecondEntity()">...</a>
+                            &nbsp;>&nbsp;
+                        </span>
+                        </label>
+                        <label class="blue" ng-repeat="entity in selectedEntities.slice(-2)">
+                            <span ng-if="$index == 1 || selectedEntities.length == 1">{{entity.name}}</span>
+                        <span ng-if="$index == 0 && selectedEntities.length > 1">
+                            <a href="#" ng-click="openLastEntity()">{{entity.name}}</a>
+                        </span>
+                            <span ng-if="$index < 1 && selectedEntities.length > 1">&nbsp;>&nbsp;</span>
+                        </label>
 
-                    <div ng-repeat="entity in selectedEntity.annotationEntities">
-                        <label class="property-value">{{entity.name}}</label>
+                        <br>
+
+                        <div ng-repeat="property in selectedEntity.propertyGroups | filter:{visible:true}">
+                            <label class="property-value">{{property.name}}</label>
+                            <br>
+
+                            <div ng-repeat="val in property.values">
+                                <label class="property-value"
+                                       ng-if="!isPropertyLink(val)">{{val.value}}</label>
+                                <label class="property-value" ng-if="isPropertyLink(val)">
+                                    <!--<a ng-href="{{goTo(property)}}" target="_blank">{{property.valueLabel}}</a>-->
+                                    <a href="#" ng-click="openProperty(val)">{{val.valueLabel}}</a>
+                                </label>
+                            </div>
+                            <hr class="property-divider">
+                        </div>
+                    </div>
+                    <div class="col-md-4 property-box" ng-show="selectedEntity.entityType == 'web-page'">
+                        <label class="blue">
+                            Entities
+                        </label>
+
+                        <div ng-repeat="entity in selectedEntity.annotationEntities">
+                            <label class="property-value">{{entity.name}}</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -119,15 +145,56 @@
         <section class="right">
             <div class="right_inner">
                 <div>
-                    <label class="info-label mb-15">node:</label>
+                    <!--<label class="info-label mb-15">image:</label>-->
 
-                    <div class="info-text">{{selectedEntity.name}}</div>
+                    <div class="info-image"><img ng-if="selectedEntity.image" ng-src="{{selectedEntity.image}}"/></div>
                 </div>
 
-                <div>
-                    <label class="info-label mb-15">description:</label>
+                <div class="row">
+                    <div ng-if="selectedEntity" class="col-md-12">
+                        <div ng-if="selectedEntity" class="form-group">
+                            <label class="info-title mb-5">{{selectedEntity.name}}</label>
 
-                    <div class="info-text description">{{selectedEntity.description}}</div>
+                            <div class="info-text">{{selectedEntity.shortDescription}}</div>
+                        </div>
+
+                        <div ng-if="selectedEntity" class="form-group">
+                            <!--<label class="info-label mb-15">description:</label>-->
+                            <hr style="color:white; margin-top: 10px; margin-bottom:15px;">
+
+                            <div class="info-text description">{{selectedEntity.description}}</div>
+                        </div>
+                        <div class="row link-box">
+                            <div ng-if="selectedEntity && selectedEntity.dbpediaUri" class="form-group col-md-3">
+                                <div class="external-link">
+                                    <a ng-href="{{selectedEntity.dbpediaUri}}" target="_blank">
+                                        <img src="static/knowledge-base/img/dbpedia.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div ng-if="selectedEntity && selectedEntity.wikidataId" class="form-group  col-md-3">
+                                <div class="external-link">
+                                    <a ng-href="https://www.wikidata.org/wiki/{{selectedEntity.wikidataId}}"
+                                       target="_blank">
+                                        <img src="static/knowledge-base/img/wikidata_text.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div ng-if="selectedEntity && selectedEntity.wikipediaUri" class="form-group  col-md-3">
+
+                                <div class="external-link">
+                                    <a ng-href="{{selectedEntity.wikipediaUri}}" target="_blank">
+                                        <img src="static/knowledge-base/img/wikipedia.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group right-save-button">
+                            <input type="button" class="btn btn-default blue" value="Save"
+                                   ng-if="!isEntitySaved() && !propertiesLoading"
+                                   ng-click="saveEntity()">
+                        </div>
+                    </div>
                 </div>
 
             </div>

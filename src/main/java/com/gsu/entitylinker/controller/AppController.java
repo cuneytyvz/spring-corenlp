@@ -36,7 +36,7 @@ public class AppController {
         System.out.println("Extracting...");
 
 //        List<String> paths = URLDecoder.decode((String) ((LinkedHashMap) body).get("text"), "UTF-8");
-        String text = pdf.getTextFromPdf("/Users/cnytync/Documents/-/lil/ast/gg/ts/The Magus by Francis Barrett.pdf");
+        String text = pdf.getTextFromPdf("/Users/cnytync/Documents/-/lil/");
 
         Collection<Triple> allTriples = reverb.getRelations(text);
         Collection<Entity> allEntities = coreNlp.getNamedEntities(text);
@@ -56,12 +56,34 @@ public class AppController {
         ArrayList<String> files = Util.listFilesForFolder(f);
 
         files = new ArrayList<>();
-        files.add("/Users/cnytync/Downloads/The Silmarillion (Illustrated ebook).pdf");
+//        files.add("/Users/cnytync/Downloads/The Silmarillion (Illustrated ebook).pdf");
+        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
 
         List<Collocation> collocations = collocationFinder.findCollocations(files);
         Collections.sort(collocations);
 
         return collocations;
+    }
+
+    @RequestMapping(value = "/findWordFrequencies", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object findWordFrequencies() throws Exception {
+        System.out.println("Finding Frequent Words...");
+
+        String path = "/Users/cnytync/Documents/-/uni/paper (phd)";
+        File f = new File(path);
+
+        ArrayList<String> files = Util.listFilesForFolder(f);
+
+        files = new ArrayList<>();
+//        files.add("/Users/cnytync/Downloads/The Silmarillion (Illustrated ebook).pdf");
+        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
+
+        List<Word> words = collocationFinder.findWordFrequencies(files);
+        Collections.sort(words);
+
+        return words;
     }
 
     @RequestMapping(value = "/findRelatedDocs", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
