@@ -22,7 +22,7 @@ public class KnowledgeBaseDao {
     public Long saveEntity(Entity entity) throws Exception {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, wikipedia_uri = ?,short_description = ?";
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, wikipedia_uri = ?,short_description = ?, small_image = ?";
 
         Connection conn = null;
 
@@ -56,6 +56,7 @@ public class KnowledgeBaseDao {
             ps.setString(11, entity.getImage());
             ps.setString(12, entity.getWikipediaUri());
             ps.setString(13, entity.getShortDescription());
+            ps.setString(14, entity.getSmallImage());
 
             ps.execute();
 
@@ -311,7 +312,7 @@ public class KnowledgeBaseDao {
     public Long saveMetaProperty(Property property) {
 
         String sql = "insert into meta_property set id = ?, name = ?, uri = ?, source = ?," +
-                "visible = ?, description = ?, property_type = ?, datatype = ?;";
+                "visibility = ?, description = ?, property_type = ?, datatype = ?;";
 
         Connection conn = null;
 
@@ -351,7 +352,7 @@ public class KnowledgeBaseDao {
 
     public Collection<Entity> findAllEntities() {
         String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
-                " left join meta_property mp on pr.uri = mp.uri  and mp.visible = 1 " +
+                " left join meta_property mp on pr.uri = mp.uri  and mp.visibility = 1 " +
                 " where entity_type <> 'web-page-annotation';";
 
         Connection conn = null;
@@ -375,12 +376,109 @@ public class KnowledgeBaseDao {
                 }
 
                 Property property = new Property(rs);
+                MetaProperty mp = new MetaProperty(rs);
+                property.setMetaProperty(mp);
 
-                Boolean show = rs.getBoolean("mp.visible");
-                property.setVisible(show);
+                Integer show = rs.getInt("mp.visibility");
+                property.setVisibility(show);
 
-                if (property.getVisible())
+                if (property.getVisibility().equals(3))
                     entity.getProperties().add(property);
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Entity findEntityById(Long id) {
+        String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
+                " left join meta_property mp on pr.uri = mp.uri   " + // and mp.visibility != 0
+                " left join category c on e.category_id = c.id   " + // and mp.visibility != 0
+                " where e.id = ?";
+
+        Connection conn = null;
+
+        Entity entity = null;
+        try {
+            conn = kbDataSource.getConnection();
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                entity = new Entity(rs);
+                String categoryName = rs.getString("c.name");
+                entity.setCategoryName(categoryName);
+
+                Long categoryId = rs.getLong("c.id");
+                entity.setCategoryId(categoryId);
+            }
+
+            while (rs.next()) {
+                Property property = new Property(rs);
+                MetaProperty mp = new MetaProperty(rs);
+                property.setMetaProperty(mp);
+
+                Integer show = rs.getInt("mp.visibility");
+                property.setVisibility(show);
+
+
+                entity.getProperties().add(property);
+            }
+
+            rs.close();
+            ps.close();
+
+            return entity;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<Entity> findAllEntitiesLazy() {
+        String sql = "select * from entity e " +
+                " where entity_type <> 'web-page-annotation' &&  entity_type <> 'non-semantic-web';";
+
+        Connection conn = null;
+
+        HashMap<Long, Entity> map = new HashMap<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Long entityId = rs.getLong("e.id");
+
+                Entity entity;
+                if (!map.containsKey(entityId)) {
+                    entity = new Entity(rs);
+
+                    map.put(entityId, entity);
+                } else {
+                    entity = map.get(entityId);
+                }
             }
 
             rs.close();
@@ -412,6 +510,46 @@ public class KnowledgeBaseDao {
 
             while (rs.next()) {
                 properties.add(new Property(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return properties;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+
+    public List<Property> findPropertiesByEntity(Long id) {
+        String sql = "select * from property pr left join meta_property mp on mp.id = pr.meta_property_id where pr.id = >;";
+
+        Connection conn = null;
+
+        List<Property> properties = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Integer show = rs.getInt("visibility");
+                Property p = new Property(rs);
+                MetaProperty mp = new MetaProperty(rs);
+                p.setMetaProperty(mp);
+                p.setVisibility(show);
+
+                properties.add(p);
             }
 
             rs.close();
@@ -595,7 +733,7 @@ public class KnowledgeBaseDao {
     public Collection<Entity> findAnnotationEntities(Long webPageEntityId) {
         String sql = "select * from entity e " +
                 " left join property pr on pr.entity_id = e.id " +
-                " left join meta_property mp on pr.meta_property_id = mp.id and mp.visible = 1 " +
+                " left join meta_property mp on pr.meta_property_id = mp.id and mp.visibility = 1 " +
                 " where e.web_page_entity_id = ?;";
 
         Connection conn = null;
@@ -612,7 +750,10 @@ public class KnowledgeBaseDao {
                 entity = new Entity(rs);
 
                 Property property = new Property(rs);
-                if (property.getVisible() != null && property.getVisible()) {
+                MetaProperty mp = new MetaProperty(rs);
+                property.setMetaProperty(mp);
+
+                if (property.getVisibility() != null && property.getVisibility().equals(3)) {
                     if (map.get(entity.getId()) != null) {
 
                         map.get(entity.getId()).getProperties().add(property);

@@ -1,16 +1,16 @@
 package com.gsu.semantic.controller;
 
+import com.gsu.common.util.ImageUtils;
 import com.gsu.semantic.model.Place;
 import com.gsu.semantic.model.Property;
 import com.gsu.semantic.repository.HistoricalIstanbulDao;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.*;
 import java.util.Collection;
 
 /**
@@ -22,6 +22,25 @@ public class HistoricalIstanbulApi {
 
     @Autowired
     private HistoricalIstanbulDao historicalIstanbulDao;
+
+    @ResponseBody
+    @RequestMapping(value = "/image/{image:.*}", method = RequestMethod.GET, produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getImage(@PathVariable("image") String image) throws IOException {
+        if (image == null || image.isEmpty()) {
+            return null;
+        }
+
+        File f = new File(ImageUtils.HI_IMG_LOCATION + image);
+        try {
+            InputStream fis = new FileInputStream(f);
+            byte[] bytes = IOUtils.toByteArray(fis);
+            fis.close();
+
+            return bytes;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
+    }
 
     @RequestMapping(value = "/savePlace", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,

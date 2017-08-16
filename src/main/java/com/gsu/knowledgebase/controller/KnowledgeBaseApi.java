@@ -1,17 +1,19 @@
 package com.gsu.knowledgebase.controller;
 
+import com.gsu.common.util.ImageUtils;
 import com.gsu.knowledgebase.model.*;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
 import com.gsu.knowledgebase.service.DBPedia;
 import com.gsu.knowledgebase.service.WebPageAnnotator;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletContext;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.*;
 
 @Controller("KnowledgeBaseApi")
@@ -27,6 +29,31 @@ public class KnowledgeBaseApi {
     @Autowired
     private DBPedia dbPedia;
 
+    @Autowired
+    private ImageUtils imageUtils;
+
+    @Autowired
+    private ServletContext servletContext;
+
+    @ResponseBody
+    @RequestMapping(value = "/image/{image:.*}", method = RequestMethod.GET, produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getImage(@PathVariable("image") String image) throws IOException {
+        if (image == null || image.isEmpty()) {
+            return null;
+        }
+
+        File f = new File(ImageUtils.KB_IMG_LOCATION + image);
+        try {
+            InputStream fis = new FileInputStream(f);
+            byte[] bytes = IOUtils.toByteArray(fis);
+            fis.close();
+
+            return bytes;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
+    }
+
     @RequestMapping(value = "/saveEntity", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -34,8 +61,32 @@ public class KnowledgeBaseApi {
     @ResponseBody
     Object saveEntity(@RequestBody Entity entity) throws Exception {
         Entity pl = knowledgeBaseDao.findEntityByName(entity.getName());
-        if (pl != null) {
+        if (pl != null && !pl.getEntityType().equals("web-page-annotation")) {
             return null;
+        }
+
+        if (entity.getEntityType().equals("web-page")) {
+            try {
+                String title = webPageAnnotator.getWebPageTitle(entity.getWebUri());
+                if (title == null || title.isEmpty())
+                    entity.setName(entity.getWebUri());
+                else
+                    entity.setName(title);
+
+                entity.setImage(webPageAnnotator.getWebsiteImage(entity.getWebUri()));
+            } catch (Exception e) {
+                entity.setName(entity.getWebUri());
+                e.printStackTrace();
+            }
+        }
+
+        if (entity.getImage() != null && !entity.getImage().isEmpty()) {
+            BufferedImage bf = imageUtils.readImageFromUri(entity.getImage());
+            if (bf != null) {
+                BufferedImage scaledImage = imageUtils.getScaledImage(bf, ImageUtils.SCALED_IMAGE_WIDTH, ImageUtils.SCALED_IMAGE_HEIGHT);
+                String filename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId());
+                entity.setSmallImage(filename);
+            }
         }
 
         Long id = knowledgeBaseDao.saveEntity(entity);
@@ -43,22 +94,18 @@ public class KnowledgeBaseApi {
         if (entity.getEntityType().equals("web-page")) {
             List<String> uris = webPageAnnotator.annotateWebPage(entity.getWebUri());
 
-            try {
-                String title = webPageAnnotator.getWebPageTitle(entity.getWebUri());
-                entity.setName(title);
-            } catch (Exception e) {
-                entity.setName(entity.getWebUri());
-                e.printStackTrace();
-            }
-
-
             Map<String, Entity> webPageEntities = new HashMap<>();
             for (String dbpediaUri : uris) {
                 try {
-                    Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
-                    webPageEntity.setWebPageEntityId(id);
+                    if (webPageEntities.get(dbpediaUri) == null) {
+                        Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
+                        webPageEntity.setWebPageEntityId(id);
 
-                    webPageEntities.put(webPageEntity.getName(), webPageEntity);
+                        webPageEntities.put(webPageEntity.getDbpediaUri(), webPageEntity);
+                    } else {
+                        // do nothing...
+                    }
+
                 } catch (Exception e) {
                     System.err.println("Error at dbPedia.getEntityByUri");
                     e.printStackTrace();
@@ -207,6 +254,36 @@ public class KnowledgeBaseApi {
         }
 
         return entities;
+    }
+
+    @RequestMapping(value = "/getEntityList", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getEntityList() throws Exception {
+        Collection<Entity> entities = knowledgeBaseDao.findAllEntitiesLazy();
+
+//        for (Entity e : entities) {
+//            if (e.getEntityType().equals("web-page")) {
+//                e.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(e.getId()));
+//            }
+//        }
+
+        return entities;
+    }
+
+    @RequestMapping(value = "/getEntityById/{id}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getEntityById(@PathVariable(value = "id") Long id) throws Exception {
+        Entity entity = knowledgeBaseDao.findEntityById(id);
+
+        if (entity.getEntityType().equals("web-page")) {
+            entity.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(entity.getId()));
+        }
+
+        return entity;
     }
 
     @RequestMapping(value = "/getAllMetaproperties", method = RequestMethod.GET,

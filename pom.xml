@@ -368,7 +368,20 @@
             <version>1.0.0-rc5</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.gravity</groupId>
+            <artifactId>goose</artifactId>
+            <version>2.1.23</version>
+        </dependency>
 
+        <!-- ImageScalr -->
+        <dependency>
+            <groupId>org.imgscalr</groupId>
+            <artifactId>imgscalr-lib</artifactId>
+            <version>4.2</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
 
         <!--<dependency>-->
         <!--<groupId>edu.stanford.nlp</groupId>-->

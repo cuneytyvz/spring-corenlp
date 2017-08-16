@@ -1,7 +1,7 @@
 var dbpedia = (function () {
 
-    var lookupUri = "http://lookup.dbpedia-spotlight.org/api/search/PrefixSearch?QueryClass=&MaxHits=5&QueryString=";
-//    var lookupUri = "http://lookup.dbpedia.org/api/search/PrefixSearch?QueryString=";
+//    var lookupUri = "http://lookup.dbpedia-spotlight.org/api/search/PrefixSearch?QueryClass=&MaxHits=5&QueryString=";
+    var lookupUri = "http://lookup.dbpedia.org/api/search/PrefixSearch?QueryString=";
 
     // Keep this variable private inside this closure scope
     var prefixSearch = function ($http, term, onSuccess) {
@@ -18,7 +18,7 @@ var dbpedia = (function () {
                 onSuccess(response.data.results);
             },
             function (err) {
-                console.log("ERROR: " + err);
+                console.log("ERROR: " + JSON.stringify(err));
             });
     };
 

@@ -1,28 +1,38 @@
 package com.gsu.knowledgebase.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gravity.goose.Article;
+import com.gravity.goose.Configuration;
+import com.gravity.goose.Goose;
 import com.gsu.common.util.MyHttpClient;
-import com.gsu.knowledgebase.model.Entity;
+import de.l3s.boilerpipe.BoilerpipeExtractor;
+import de.l3s.boilerpipe.document.Image;
+import de.l3s.boilerpipe.document.TextBlock;
+import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
-import org.apache.commons.io.IOUtils;
-import org.json.simple.parser.JSONParser;
+import de.l3s.boilerpipe.extractors.LargestContentExtractor;
+import de.l3s.boilerpipe.sax.ImageExtractor;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 
 @Component
 public class WebPageAnnotator {
 
+    @Autowired
+    MyHttpClient myHttpClient;
+
     public static void main(String args[]) throws Exception {
-        String html = IOUtils.toString(new URI("http://explodingart.com/wp/"));
+//        String html = IOUtils.toString(new URI("http://www.medievalists.net/2017/08/living-books-renaissance-ferrara/"));
+        String html = new MyHttpClient().getAsString("http://www.medievalists.net/2017/08/living-books-renaissance-ferrara/");
         String text = ArticleExtractor.INSTANCE.getText(html);
 
         Map response = new RestTemplate().getForObject(
@@ -30,11 +40,18 @@ public class WebPageAnnotator {
                         text +
                         "&confidence=0.5&support=0&spotter=Default&disambiguator=Default&policy=whitelist&types=&sparql="
                 , Map.class);
+
+        response.get("");
+
     }
 
     public List<String> annotateWebPage(String url) throws Exception {
-        String html = IOUtils.toString(new URI(url));
+        String html = myHttpClient.getAsString(url);
         String text = ArticleExtractor.INSTANCE.getText(html);
+
+        Goose goose = new Goose(new Configuration());
+        Article article = goose.extractContent(url);
+
         String cut = text.length() < 5000 ? text : text.substring(0, 5000);
 
         Map response = new RestTemplate().getForObject(
@@ -53,6 +70,42 @@ public class WebPageAnnotator {
 
         return entities;
     }
+
+    public String getWebsiteImage2(String url) throws Exception {
+
+        List<Image> images = ImageExtractor.INSTANCE.process(new URL(url), LargestContentExtractor.INSTANCE);
+
+        List<String> strs = new ArrayList<>();
+        for (Image img : images) {
+            strs.add(img.getSrc());
+        }
+
+        if (strs.size() > 0) {
+            return strs.get(0);
+        } else {
+            return "";
+        }
+    }
+
+    public String getWebsiteImage(String url) throws Exception {
+        String html = myHttpClient.getAsString("https://boilerpipe-web.appspot.com/extract?url=" + URLEncoder.encode(url)
+                + "&extractor=LargestContentExtractor&output=img&extractImages=4&token=");
+
+        Document doc = Jsoup.parse(html);
+        Elements elements = doc.select("img");
+
+        List<String> images = new ArrayList<>();
+        for (Element element: elements) {
+            images.add(element.attr("src"));
+        }
+
+        if (images.size() > 0) {
+            return images.get(0);
+        } else {
+            return "";
+        }
+    }
+
 
     public String getWebPageTitle(String uri) throws Exception {
         Document doc = Jsoup.connect(uri).get();

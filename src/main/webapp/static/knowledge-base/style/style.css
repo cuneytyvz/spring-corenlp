@@ -93,14 +93,38 @@ footer {
 div.searchbox {
     display: block;
     float: left;
-    width: 300px;
+    /*width: 300px;*/
     margin-top: 10px;
     margin-bottom: 10px;
     margin-left: 15px;
 }
 
+form.searchbox {
+    display: block;
+    float: left;
+    /*width: 300px;*/
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 15px;
+}
+
+label.blue {
+    color: #555758;
+    font-family: "Times New Roman";
+}
+
+label {
+    color: #555758;
+    font-family: "Times New Roman";
+}
+
 .blue {
     color: #555758;
+}
+
+.entity-header {
+    color: #555758;
+    font-size: 15px;
 }
 
 .cafeta {
@@ -182,11 +206,6 @@ div.searchbox {
     max-height: 250px;
 }
 
-label.blue {
-    color: #555758;
-    font-family: "Times New Roman";
-}
-
 /* for autocomplete */
 .ui-menu-item {
     z-index: 999;
@@ -230,4 +249,50 @@ label.blue {
 .right-save-button {
     margin-left: 15px;
     margin-top: 5px;
+}
+
+.property-filter {
+    margin-top: 10px;
+}
+
+.property-filter a {
+    float: right;
+}
+
+.entity-box {
+    max-height: 300px;
+    height: 300px;
+    overflow-y: scroll
+}
+
+.web-page-box {
+    max-height: 300px;
+    height: 300px;
+    overflow-y: scroll
+}
+
+.memory-box {
+    max-height: 600px;
+    height: 600px;
+    overflow-y: scroll
+}
+
+.image-container {
+    /*width: 100%;*/
+    /*max-width: 150px;*/
+    max-height: 300px;
+    height: 300px;
+}
+
+.image-container img {
+    border-radius: 3%;
+    max-height: 230px;
+    /*width: 100%;*/
+    max-width: 100%;
+}
+
+.memory-box-text {
+    line-height: 230px;
+    text-align: center;
+    border: 2px dashed #f69c55;
 }

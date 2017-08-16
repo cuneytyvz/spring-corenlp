@@ -38,7 +38,6 @@ public class CoreNlp {
     private static StanfordCoreNLP pipeline;
     private static OpenIE openIE;
     private Properties props = new Properties();
-    private WordNetConnection wnc;
 
 //    @PostConstruct
     public void init() {
@@ -49,12 +48,6 @@ public class CoreNlp {
         classifier = CRFClassifier.getClassifierNoExceptions(MODEL);
         pipeline = new StanfordCoreNLP(props);
         openIE = new OpenIE(props);
-        wnc = new WordNetConnection() {
-            @Override
-            public boolean wordNetContains(String s) {
-                return false;
-            }
-        };
     }
 
     public List<Map.Entry<Word, Integer>> getWordFrequencies(String text) {

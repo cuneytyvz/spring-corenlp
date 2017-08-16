@@ -126,12 +126,14 @@ var wikidata = (function () {
 
                     for (var propertyId in item.claims) {
                         for (var i = 0; i < item.claims[propertyId].length; i++) {
+                            var description = labels[propertyId].descriptions["en"] ? labels[propertyId].descriptions["en"].value : '';
+
                             var p = {
                                 source: 'wikidata',
                                 uri: 'https://www.wikidata.org/wiki/Property:' + propertyId,
                                 datatype: item.claims[propertyId][0].mainsnak.datatype,
                                 name: labels[propertyId].labels["en"].value,
-                                description: labels[propertyId].descriptions["en"].value,
+                                description: description,
                                 subproperties: []
                             };
 

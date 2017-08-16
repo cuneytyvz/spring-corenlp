@@ -42,6 +42,11 @@
         <url-pattern>/visual/*</url-pattern>
     </servlet-mapping>
 
+    <servlet-mapping>
+        <servlet-name>main</servlet-name>
+        <url-pattern>/knowledge-base/*</url-pattern>
+    </servlet-mapping>
+
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>

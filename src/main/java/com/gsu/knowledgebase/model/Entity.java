@@ -18,7 +18,9 @@ public class Entity implements Serializable {
     private String entityType;
     private String webUri;
     private String image;
-    private Long categoryId;
+    private String smallImage;
+    private Long categoryId = 1l;
+    private String categoryName = "Other";
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
@@ -39,6 +41,7 @@ public class Entity implements Serializable {
         webUri = rs.getString("e.web_uri");
         image = rs.getString("e.image");
         wikipediaUri = rs.getString("e.wikipedia_uri");
+        smallImage = rs.getString("e.small_image");
     }
 
     public Long getId() {
@@ -151,5 +154,21 @@ public class Entity implements Serializable {
 
     public void setShortDescription(String shortDescription) {
         this.shortDescription = shortDescription;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getSmallImage() {
+        return smallImage;
+    }
+
+    public void setSmallImage(String smallImage) {
+        this.smallImage = smallImage;
     }
 }

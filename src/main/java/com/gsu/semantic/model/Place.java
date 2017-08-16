@@ -10,6 +10,8 @@ import java.util.List;
 public class Place implements Serializable {
     private Long id;
     private String name;
+    private String image;
+    private String smallImage;
     private String description;
     private String dbpediaUri;
     private String type;
@@ -18,11 +20,14 @@ public class Place implements Serializable {
     private Double lon;
     private List<Property> properties = new ArrayList<>();
 
-    public Place(){}
+    public Place() {
+    }
 
     public Place(ResultSet rs) throws SQLException {
         id = rs.getLong("pl.id");
         name = rs.getString("pl.name");
+        image = rs.getString("pl.image");
+        smallImage = rs.getString("pl.small_image");
         description = rs.getString("pl.description");
         dbpediaUri = rs.getString("pl.dbpedia_uri");
         type = rs.getString("pl.typ");
@@ -101,5 +106,21 @@ public class Place implements Serializable {
 
     public void setProperties(List<Property> properties) {
         this.properties = properties;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getSmallImage() {
+        return smallImage;
+    }
+
+    public void setSmallImage(String smallImage) {
+        this.smallImage = smallImage;
     }
 }

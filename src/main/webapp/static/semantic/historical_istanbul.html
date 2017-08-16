@@ -54,20 +54,58 @@
 
         <section class="right">
             <div class="right_inner">
-                <div>
-                    <label class="right-label">node:</label>
+                <div ng-if="selectedPlace" class="">
+                    <div>
+                        <!--<label class="info-label mb-15">image:</label>-->
 
-                    <div class="my-text">{{selectedPlace.name}}</div>
+                        <div class="info-image">
+                            <img ng-if="selectedPlace.smallImage"
+                                 ng-src="historicalIstanbul/api/image/{{selectedPlace.smallImage}}"/>
+                        </div>
+                    </div>
+
+
+                    <div ng-if="selectedPlace" class="form-group">
+                        <label class="right-label mb-5">{{selectedPlace.name}}</label>
+
+                        <div class="my-text description">{{selectedPlace.shortDescription}}</div>
+                    </div>
+
+                    <div ng-if="selectedPlace" class="form-group">
+                        <!--<label class="info-label mb-15">description:</label>-->
+                        <hr style="color:white; margin-top: 10px; margin-bottom:15px;">
+
+                        <div class="my-text description">{{selectedPlace.description}}</div>
+                    </div>
+                    <div class="row link-box">
+                        <div ng-if="selectedPlace && selectedPlace.dbpediaUri" class="form-group col-md-3">
+                            <div class="external-link">
+                                <a ng-href="{{selectedPlace.dbpediaUri}}" target="_blank">
+                                    <img src="static/knowledge-base/img/dbpedia.png"/>
+                                </a>
+                            </div>
+                        </div>
+                        <div ng-if="selectedPlace && selectedPlace.wikidataId" class="form-group  col-md-3">
+                            <div class="external-link">
+                                <a ng-href="https://www.wikidata.org/wiki/{{selectedPlace.wikidataId}}"
+                                   target="_blank">
+                                    <img src="static/knowledge-base/img/wikidata_text.png"/>
+                                </a>
+                            </div>
+                        </div>
+                        <div ng-if="selectedPlace && selectedPlace.wikipediaUri" class="form-group  col-md-3">
+
+                            <div class="external-link">
+                                <a ng-href="{{selectedPlace.wikipediaUri}}" target="_blank">
+                                    <img src="static/knowledge-base/img/wikipedia.png"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div>
-                    <label class="right-label">description:</label>
-
-                    <div class="my-text description">{{selectedPlace.description}}</div>
-                    <!--<hr style="border-top: 1px solid white;">-->
-                </div>
-
             </div>
+
+
         </section>
     </div>
 </div>

@@ -4,9 +4,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.gsu.common.util.MyHttpClient;
 import com.gsu.knowledgebase.model.Entity;
 import com.gsu.knowledgebase.model.Property;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,6 +23,9 @@ import java.util.*;
 
 @Component
 public class DBPedia {
+
+    @Autowired
+    MyHttpClient myHttpClient;
 
     public static void main(String args[]) throws Exception {
         new DBPedia().getEntityByUri("http://dbpedia.org/resource/Bayesian_network");
@@ -53,7 +58,8 @@ public class DBPedia {
                 "format=application%2Fjson-ld";
 
 
-        String str = IOUtils.toString(new URI(req));
+//        String str = IOUtils.toString(new URI(req));
+        String str = myHttpClient.getAsString(req);
 
 
         JsonObject json = new JsonParser().parse(str).getAsJsonObject();
@@ -96,6 +102,7 @@ public class DBPedia {
                 p.setDatatype(getAsString(property, "datatype"));
                 p.setType(getAsString(property, "type"));
                 p.setValue(getAsString(property, "value"));
+                p.setValueLabel(getAsString(property, "value").split("/")[getAsString(property, "value").split("/").length - 1]);
 
                 properties.add(p);
             }

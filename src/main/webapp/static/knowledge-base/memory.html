@@ -60,69 +60,35 @@
 <div class="core clearfix">
 <section class="space container">
     <div class="row">
-        <div class="col-md-3">
-            <div class="col-md-12">
 
-                <form>
-                    <div class="form-group">
-                        <label class="blue">Entity</label>
-                        <input type="text" class="form-control" id="entity-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="blue">Category</label>
-                        <input type="text" class="form-control" id="category-input">
-                    </div>
-                    <div class="form-group">
-                        <input type="button" class="btn btn-default blue" value="Save" ng-click="saveEntity()">
-                    </div>
-                </form>
-                <hr class="entity-divider">
-
-            </div>
-
-            <div class="col-md-12">
-                <ul>
-                    <li style="list-style: none;" ng-repeat="c in categories">
-                        <a href ng-click="">{{c.name}}</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="col-md-5">
-            <div class="col-md-12 entity-box">
-                <!--<ul>-->
-                    <!--<li style="list-style: none;" ng-repeat="e in entities">-->
-                        <!--<a href ng-click="showEntity(e)">{{e.name}}</a>-->
-                    <!--</li>-->
-                <!--</ul>-->
-
-                <ul>
-                    <li style="list-style: none;" ng-repeat="c in categories">
+        <div class="col-md-8 memory-box">
+            <div style="list-style: none;" ng-repeat="c in categories">
+                <div class="row">
+                    <div class="col-md-12">
                         <label class="category-header">{{c.name}}</label>
-                        <ul style="padding-left: 10px;">
-                            <li style="list-style: none;" ng-repeat="e in c.entities">
-                                <a href ng-click="showEntity(e)">{{e.name}}</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4" ng-repeat="e in c.entities">
+                        <a href ng-click="showEntity(e)">
+                            <div class="image-container">
+                                <img ng-if="e.smallImage && e.smallImage != ''" ng-mouseover="mouseOver($event,e)"
+                                     ng-mouseleave="mouseLeave($event,e)"
+                                     ng-src="knowledgeBase/api/image/{{e.smallImage}}" orientable>
+
+                                <div class="overlay" style="display: none;"></div>
+                                <div ng-if="!e.smallImage" class="memory-box-text">
+                                    {{e.name}}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
             <br/><br/><br/>
 
-            <div class="col-md-12">
-                <hr class="entity-divider">
-            </div>
-            <br/>
-
-            <div class="col-md-12 web-page-box">
-                <ul>
-                    <li style="list-style: none;" ng-repeat="e in webPages">
-                        <a href ng-click="showEntity(e)">{{e.name}}</a>
-                    </li>
-                </ul>
-            </div>
         </div>
+
         <div class="col-md-4 property-box" ng-show="selectedEntity.entityType != 'web-page'"
              ng-class="propertyBoxClass">
             <div ng-if="propertiesLoading" class="overlay">
@@ -260,7 +226,12 @@
         <div>
             <!--<label class="info-label mb-15">image:</label>-->
 
-            <div class="info-image"><img ng-if="selectedEntity.image" ng-src="{{selectedEntity.image}}"/></div>
+            <div class="info-image">
+                <img ng-if="selectedEntity.image"
+                     ng-src="{{selectedEntity.image}}"/>
+                <img ng-if="!selectedEntity.image && selectedEntity.smallImage"
+                     ng-src="knowledgeBase/api/image/{{selectedEntity.smallImage}}"/>
+            </div>
         </div>
 
         <div class="row">

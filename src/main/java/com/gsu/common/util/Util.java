@@ -1,6 +1,11 @@
 package com.gsu.common.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -38,5 +43,34 @@ public class Util {
         );
 
         return sortedEntries;
+    }
+
+    public static String fetchRedirectURL(String url) throws IOException
+    {
+        HttpURLConnection con =(HttpURLConnection) new URL( url ).openConnection();
+//System.out.println( "orignal url: " + con.getURL() );
+        con.setInstanceFollowRedirects(false);
+        con.connect();
+
+
+        InputStream is = con.getInputStream();
+        if(con.getResponseCode()==301)
+            return con.getHeaderField("Location");
+        else return null;
+    }
+
+    public static void main(String[] args) throws MalformedURLException, IOException {
+        String url="http://commons.wikimedia.org/wiki/Special:FilePath/Kate_Bush_at_1986_Comic_Relief_(cropped).png";
+        String fetchedUrl=fetchRedirectURL(url);
+        System.out.println("FetchedURL is:"+fetchedUrl);
+        while(fetchedUrl!=null)
+        {   url=fetchedUrl;
+            System.out.println("The url is:"+url);
+            fetchedUrl=fetchRedirectURL(url);
+
+
+        }
+        System.out.println(url);
+
     }
 }
