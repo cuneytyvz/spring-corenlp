@@ -58,10 +58,15 @@ var autocompleteService = (function () {
 
                 response(cats);
             }, select: function (event, ui) {
+                $("#entity-category-input").val(ui.item.value);
                 this.value = ui.item.value;
                 $scope.selectedCategory = ui.item.value;
+                $scope.selectedEntity.categoryId = ui.item.id;
+                $scope.selectedEntity.categoryName = ui.item.value;
 
                 return false;
+            }, change: function (event, ui) { // not-selected
+                $("#entity-category-input").val($("#category-input").val());
             }
         });
 
@@ -85,12 +90,15 @@ var autocompleteService = (function () {
                                 ui.item.value = _.find($scope.categories, {name: 'Other'}).name;
                             }
 
+                            $("#category-input").val(ui.item.value);
                             this.value = ui.item.value;
                             $scope.selectedCategory = ui.item.value;
                             $scope.selectedEntity.categoryId = ui.item.id;
                             $scope.selectedEntity.categoryName = ui.item.value;
 
                             return false;
+                        }, change: function (event, ui) { // not-selected
+                            $("#category-input").val($("#entity-category-input").val());
                         }
                     });
                 }

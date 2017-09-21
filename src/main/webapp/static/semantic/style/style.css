@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    background-color: #4D4D4D;
+    background-color: #FFFFFF;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -58,7 +58,7 @@ label#artist_label {
 label#artist_text {
     margin-top: -15px;
     margin-left: 15px;
-    color: white;
+    color: #4D4D4D;
     font-size: 25px;
     font-weight: bold;
 }
@@ -154,7 +154,7 @@ svg {
 section#right {
     float: left;
     width: 20%;
-    background-color: #4D4D4D;
+    background-color: white;
     margin: 0;
     padding: 0;
     margin-bottom: 10px;
@@ -181,7 +181,7 @@ label#artist_label {
 label#artist_text {
     margin-top: -15px;
     margin-left: 15px;
-    color: white;
+    color: #4D4D4D;
     font-size: 25px;
     font-weight: bold;
 }
@@ -223,7 +223,7 @@ circle {
     pointer-events: none;
     font-size: 12px;
     font-weight: bold;
-    fill: white;
+    fill: #4D4D4D;
 }
 
 footer {
@@ -253,4 +253,56 @@ html[xmlns] .clearfix {
 
 * html .clearfix {
     height: 1%;
+}
+
+.info-text {
+    color: #4D4D4D;
+}
+
+.info-title {
+    color: #4D4D4D;
+}
+
+.album-box-edge {
+    height: 350px;
+    width: 300px;
+    background-color: #006bff;
+    position: absolute;
+    top: 350px;
+    left: 25px;
+}
+
+.album-box {
+    margin-top: 10px;
+    margin-left: 10px;
+    background-color: white;
+    height: 330px;
+    width: 280px;
+    overflow-y: scroll;
+}
+
+/* Accordion */
+/* Style the buttons that are used to open and close the accordion panel */
+button.accordion {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+button.accordion.active, button.accordion:hover {
+    background-color: #ddd;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+div.panel {
+    padding: 0 18px;
+    background-color: white;
+    display: none;
 }

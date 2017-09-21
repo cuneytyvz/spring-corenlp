@@ -54,6 +54,17 @@ public class KnowledgeBaseApi {
         }
     }
 
+    @RequestMapping(value = "/updateEntity", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object updateEntity(@RequestBody Entity entity) throws Exception {
+        Long id = knowledgeBaseDao.updateEntity(entity);
+
+        return id;
+    }
+
     @RequestMapping(value = "/saveEntity", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -82,14 +93,20 @@ public class KnowledgeBaseApi {
 
         if (entity.getImage() != null && !entity.getImage().isEmpty()) {
             BufferedImage bf = imageUtils.readImageFromUri(entity.getImage());
+
             if (bf != null) {
+                String filename = imageUtils.saveJpegPngImage(bf, entity.getName().replace(" ", "_") + "_" + entity.getWikidataId());
+                entity.setImage(filename);
+
                 BufferedImage scaledImage = imageUtils.getScaledImage(bf, ImageUtils.SCALED_IMAGE_WIDTH, ImageUtils.SCALED_IMAGE_HEIGHT);
-                String filename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId());
-                entity.setSmallImage(filename);
+                String smallFilename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId());
+                entity.setSmallImage(smallFilename);
             }
         }
 
+
         Long id = knowledgeBaseDao.saveEntity(entity);
+        entity.setId(id);
 
         if (entity.getEntityType().equals("web-page")) {
             List<String> uris = webPageAnnotator.annotateWebPage(entity.getWebUri());
@@ -180,7 +197,7 @@ public class KnowledgeBaseApi {
 
         knowledgeBaseDao.saveSubproperties(subproperties);
 
-        return id;
+        return entity;
     }
 
     @RequestMapping(value = "/transferMetaprops", method = RequestMethod.GET,

@@ -63,9 +63,15 @@ public class WebPageAnnotator {
 //            return null;
 //        }
 
+        Map<String,String> map = new HashMap<>();
         List<String> entities = new ArrayList<>();
         for (Map r : (List<Map>) response.get("Resources")) {
-            entities.add((String) r.get("@URI"));
+            String uri = (String) r.get("@URI");
+
+            if(!entities.contains(uri)) {
+                entities.add(uri);
+            }
+
         }
 
         return entities;

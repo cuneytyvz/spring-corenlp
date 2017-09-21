@@ -34,6 +34,7 @@ header {
     display: block;
     background-color: #e1d5ad;
     height: 50px;
+    box-shadow: 0 0 5px 3px #e1d5ad;;
 }
 
 img.buyutec {
@@ -53,7 +54,7 @@ div.core {
     display: block;
     clear: both;
     margin: 0;
-    padding: 0px 10px 10px 10px;
+    padding: 0px 10px 10px 0px;
     height: 100%;
 }
 
@@ -73,6 +74,7 @@ section.right {
     margin: 0;
     margin-bottom: 10px;
     height: 100%;
+    box-shadow: 0 0 5px 3px #dfddc8;
 }
 
 div.right_inner {
@@ -274,17 +276,18 @@ label {
 .memory-box {
     max-height: 600px;
     height: 600px;
-    overflow-y: scroll
+    overflow-y: scroll;
+    padding-left: 0;
 }
 
 .image-container {
     /*width: 100%;*/
     /*max-width: 150px;*/
     max-height: 300px;
-    height: 300px;
+    /*height: 300px;*/
 }
 
-.image-container img {
+.memory-image {
     border-radius: 3%;
     max-height: 230px;
     /*width: 100%;*/
@@ -295,4 +298,247 @@ label {
     line-height: 230px;
     text-align: center;
     border: 2px dashed #f69c55;
+    color: #555758;
 }
+
+.entity-text {
+    text-align: center;
+    color: #555758;
+    text-decoration: none;
+}
+
+.entity-text:focus, .entity-text:hover {
+    color: #23527c;
+    text-decoration: none !important;
+}
+
+.memory-box-row {
+    overflow-y: scroll;
+}
+
+.category-sticker {
+    padding-right: 10px;
+    height: 100%;
+    width: 20px;
+}
+
+.category-sticker label {
+    transform: rotate(90deg);
+    padding-left: 10px;
+}
+
+/* pinterest style columns */
+#columns {
+    column-width: 190px;
+    column-gap: 15px;
+    width: 90%;
+    max-width: 1100px;
+    margin: 15px auto;
+}
+
+div#columns figure {
+    background: #fefefe;
+    border: 2px solid #fcfcfc;
+    box-shadow: 0 1px 2px rgba(34, 25, 25, 0.4);
+    margin: 0 2px 15px;
+    padding: 15px;
+    padding-bottom: 10px;
+    /*transition: opacity .4s ease-in-out;*/
+    display: inline-block;
+    column-break-inside: avoid;
+    border-radius: 3%;
+}
+
+div#columns figure img {
+    width: 100%;
+    height: auto;
+    border-bottom: 1px solid #ccc;
+    /*padding-bottom: 15px;*/
+    margin-bottom: 5px;
+    border-radius: 3%;
+}
+
+div#columns figure figcaption {
+    font-size: 1.1rem;
+    /*color: #444;*/
+    line-height: 1.5;
+    text-align: center;
+    color: #555758;
+}
+
+div#columns small {
+    font-size: 1rem;
+    float: right;
+    text-transform: uppercase;
+    color: #aaa;
+}
+
+div#columns small a {
+    color: #666;
+    text-decoration: none;
+    transition: .4s color;
+}
+
+div#columns:hover figure:not(:hover) {
+    /*opacity: 0.4;*/
+}
+
+@media screen and (max-width: 750px) {
+    #columns {
+        column-gap: 0px;
+    }
+
+    #columns figure {
+        width: 100%;
+    }
+
+    #columns .figure {
+        width: 100%;
+    }
+}
+
+.figure-text {
+    line-height: 180px;
+    width: 155px;
+    text-align: center;
+    border: 2px dashed #f69c55;
+    color: #555758;
+    margin-bottom: 15px;
+    margin-top: 5px;
+    border-radius: 3%;
+}
+
+.side-menu {
+    width: 50px;
+    height: 100%;
+    /*position: absolute;*/
+    /*top: 0;*/
+    left: 0;
+    padding-left: 0;
+    padding-right: 0;
+    /*display: table;*/
+    overflow-y: scroll;
+    max-height: 550px;
+}
+
+.side-menu-item {
+    height: 66.33333%;
+    display: flex;
+    background: #dfddc8;
+    text-align: center;
+    padding: 20px 0px 20px 0px;
+    margin: 10px 0px 10px 0px;
+    border-top-right-radius: 30%;
+    border-bottom-right-radius: 30%;
+    margin-right: 22px;
+}
+
+.side-menu-item label {
+    margin-left: -12px;
+}
+
+.side-menu-item.selected {
+    margin-right: 0px;
+}
+
+.side-menu-item.selected label {
+    margin-left: 0px;
+}
+
+.side-menu-item-wrapper {
+
+}
+
+.side-menu-item a {
+    display: table-cell;
+    vertical-align: middle;
+    line-height: 50px;
+    white-space: nowrap;
+    max-width: 50px;
+    -webkit-transform: rotate(270deg);
+}
+
+.side-menu-item:hover {
+    background: #ddd
+}
+
+.pop-up {
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 60px;
+    background-color: #dfddc8;
+    /*box-shadow: 10px 10px 10px #e1d5ad;*/
+    box-shadow: 1px 1px 20px 20px #e1d5ad;
+    /*box-shadow: 0px 0px 5px 10px #dfddc8;*/
+
+}
+
+.pop-up .shadow-wrapper {
+    box-shadow: 0px 0px 5px 10px #dfddc8;
+    padding-bottom: 15px;
+}
+
+.pop-up .block {
+    margin-bottom: 0;
+    padding: 15px 15px 15px 15px;
+}
+
+.pop-up .block .notes {
+    padding-top: 15px;
+}
+
+.detail-info {
+    display: block;
+    /*height: 300px;*/
+    /*overflow-y: hidden;*/
+}
+
+.detail-info .image > img {
+    width: 250px;
+    /*height: 100%;*/
+    border: 1px solid #555758;
+    float:left;
+    margin-right: 15px;
+}
+
+.detail-info .text .info-text {
+    margin-left: 0;
+}
+
+.detail-info .text .info-title {
+    margin-top: 0;
+}
+
+.popup .block .notes {
+    padding-top: 10px;
+}
+
+.popup .block .notes textarea {
+
+}
+
+.pop-up-overlay {
+    position: absolute; /* Sit on top of the page content */
+    /*display: none; *//* Hidden by default */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(93, 74, 41, 0.22);
+    /*background-color: rgba(0,0,0,0.5); *//* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+.ngdialog-close {
+    display: none;
+}
+
+/*
+background: -webkit-linear-gradient(top, #04b3d2, #48dfff);
+background: -moz-linear-gradient(top, #04b3d2, #48dfff);
+background: -o-linear-gradient(top, #04b3d2, #48dfff);
+background: linear-gradient(top, #04b3d2, #48dfff);
+*/

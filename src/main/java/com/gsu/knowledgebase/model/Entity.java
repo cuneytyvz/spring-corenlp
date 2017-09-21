@@ -19,6 +19,7 @@ public class Entity implements Serializable {
     private String webUri;
     private String image;
     private String smallImage;
+    private String note;
     private Long categoryId = 1l;
     private String categoryName = "Other";
     private List<Property> properties = new ArrayList<>();
@@ -37,10 +38,11 @@ public class Entity implements Serializable {
         categoryId = rs.getLong("e.category_id");
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
-        webPageEntityId = rs.getLong("e.web_page_entity_id");
+        webPageEntityId = rs.getLong("e.web_page_entity_id") == 0 ? null : rs.getLong("e.web_page_entity_id");
         webUri = rs.getString("e.web_uri");
-        image = rs.getString("e.image");
         wikipediaUri = rs.getString("e.wikipedia_uri");
+        note = rs.getString("e.note");
+        image = rs.getString("e.image");
         smallImage = rs.getString("e.small_image");
     }
 
@@ -132,13 +134,6 @@ public class Entity implements Serializable {
         this.webUri = webUri;
     }
 
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
 
     public String getWikipediaUri() {
         return wikipediaUri;
@@ -162,6 +157,23 @@ public class Entity implements Serializable {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public String getSmallImage() {

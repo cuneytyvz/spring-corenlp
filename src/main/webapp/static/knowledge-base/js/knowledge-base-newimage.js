@@ -59,7 +59,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         $scope.existingElements = getExistingProperties();
     }
 
-    $scope.entityDoubleClicked = function(e) {
+    $scope.entityDoubleClicked = function (e) {
         $scope.showEntity(e);
         $scope.openDetailPopup(e);
 
@@ -263,22 +263,22 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                 $ss.saveEntity = $scope.saveEntity;
 
-                if($ss.selectedEntity.description.length > 1315) {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315) + "...";
+                if ($ss.selectedEntity.description.length > 1315) {
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315) + "...";
                     $ss.displayShowMore = true;
                 } else {
                     $ss.description = $ss.selectedEntity.description;
                     $ss.displayShowMore = false;
                 }
 
-                $ss.showMore = function() {
+                $ss.showMore = function () {
                     $ss.description = $ss.selectedEntity.description;
                     $ss.displayShowMore = false;
                     $ss.displayShowLess = true;
                 };
 
-                $ss.showLess = function() {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315);
+                $ss.showLess = function () {
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315);
                     $ss.displayShowLess = false;
                     $ss.displayShowMore = true;
                 };
@@ -391,12 +391,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     c.entities.push(e);
                 }
             }
-
-            c.entities2row = [
-                []
-            ];
-            c.entities2row[0] = c.entities.slice(c.entities.length / 2);
-            c.entities2row[1] = c.entities.slice(0, c.entities.length / 2);
         }
     };
 
@@ -454,6 +448,35 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
 //        $overlay = $($event.target).parent().find('.overlay').hide();
     };
+
+    $scope.getImageUrl = function(e) {
+        if($scope.isEntitySaved()) {
+            return "knowledgeBase/api/image/" + $scope.entitySmallImage(e);
+        } else {
+            return $scope.entityImage(e);
+        }
+    };
+
+    $scope.entityImage = function (e) {
+        if (e.dbpediaImage && e.dbpediaImage.length > 0)
+            return e.dbpediaImage;
+        else
+            return e.wikidataImage;
+    };
+
+    $scope.entitySmallImage = function (e) {
+        if (e.dbpediaSmallImage && e.dbpediaSmallImage.length > 0)
+            return e.dbpediaSmallImage;
+        else
+            return e.wikidataSmallImage;
+    };
+
+    $scope.entityHaveImage = function (e) {
+        if (e && (e.dbpediaImage || e.wikidataImage))
+            return true;
+        else
+            return false;
+    }
 });
 
 app.config(function ($sceDelegateProvider, $sceProvider) {

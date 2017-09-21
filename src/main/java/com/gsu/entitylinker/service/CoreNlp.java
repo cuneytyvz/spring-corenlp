@@ -43,8 +43,8 @@ public class CoreNlp {
     public void init() {
         props.setProperty("annotators", "tokenize,ssplit,pos,lemma"); // tokenize,ssplit,pos,lemma,depparse,natlog,openie
 //        props.setProperty("segment.model",FRENCH_MODEL);
-        props.setProperty("parse.model","edu/stanford/nlp/models/parser/nndep/UD_French.gz");
-        props.setProperty("pos.model","edu/stanford/nlp/models/pos-tagger/french/french.tagger");
+//        props.setProperty("parse.model","edu/stanford/nlp/models/parser/nndep/UD_French.gz");
+//        props.setProperty("pos.model","edu/stanford/nlp/models/pos-tagger/french/french.tagger");
         classifier = CRFClassifier.getClassifierNoExceptions(MODEL);
         pipeline = new StanfordCoreNLP(props);
         openIE = new OpenIE(props);

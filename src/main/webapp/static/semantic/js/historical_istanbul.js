@@ -147,7 +147,7 @@ app.controller('Controller', function ($scope, $http) {
     });
 
     $scope.savePlace = function () {
-        $http.post('historicalIstanbul/api/saveEntity', $scope.selectedPlace)
+        $http.post('historicalIstanbul/api/savePlace', $scope.selectedPlace)
             .then(function (response) {
                 $scope.saveResponse = 'Eklendi';
             }, function (err) {

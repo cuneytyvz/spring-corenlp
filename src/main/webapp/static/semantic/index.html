@@ -4,12 +4,29 @@
     <meta charset="utf-8">
     <title>Semantic Space</title>
     <meta name="description" content="">
+    <link rel="stylesheet" href="static/knowledge-base/style/style.css?v=1">
+    <link rel="stylesheet" href="static/knowledge-base/style/my-common.css?v=1">
     <link rel="stylesheet" href="static/semantic/style/style.css?v=1">
-    <script
-            src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
     <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/jquery-ui.css">
+    <script src="static/knowledge-base/js/lib/jquery.min.js"></script>
+    <script src="static/knowledge-base/js/lib/jquery-ui.js"></script>
+    <script src="static/knowledge-base/js/lib/underscore-min.js"></script>
+    <script src="static/knowledge-base/js/lib/angular.min.js"></script>
+
+    <!--Bootstrap -->
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"-->
+    <!--integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">-->
+    <script src="static/knowledge-base/js/lib/bootstrap.min.js"></script>
+
+    <script src="static/common/util.js"></script>
     <script src="static/semantic/js/util.js"></script>
-    <script src="static/semantic/js/semantic-space-1.0.2.js"></script>
+    <script src="static/semantic/js/lib/jLouvain.js"></script>
+    <script src="static/semantic/js/semantic-space-1.0.4.js"></script>
+    <script src="static/semantic/js/semantic.js"></script>
 
     <script>
         function search(node) {
@@ -20,50 +37,131 @@
                 console.log("error : " + e);
                 return false;
             }
-        };
-        $(document).ready(function() {
-            $('.fs-button').on('click', function() {
+        }
+
+        $(document).ready(function () {
+            $('.fs-button').on('click', function () {
                 var elem = document.getElementById('space');
                 if (document.mozFullScreenElement) {
                     document.mozCancelFullscreen();
                 } else {
                     elem.mozRequestFullScreen();
                 }
-                ;
             });
         });
     </script>
 
 </head>
 
-<body>
+<body ng-app="app" ng-controller="Controller">
 <span id="ruler"></span>
-<div id="wrapper">
-    <header>
-        <div id="searchbox">
-            <img src="static/semantic/img/buyutec.png" id="buyutec" />
 
-            <form name="searchForm" action="#"
-                  onsubmit="search(this.searchinput.value);return false;">
-                <input type="text" name="searchinput" id="searchinput"
-                       value="Jeff Buckley">
-            </form>
-        </div>
-        <span class='fs-button'></span>
+<div id="wrapper" style="display: none;">
+    <header>
+        <form id="searchbox" class="searchbox form-inline" ng-submit="search()">
+            <img src="static/semantic/img/buyutec.png" class="buyutec" style="margin-right: 10px;"/>
+
+            <div class="form-group">
+                <input type="text" class="form-control" id="search-input" placeholder="Name" ng-model="searchInput">
+            </div>
+            <div class="form-group">
+                <input type="button" class="btn btn-default blue" value="Get User Graph"
+                       ng-click="getUserGraph()">
+                <input type="button" class="btn btn-default blue" value="Show/Hide Similars"
+                       ng-click="showHideSimilars()">
+                <input type="button" class="btn btn-default blue" value="Community Detection"
+                       ng-click="detectCommunities()">
+            </div>
+        </form>
     </header>
 
     <div id="core" class="clearfix">
         <section id="space">
             <div id="graph">
-                <svg></svg>
+                <svg>
+
+                    <div class="album-box-edge">
+                        <div class="album-box">
+                            <!--<div>-->
+                            <!--<ul>-->
+                            <!--<li ng-repeat="r in releases">-->
+                            <!--{{r.title}}-->
+                            <!--</li>-->
+                            <!--</ul>-->
+                            <!--</div>-->
+
+                            <button class="accordion" ng-repeat="a in selectedNode.albums" ng-click="showTracks(a,selectedNode)">
+                                {{a.name}}
+                            </button>
+                            <div class="panel" ng-repeat="t in a.tracks">
+                                <p>{{t.title}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </svg>
             </div>
         </section>
 
         <section id="right">
             <div id="right_inner">
-                <div id="artist">
-                    <label id="artist_label" class="text">node:</label><br /> <label
-                        id="artist_text" class="text">jeff buckley</label>
+                <div>
+                    <!--<label class="info-label mb-15">image:</label>-->
+
+                    <div class="info-image">
+                        <img ng-if="selectedNode.largeImg"
+                             ng-src="{{selectedNode.largeImg}}"/>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div ng-if="selectedNode" class="col-md-12">
+                        <div class="form-group">
+                            <label class="info-title mb-5">{{selectedNode.name}}</label>
+
+                            <!--<div class="info-text">{{selectedNode.bioSummary}}</div>-->
+                        </div>
+
+                        <div class="form-group">
+                            <!--<label class="info-label mb-15">description:</label>-->
+                            <hr style="color:white; margin-top: 10px; margin-bottom:15px;">
+
+                            <div class="info-text description" ng-bind-html="selectedNode.bioSummary"></div>
+                        </div>
+                        <div class="row link-box">
+                            <div ng-if="selectedNode.dbpediaUri" class="form-group col-md-3">
+                                <div class="external-link">
+                                    <a ng-href="{{selectedNode.dbpediaUri}}" target="_blank">
+                                        <img src="static/knowledge-base/img/dbpedia.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div ng-if="selectedNode.wikidataId" class="form-group  col-md-3">
+                                <div class="external-link">
+                                    <a ng-href="https://www.wikidata.org/wiki/{{selectedNode.wikidataId}}"
+                                       target="_blank">
+                                        <img src="static/knowledge-base/img/wikidata_text.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div ng-if="selectedNode.wikipediaUri" class="form-group  col-md-3">
+
+                                <div class="external-link">
+                                    <a ng-href="{{selectedNode.wikipediaUri}}" target="_blank">
+                                        <img src="static/knowledge-base/img/wikipedia.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="form-group" ng-if="!isEntitySaved() && !propertiesLoading">-->
+                        <!--<label class="blue">Category</label>-->
+                        <!--<input type="text" class="form-control" id="entity-category-input">-->
+                        <!--</div>-->
+                        <div class="form-group right-save-button">
+                            <input type="button" class="btn btn-default blue" value="Save"
+                                   ng-if="!isNodeSaved()"
+                                   ng-click="saveNode()">
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

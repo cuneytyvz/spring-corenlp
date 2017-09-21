@@ -26,7 +26,7 @@ import java.util.Map;
 @Component
 public class MyHttpClient {
 
-    private final String USER_AGENT = "Mozilla/5.0";
+    private final String USER_AGENT = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2";
 
     public Map<String, Object> get(String url) throws Exception {
         HttpClient client = HttpClientBuilder.create().build();
@@ -36,8 +36,8 @@ public class MyHttpClient {
         request.addHeader("User-Agent", USER_AGENT);
         HttpResponse response = client.execute(request);
 
-        System.out.println("Response Code : "
-                + response.getStatusLine().getStatusCode());
+//        System.out.println("Response Code : "
+//                + response.getStatusLine().getStatusCode());
 
         BufferedReader rd = new BufferedReader(
                 new InputStreamReader(response.getEntity().getContent()));
@@ -63,8 +63,8 @@ public class MyHttpClient {
         request.addHeader("User-Agent", USER_AGENT);
         HttpResponse response = client.execute(request);
 
-        System.out.println("Response Code : "
-                + response.getStatusLine().getStatusCode());
+//        System.out.println("Response Code : "
+//                + response.getStatusLine().getStatusCode());
 
         BufferedReader rd = new BufferedReader(
                 new InputStreamReader(response.getEntity().getContent()));
@@ -98,8 +98,8 @@ public class MyHttpClient {
         post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
         HttpResponse response = client.execute(post);
-        System.out.println("Response Code : "
-                + response.getStatusLine().getStatusCode());
+//        System.out.println("Response Code : "
+//                + response.getStatusLine().getStatusCode());
 
         BufferedReader rd = new BufferedReader(
                 new InputStreamReader(response.getEntity().getContent()));

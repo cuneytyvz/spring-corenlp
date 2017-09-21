@@ -57,7 +57,8 @@ public class AppController {
 
         files = new ArrayList<>();
 //        files.add("/Users/cnytync/Downloads/The Silmarillion (Illustrated ebook).pdf");
-        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
+//        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
+        files.add("/Users/cnytync/Documents/-/IELTS/task1.pdf");
 
         List<Collocation> collocations = collocationFinder.findCollocations(files);
         Collections.sort(collocations);
@@ -78,7 +79,8 @@ public class AppController {
 
         files = new ArrayList<>();
 //        files.add("/Users/cnytync/Downloads/The Silmarillion (Illustrated ebook).pdf");
-        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
+//        files.add("/Users/cnytync/Documents/-/lang/français/yds-2013.pdf");
+        files.add("/Users/cnytync/Documents/-/IELTS/task1.pdf");
 
         List<Word> words = collocationFinder.findWordFrequencies(files);
         Collections.sort(words);

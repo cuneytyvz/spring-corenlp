@@ -11,6 +11,10 @@ var semantic = (function () {
             this.id = source + "_" + target;
         }
 
+        function shortenName(name) {
+            return name.length < 17 ? name : name.substr(0, 17) + "...";
+        }
+
         // Graph Object //
         var graph = {
             nodes: [],
@@ -21,10 +25,15 @@ var semantic = (function () {
                 var _links = _graph.links;
                 for (var i = 0; i < _nodes.length; i++) {
                     // varsa ekleme
-                    if (this.nodes.map(function (node) {
+                    var index = this.nodes.map(function (node) {
                         return node.id;
-                    }).indexOf(_nodes[i].id) === -1) {
+                    }).indexOf(_nodes[i].id);
+
+                    if (index === -1) {
                         this.nodes.push(_nodes[i]);
+                    } else {
+                        if (_nodes[i].selected)
+                            this.nodes[index].selected = true;
                     }
                 }
                 for (i = 0; i < _links.length; i++) {
@@ -56,7 +65,7 @@ var semantic = (function () {
         var force = d3.layout.force().gravity(0.05).distance(250).linkDistance(
             250).charge(-1000).size([ width, height ]).nodes(graph.nodes)
             .links(graph.links).on("tick", tick);
-        ;
+
 
         var x = d3.scale.linear().domain([ 0, 1 ]).range([ 0, 1 ]);
         var y = d3.scale.linear().domain([ 1, 0 ]).range([ 1, 0 ]);
@@ -69,30 +78,104 @@ var semantic = (function () {
         var node = svg.selectAll(".node");
         var link = svg.selectAll(".path");
 
+        var lastSelectedNode;
+        var showSimilars = false;
+
+        var browsePath = [];
+
         function drawGraph(incomingGraph) {
 
-            graph.merge(incomingGraph);
+            if (incomingGraph)
+                graph.merge(incomingGraph);
 
-            console.log("Merged graph : " + JSON.stringify(graph));
+//            console.log("Merged graph : " + JSON.stringify(graph));
             var test = force.nodes();
+
             // Join
             node = node.data(force.nodes(), function (d) {
                 return d.id;
             });
             link = link.data(force.links());
 
+            link.style({
+                opacity: adjustLinkOpacity
+            });
+
             // Links //
-            link.enter().insert("svg:path", "g").attr("class", "link").style(
+            link.enter().insert("svg:path", "g").attr("class", "link")
+                .style(
                 "stroke-width", function (d) {
                     return Math.sqrt(d.value);
-                });
+                })
+                .style({
+                    opacity: adjustLinkOpacity});
             // ***** //
 
-            node.attr("join", "update");
+            function adjustLinkOpacity(d) {
+                var showThisOne = false;
+                for (var i = 0; i < graph.links.length; i++) {
+                    if (graph.links[i].target.id == d.id &&
+                        (graph.links[i].source.selected)) {
+                        showThisOne = true; // because its neighbour is selected
+                    }
+                }
+
+                for(var i = 0; i < browsePath.length; i++) {
+                    if(browsePath[i].name == d.target.name) {
+                        showThisOne = true;
+                    }
+                }
+
+                if ((d.source.saved || d.source.selected)
+                    && (d.target.saved || d.target.selected)) {
+                    return 1;
+                } else {
+                    if (showSimilars || d.source.selected || showThisOne)
+                        return 0.5;
+                    else
+                        return 0;
+                }
+            }
+
+            node.attr("join", "update")
+                .style({
+                    opacity: adjustNodeOpacity
+                });
+
             // Nodes //
             var enterNode = node.enter().append("g").attr("id", function (d) {
                 return d.id;
-            }).attr("class", "node").call(force.drag);
+            }).attr("class", "node")
+                .style({
+                    opacity: adjustNodeOpacity})
+                .call(force.drag);
+
+            function adjustNodeOpacity(d) {
+
+                // if it is selected show its neighbours
+                var showThisOne = false;
+                for (var i = 0; i < graph.links.length; i++) {
+                    if (graph.links[i].target.id == d.id &&
+                        (graph.links[i].source.selected)) {
+                        showThisOne = true; // because its neighbour is selected
+                    }
+                }
+
+                for(var i = 0; i < browsePath.length; i++) {
+                    if(browsePath[i].name == d.name) {
+                        showThisOne = true;
+                    }
+                }
+
+                if (!d.saved && !d.selected) {
+                    if (showSimilars || showThisOne)
+                        return 0.5;
+                    else
+                        return 0;
+                } else {
+                    return 1;
+                }
+            }
 
             var clipPath = enterNode.append("clipPath").attr("id", function (d) {
                 return "clipPath_" + d.id;
@@ -137,49 +220,28 @@ var semantic = (function () {
                 var y = cy + r + 15;
                 return y;
             }).attr("class", ".text").text(function (d) {
-                return d.name;
+                return shortenName(d.name);
             });
 
-//            enterNode.append("path").attr("stroke", "blue")
-//                .attr("stroke-width", 5)
-//                .attr("fill", "none")
-//                .attr("id",function (d) {
-//                    return "path-" + d.id;
-//                }).attr("d", function (d) {
-//                    var path = "M 0, 0" +
-//                        " m 0, " + d.image.height / 2 + " " +
-//                        " a 15,15 0 1,0 60,0" +
-//                        " a 15,15 0 1,0 -60,0";
-//
-//                    return path;
-//                });
-//
-//            enterNode.append("text").attr("width", "500")
-//                .append("textPath")
-//                .attr("alignment-baseline", "top")
-//                .attr("xlink:href", function (d) {
-//                    return "#path-" + d.id;
-//                })
-//                .html(function (d) {
-//                    d.name;
-//                });
+            enterNode.append("path").attr("stroke", "blue")
+                .attr("stroke-width", function (d) {
+                    if (d.saved) {
+                        return 0; // 5
+                    } else {
+                        return 0;
+                    }
+                })
+                .attr("fill", "none")
+                .attr("id", function (d) {
+                    return "path-" + d.id;
+                }).attr("d", function (d) {
+                    var path = "M 0, 0" +
+                        " m 0, " + d.image.height / 2 + " " +
+                        " a 15,15 0 1,0 60,0" +
+                        " a 15,15 0 1,0 -60,0";
 
-//            <text width="500">
-//                <textPath alignment-baseline="top" xlink:href="#curve">
-//                Dangerous Curves Ahead
-//                </textPath>
-//            </text>
-
-            /*
-             * node.on("mouseover",function (d,i){
-             * d3.select(this).select("circle") .transition() .duration(500)
-             * .attr("r", 15)
-             *
-             *
-             * node.on("mouseout",function (d,i){
-             * d3.select(this).select("circle") .transition() .duration(500)
-             * .attr("r", 10) });
-             */
+                    return path;
+                });
 
             node.on("click", function (d, i) {
                 var tmp = d.name.replace(" ", "+").toLowerCase();
@@ -189,7 +251,25 @@ var semantic = (function () {
                 var url = "http://www.lastfm.com.tr/music/" + tmp;
 
                 if (d3.event.which == 1) {
-                    getSubGraph(d.name);
+//                    getSubGraph(d.name);
+
+                    $.event.trigger('nodeClicked', d.name);
+
+                    if (!d.saved) {
+                        browsePath.push(d);
+                    } else {
+                        browsePath = [];
+                    }
+
+                    setTimeout(function () {
+                        drawGraph();
+                    }, 500);
+
+                    // set selected opacity 1 / not working yet...
+                    d.selected = true;
+                    if (lastSelectedNode)
+                        lastSelectedNode.selected = false;
+                    lastSelectedNode = d;
                 } else if (d3.event.which == 2) {
                     var win = window.open(url, "lastfm");
                     win.focus();
@@ -198,10 +278,31 @@ var semantic = (function () {
 
             var img = d3.select("image");
             img.on("click", function (d, i) {
+
+            });
+
+            $(document).bind('nodeSaved', function (e, nodeName) {
+                for (var i = 0; i < graph.nodes.length; i++) {
+                    if (graph.nodes[i].name == nodeName) {
+                        graph.nodes[i].saved = true;
+                    }
+                }
+
+                drawGraph();
             });
 
             force.start();
         }
+
+        setTimeout(function () {
+            drawGraph();
+        }, 1000);
+
+        $(document).bind('showHideSimilars', function (e) {
+            showSimilars = !showSimilars;
+            drawGraph();
+        });
+
 
         function transform(d) {
             return "translate(" + (x(d.x) - d.image.width / 2) + ","
@@ -270,7 +371,7 @@ var semantic = (function () {
 
             // Text
             text.attr("dx", function (d) {
-                var tmp = getVisualLength(d.name) / 2;
+                var tmp = getVisualLength(shortenName(d.name)) / 2;
                 return (clipPath.attr("cx") - tmp) / 2;
             });
             text.attr("dy", function (d) {
@@ -288,7 +389,7 @@ var semantic = (function () {
             image.onload = function () {
                 imgOnLoad(this, id);
             };
-            console.log("Image : (" + id + "," + url + ")");
+//            console.log("Image : (" + id + "," + url + ")");
             return image;
         }
 
@@ -304,7 +405,7 @@ var semantic = (function () {
             for (var i = 0; i < nodes.length; i++) {
                 nodes[i].image = createHTMLImage(nodes[i].mediumImg, nodes[i].id);
             }
-            console.log("incomingGraph : " + JSON.stringify(data));
+//            console.log("incomingGraph : " + JSON.stringify(data));
 
             drawGraph(data);
         }
@@ -377,4 +478,5 @@ var semantic = (function () {
         }
 
     };
-})();
+})
+();

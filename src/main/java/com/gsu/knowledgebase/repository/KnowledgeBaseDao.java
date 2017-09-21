@@ -22,7 +22,8 @@ public class KnowledgeBaseDao {
     public Long saveEntity(Entity entity) throws Exception {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, wikipedia_uri = ?,short_description = ?, small_image = ?";
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?";
 
         Connection conn = null;
 
@@ -57,6 +58,64 @@ public class KnowledgeBaseDao {
             ps.setString(12, entity.getWikipediaUri());
             ps.setString(13, entity.getShortDescription());
             ps.setString(14, entity.getSmallImage());
+            ps.setString(15, entity.getNote());
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long updateEntity(Entity entity) throws Exception {
+
+        String sql = "update entity set name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, " +
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "entity", "id");
+
+            ps.setString(1, entity.getName());
+            ps.setString(2, entity.getDescription());
+            ps.setString(3, entity.getDbpediaUri());
+            ps.setString(4, entity.getWikidataId());
+
+            if (entity.getCategoryId() == null) {
+                ps.setNull(5, Types.BIGINT);
+            } else {
+                ps.setLong(5, entity.getCategoryId());
+            }
+
+            ps.setTimestamp(6, DateUtils.getCurrentTimeStamp());
+            ps.setString(7, entity.getEntityType());
+            if (entity.getWebPageEntityId() == null) {
+                ps.setNull(8, Types.BIGINT);
+            } else {
+                ps.setLong(8, entity.getWebPageEntityId());
+            }
+
+            ps.setString(9, entity.getWebUri());
+            ps.setString(10, entity.getImage());
+            ps.setString(11, entity.getWikipediaUri());
+            ps.setString(12, entity.getShortDescription());
+            ps.setString(13, entity.getSmallImage());
+            ps.setString(14, entity.getNote());
+            ps.setLong(15, entity.getId());
 
             ps.execute();
 
@@ -198,7 +257,7 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public Long saveSubproperty(Subproperty property) {
+    public Long ntiSubproperty(Subproperty property) {
 
         String sql = "insert into subproperty set id = ?, property_id = ?, name = ?, value = ?;";
 

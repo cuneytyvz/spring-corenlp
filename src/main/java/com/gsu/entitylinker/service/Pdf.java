@@ -2,6 +2,7 @@ package com.gsu.entitylinker.service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.text.PDFMarkedContentExtractor;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 
@@ -33,5 +34,19 @@ public class Pdf {
         return text;
     }
 
+    public void blabla() throws IOException {
+        PDDocument document = PDDocument.load(new File("/Users/cnytync/Documents/-/uni/paper (phd)/cmp blending/Concept Invention and Music.pdf"));
+        PDPage doc = document.getPage(0);
+
+        PDFMarkedContentExtractor p = new PDFMarkedContentExtractor();
+        p.processPage(doc);
+        p.getMarkedContents();
+
+        return;
+    }
+
+    public static void main(String[] args) throws Exception {
+        new Pdf().blabla();
+    }
 
 }

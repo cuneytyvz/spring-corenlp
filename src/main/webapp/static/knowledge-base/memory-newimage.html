@@ -104,8 +104,8 @@
                     <div id="columns">
                         <div ng-repeat="e in selectedCategoryToShow.entities">
                             <a href ng-click="showEntity(e)" ng-dblclick="entityDoubleClicked(e)">
-                                <figure ng-if="e.smallImage && e.smallImage != ''">
-                                    <img ng-src="knowledgeBase/api/image/{{e.smallImage}}"
+                                <figure ng-if="entitySmallImage(e) && entitySmallImage(e) != ''">
+                                    <img ng-src="knowledgeBase/api/image/{{entitySmallImage(e)}}"
                                          ng-mouseover="mouseOver($event,e)" ng-mouseleave="mouseLeave($event,e)">
                                     <figcaption>{{e.name}}</figcaption>
                                 </figure>
@@ -262,12 +262,8 @@
 
             <a href="#" ng-click="openDetailPopup()">
                 <div class="info-image">
-                    <img ng-if="!isEntitySaved() && selectedEntity.image"
-                         ng-src="{{selectedEntity.image}}"/>
-                    <img ng-if="isEntitySaved() && selectedEntity.image"
-                         ng-src="knowledgeBase/api/image/{{selectedEntity.image}}"/>
-                    <img ng-if="!selectedEntity.image && selectedEntity.smallImage"
-                         ng-src="knowledgeBase/api/image/{{selectedEntity.smallImage}}"/>
+                    <img ng-if="entityHaveImage(selectedEntity)"
+                         ng-src="{{getImageUrl(selectedEntity)}}"/>
                 </div>
             </a>
         </div>
@@ -345,12 +341,7 @@
                     <div class="col-md-12">
                         <div class="detail-info">
                             <div class="image">
-                                <img ng-if="!isEntitySaved() && selectedEntity.image"
-                                     ng-src="{{selectedEntity.image}}"/>
-                                <img ng-if="isEntitySaved() && selectedEntity.image"
-                                     ng-src="knowledgeBase/api/image/{{selectedEntity.image}}"/>
-                                <img ng-if="!selectedEntity.image && selectedEntity.smallImage"
-                                     ng-src="knowledgeBase/api/image/{{selectedEntity.smallImage}}"/>
+                                <img ng-if="entityHaveImage(selectedEntity)" ng-src="{{getImageUrl(selectedEntity)}}"/>
                             </div>
 
                             <div class="text">

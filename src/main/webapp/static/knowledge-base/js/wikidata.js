@@ -117,7 +117,8 @@ var wikidata = (function () {
                     if (datatype == "wikibase-item" ||
                         datatype == "wikibase-property") {
                         for (var i = 0; i < item.claims[propertyId].length; i++) {
-                            ids.push(item.claims[propertyId][i].mainsnak.datavalue.value.id);
+                            if (item.claims[propertyId][i].mainsnak.datavalue)
+                                ids.push(item.claims[propertyId][i].mainsnak.datavalue.value.id);
                         }
                     }
                 }
@@ -126,6 +127,7 @@ var wikidata = (function () {
 
                     for (var propertyId in item.claims) {
                         for (var i = 0; i < item.claims[propertyId].length; i++) {
+
                             var description = labels[propertyId].descriptions["en"] ? labels[propertyId].descriptions["en"].value : '';
 
                             var p = {
@@ -138,52 +140,54 @@ var wikidata = (function () {
                             };
 
                             var claim = item.claims[propertyId][i];
-                            var value = claim.mainsnak.datavalue.value;
+                            if (claim.mainsnak.datavalue) {
+                                var value = claim.mainsnak.datavalue.value;
 
-                            if ((p.datatype == "wikibase-item" || p.datatype == "wikibase-property")
-                                && Object.keys(labels[value.id].labels).length === 0) {
-                                break;
+                                if ((p.datatype == "wikibase-item" || p.datatype == "wikibase-property")
+                                    && Object.keys(labels[value.id].labels).length === 0) {
+                                    break;
+                                }
+
+                                if (p.datatype == "wikibase-item") {
+                                    p.value = value.id;
+                                    p.valueLabel = labels[value.id].labels["en"].value;
+                                } else if (p.datatype == "wikibase-property") {
+                                    p.value = value.id;
+                                    p.valueLabel = labels[value.id].labels["en"].value;
+                                } else if (p.datatype == "external-id") {
+                                    p.value = value;
+                                } else if (p.datatype == "monolingualtext") {
+                                    p.value = value.text;
+                                } else if (p.datatype == "commonsMedia") {
+                                    p.value = value;
+                                } else if (p.datatype == "string") {
+                                    p.value = value;
+                                } else if (p.datatype == "url") {
+                                    p.value = value;
+                                } else if (p.datatype == "math") {
+                                    p.value = value;
+                                } else if (p.datatype == "globe-coordinate") {
+                                    p.subproperties.push({name: 'latitude', value: value.latitude + ""});
+                                    p.subproperties.push({ name: 'longitude', value: value.longitude + ""});
+                                } else if (p.datatype == "time") {
+                                    p.value = value.time;
+                                    p.subproperties.push({name: 'time', value: value.time});
+                                    p.subproperties.push({ name: 'timezone', value: value.timezone});
+                                    p.subproperties.push({ name: 'before', value: value.before});
+                                    p.subproperties.push({name: 'after', value: value.after});
+                                    p.subproperties.push({name: 'precision', value: value.precision});
+                                    p.subproperties.push({name: 'calendarmodel', value: value.calendarmodel});
+                                } else if (p.datatype == "geo-shape") {
+
+                                } else if (p.datatype == "quantity") {
+                                    p.subproperties.push({name: 'amount', value: value.amount});
+                                    p.subproperties.push({ name: 'unit', value: value.unit});
+                                    p.subproperties.push({ name: 'upperbound', value: value.upperbound});
+                                    p.subproperties.push({name: 'lowerbound', value: value.lowerbound});
+                                }
+
+                                entity.properties.push(p);
                             }
-
-                            if (p.datatype == "wikibase-item") {
-                                p.value = value.id;
-                                p.valueLabel = labels[value.id].labels["en"].value;
-                            } else if (p.datatype == "wikibase-property") {
-                                p.value = value.id;
-                                p.valueLabel = labels[value.id].labels["en"].value;
-                            } else if (p.datatype == "external-id") {
-                                p.value = value;
-                            } else if (p.datatype == "monolingualtext") {
-                                p.value = value.text;
-                            } else if (p.datatype == "commonsMedia") {
-                                p.value = value;
-                            } else if (p.datatype == "string") {
-                                p.value = value;
-                            } else if (p.datatype == "url") {
-                                p.value = value;
-                            } else if (p.datatype == "math") {
-                                p.value = value;
-                            } else if (p.datatype == "globe-coordinate") {
-                                p.subproperties.push({name: 'latitude', value: value.latitude + ""});
-                                p.subproperties.push({ name: 'longitude', value: value.longitude + ""});
-                            } else if (p.datatype == "time") {
-                                p.value = value.time;
-                                p.subproperties.push({name: 'time', value: value.time});
-                                p.subproperties.push({ name: 'timezone', value: value.timezone});
-                                p.subproperties.push({ name: 'before', value: value.before});
-                                p.subproperties.push({name: 'after', value: value.after});
-                                p.subproperties.push({name: 'precision', value: value.precision});
-                                p.subproperties.push({name: 'calendarmodel', value: value.calendarmodel});
-                            } else if (p.datatype == "geo-shape") {
-
-                            } else if (p.datatype == "quantity") {
-                                p.subproperties.push({name: 'amount', value: value.amount});
-                                p.subproperties.push({ name: 'unit', value: value.unit});
-                                p.subproperties.push({ name: 'upperbound', value: value.upperbound});
-                                p.subproperties.push({name: 'lowerbound', value: value.lowerbound});
-                            }
-
-                            entity.properties.push(p);
                         }
                     }
 

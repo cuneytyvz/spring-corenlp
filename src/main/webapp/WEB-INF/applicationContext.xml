@@ -16,4 +16,5 @@
 
     <import resource="historicalIstanbul-Datasource.xml" />
     <import resource="knowledgeBase-Datasource.xml" />
+    <import resource="semanticGraph-Datasource.xml" />
 </beans>

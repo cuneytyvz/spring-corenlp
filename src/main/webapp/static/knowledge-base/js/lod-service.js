@@ -57,8 +57,7 @@ var lodService = (function () {
 
             });
         }
-    }
-
+    };
 
     return {
         getItem: getItem,

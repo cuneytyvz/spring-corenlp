@@ -57,5 +57,29 @@ public class MaxIdCalculator {
         return userIdMaxValue;
     }
 
+    public Integer getMaxIntIdFromTable(Connection conn, boolean increase, String table, String idColumn)
+            throws SQLException {
 
+        String query = "select max(" + idColumn + ") max_id from " + table;
+        PreparedStatement ps = conn.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+
+        int userIdMaxValue;
+        if (rs.next()) {
+            userIdMaxValue = rs.getInt("max_id");
+        } else {
+            //This is the first insert operation to the related table
+            userIdMaxValue = 0;
+            //Do not increase. This is the first id.
+            increase = false;
+        }
+
+        rs.close();
+        ps.close();
+
+        if (increase) {
+            userIdMaxValue++;
+        }
+        return userIdMaxValue;
+    }
 }

@@ -1,6 +1,6 @@
-var app = angular.module('app', ['ngDialog']);
+var app = angular.module('app', []);
 
-app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDialog) {
+app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
 
     $scope.items = [];
     $scope.entities = [];
@@ -59,12 +59,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         $scope.existingElements = getExistingProperties();
     }
 
-    $scope.entityDoubleClicked = function(e) {
-        $scope.showEntity(e);
-        $scope.openDetailPopup(e);
-
-    };
-
     $scope.showEntity = function (e) {
         $scope.propertiesFiltered = true;
 
@@ -102,19 +96,13 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $scope.propertiesLoading = false;
 
                 $scope.selectedEntity.propertyGroups = pg;
-                $scope.items.push(response.data);
-                $scope.entities.push(response.data);
-
-                $scope.selectedEntity = response.data;
-                $scope.selectedEntity.saved = true;
-
-                getEntitiesByCategory();
+                $scope.items.push($scope.selectedEntity);
+                $scope.entities.push($scope.selectedEntity);
             }, function (err) {
                 printError(err);
                 $scope.saveResponse = err;
             });
     };
-
 
     $scope.isPropertyLink = function (property) {
         return (property.source == "wikidata" && (property.datatype == "wikibase-item") || (property.datatype == "external-id"))
@@ -245,70 +233,13 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         }
     };
 
-    $scope.showCategoryItems = function ($event, c) {
+    $scope.showCategoryItems = function ($event,c) {
         $scope.categories.forEach(function (cc) {
             cc.selected = undefined;
         });
 
         c.selected = 'selected';
         $scope.selectedCategoryToShow = c;
-    };
-
-    $scope.openDetailPopup = function () {
-        ngDialog.open({
-            template: 'detail-popup',
-            controller: ['$scope', function ($ss) {
-                $ss.selectedEntity = $scope.selectedEntity;
-                $ss.isEntitySaved = $scope.isEntitySaved;
-
-                $ss.saveEntity = $scope.saveEntity;
-
-                if($ss.selectedEntity.description.length > 1315) {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315) + "...";
-                    $ss.displayShowMore = true;
-                } else {
-                    $ss.description = $ss.selectedEntity.description;
-                    $ss.displayShowMore = false;
-                }
-
-                $ss.showMore = function() {
-                    $ss.description = $ss.selectedEntity.description;
-                    $ss.displayShowMore = false;
-                    $ss.displayShowLess = true;
-                };
-
-                $ss.showLess = function() {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315);
-                    $ss.displayShowLess = false;
-                    $ss.displayShowMore = true;
-                };
-
-                $ss.updateEntity = function () {
-                    var pg = $ss.selectedEntity.propertyGroups;
-                    delete $ss.selectedEntity.propertyGroups;
-
-//                    if (!$scope.selectedEntity.categoryId || $scope.selectedEntity.categoryId == 0) {
-//                        $scope.selectedEntity.categoryId = 1;
-//                        $scope.selectedEntity.categoryName = "Other";
-//                    }
-
-                    $ss.propertiesLoading = true;
-                    $http.post('knowledgeBase/api/updateEntity', $ss.selectedEntity)
-                        .then(function (response) {
-                            $ss.saveResponse = 'Saved';
-                            $ss.propertiesLoading = false;
-
-                            $ss.selectedEntity.propertyGroups = pg;
-                            $scope.selectedEntity = $ss.selectedEntity;
-
-                            getEntitiesByCategory();
-                        }, function (err) {
-                            printError(err);
-                            $ss.saveResponse = err;
-                        });
-                };
-
-            }]});
     };
 
     function groupProperties(entity) {
