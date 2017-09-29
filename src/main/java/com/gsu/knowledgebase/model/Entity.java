@@ -21,7 +21,9 @@ public class Entity implements Serializable {
     private String smallImage;
     private String note;
     private Long categoryId = 1l;
+    private Long subCategoryId = 1l;
     private String categoryName = "Other";
+    private String subCategoryName = "All";
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
@@ -36,6 +38,7 @@ public class Entity implements Serializable {
         shortDescription = rs.getString("e.short_description");
         dbpediaUri = rs.getString("e.dbpedia_uri");
         categoryId = rs.getLong("e.category_id");
+        subCategoryId = rs.getLong("e.subcategory_id");
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
         webPageEntityId = rs.getLong("e.web_page_entity_id") == 0 ? null : rs.getLong("e.web_page_entity_id");
@@ -159,7 +162,6 @@ public class Entity implements Serializable {
         this.categoryName = categoryName;
     }
 
-
     public String getNote() {
         return note;
     }
@@ -182,5 +184,21 @@ public class Entity implements Serializable {
 
     public void setSmallImage(String smallImage) {
         this.smallImage = smallImage;
+    }
+
+    public Long getSubCategoryId() {
+        return subCategoryId;
+    }
+
+    public void setSubCategoryId(Long subCategoryId) {
+        this.subCategoryId = subCategoryId;
+    }
+
+    public String getSubCategoryName() {
+        return subCategoryName;
+    }
+
+    public void setSubCategoryName(String subCategoryName) {
+        this.subCategoryName = subCategoryName;
     }
 }

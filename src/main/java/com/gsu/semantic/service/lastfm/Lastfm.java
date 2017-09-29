@@ -108,6 +108,7 @@ public class Lastfm {
             JsonObject json = new JsonParser().parse(response).getAsJsonObject();
             JsonObject item = json.getAsJsonObject("artist");
 
+            // error handling missing ** //
 
             node.setMbid(JsonUtils.getPropertyAsString(item, "mbid"));
             node.setName(JsonUtils.getPropertyAsString(item, "name"));

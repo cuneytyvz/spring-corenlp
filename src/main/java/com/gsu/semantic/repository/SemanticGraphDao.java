@@ -160,6 +160,112 @@ public class SemanticGraphDao {
         }
     }
 
+    public Integer createGraph(Integer userId, String name) {
+        Connection conn = null;
+
+        try {
+            conn = hiDataSource.getConnection();
+
+            String sql = "insert into graph set id = ?,user_id = ?, name = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "graph", "id");
+
+            ps.setInt(1, id);
+            ps.setInt(2, userId);
+            ps.setString(3, name);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public List<Graph> listGraphs(Integer userId) {
+        Connection conn = null;
+
+        try {
+            conn = hiDataSource.getConnection();
+
+            String sql = "select * from graph where user_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            List<Graph> graphs = new ArrayList<>();
+            while (rs.next()) {
+                Integer id = rs.getInt("id");
+                String name = rs.getString("name");
+
+                Graph graph = new Graph();
+                graph.setId(id);
+                graph.setName(name);
+                graph.setUserId(userId);
+
+                graphs.add(graph);
+            }
+
+            ps.close();
+
+            return graphs;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Integer saveGraphNode(Integer graphId, Integer nodeId) {
+
+        String sql = "insert into graph_node set id = ?, graph_id = ?, node_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = hiDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "graph_node", "id");
+
+            ps.setInt(1, id);
+            ps.setInt(2, graphId);
+            ps.setInt(3, nodeId);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public Integer saveUserNode(Integer userId, Integer nodeId) {
 
         String sql = "insert into user_node set id = ?, user_id = ?, node_id = ?";
@@ -202,6 +308,39 @@ public class SemanticGraphDao {
             conn = hiDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
+            ps.setInt(2, nodeId);
+
+            boolean result = false;
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                result = true;
+            }
+
+            ps.close();
+
+            return result;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public boolean isGraphNodeSaved(Integer graphId, Integer nodeId) {
+        String sql = "select * from graph_node where graph_id = ? and node_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = hiDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, graphId);
             ps.setInt(2, nodeId);
 
             boolean result = false;
@@ -546,15 +685,15 @@ public class SemanticGraphDao {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Node n =new Node(rs, "n");
+                Node n = new Node(rs, "n");
                 n.setSaved(true);
 
                 nodes.add(n);
             }
 
-            if (nodes.size() == 0) {
-                return null;
-            }
+//            if (nodes.size() == 0) {
+//                return null;
+//            }
 
             ps.close();
 
@@ -578,6 +717,11 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         List<Link> links = new ArrayList<>();
+
+        if (nodes == null) {
+            return links;
+        }
+
         try {
             conn = hiDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -594,6 +738,44 @@ public class SemanticGraphDao {
             ps.close();
 
             return links;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public List<Node> getGraphNodes(Integer graphId) {
+        String sql = "select * from graph_node gn, node n where gn.node_id = n.id and gn.graph_id = ?";
+
+        Connection conn = null;
+
+        List<Node> nodes = new ArrayList<>();
+        try {
+            conn = hiDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, graphId);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Node n = new Node(rs, "n");
+                n.setSaved(true);
+
+                nodes.add(n);
+            }
+
+            if (nodes.size() == 0) {
+                return null;
+            }
+
+            ps.close();
+
+            return nodes;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {

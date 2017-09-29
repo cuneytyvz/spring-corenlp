@@ -63,7 +63,6 @@ public class WebPageAnnotator {
 //            return null;
 //        }
 
-        Map<String,String> map = new HashMap<>();
         List<String> entities = new ArrayList<>();
         for (Map r : (List<Map>) response.get("Resources")) {
             String uri = (String) r.get("@URI");

@@ -29,9 +29,16 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     .then(function (response) {
                         $scope.categories = response.data;
                         $scope.categories[0].selected = 'selected';
+
+                        for (var i = 0; i < $scope.categories.length; i++) {
+                            $scope.categories[i].subCategories.unshift({id: -1, name: 'All'})
+                        }
+
                         $scope.selectedCategoryToShow = $scope.categories[0];
+                        $scope.selectedCategoryToShow.selectedSubCategory = $scope.categories[0].subCategories[0];
 
                         getEntitiesByCategory();
+                        getEntitiesBySubCategory();
                     }, printError);
             });
         }, printError);
@@ -59,7 +66,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         $scope.existingElements = getExistingProperties();
     }
 
-    $scope.entityDoubleClicked = function(e) {
+    $scope.entityDoubleClicked = function (e) {
         $scope.showEntity(e);
         $scope.openDetailPopup(e);
 
@@ -70,6 +77,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         $http.get('knowledgeBase/api/getEntityById/' + e.id)
             .then(function (response) {
+
                 var entity = response.data;
                 groupProperties(entity);
 
@@ -90,7 +98,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         var pg = $scope.selectedEntity.propertyGroups;
         delete $scope.selectedEntity.propertyGroups;
 
-        if (!$scope.selectedEntity.categoryId || $scope.selectedEntity.categoryId == 0) {
+        if ($scope.selectedCategory) {
+            $scope.selectedEntity.categoryId = $scope.selectedCategory.id;
+            $scope.selectedEntity.categoryName = $scope.selectedCategory.value;
+        } else {
             $scope.selectedEntity.categoryId = 1;
             $scope.selectedEntity.categoryName = "Other";
         }
@@ -109,9 +120,11 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $scope.selectedEntity.saved = true;
 
                 getEntitiesByCategory();
+                getEntitiesBySubCategory();
             }, function (err) {
                 printError(err);
                 $scope.saveResponse = err;
+                $scope.propertiesLoading = false;
             });
     };
 
@@ -234,6 +247,23 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         return props;
     };
 
+    $scope.image = function (e) {
+        <!--<img ng-if="!isEntitySaved() && selectedEntity.image"-->
+        <!--ng-src="{{selectedEntity.image}}"/>-->
+        <!--<img ng-if="isEntitySaved() && selectedEntity.image"-->
+        <!--ng-src="knowledgeBase/api/image/{{selectedEntity.image}}"/>-->
+        <!--<img ng-if="!selectedEntity.image && selectedEntity.smallImage"-->
+        <!--ng-src="knowledgeBase/api/image/{{selectedEntity.smallImage}}"/>-->
+
+        if (!$scope.isEntitySaved() && selectedEntity.image) {
+            return e.image;
+        } else if ($scope.isEntitySaved() && selectedEntity.image) {
+            return "knowledgeBase/api/image/" + e.image;
+        } else if (!selectedEntity.image && selectedEntity.smallImage) {
+            return "knowledgeBase/api/image/" + e.smallImage;
+        }
+    };
+
     $scope.showCategory = function (c) {
         if (c.hidden) {
             $('#entity-row-' + c.id).slideDown();
@@ -252,6 +282,16 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         c.selected = 'selected';
         $scope.selectedCategoryToShow = c;
+        $scope.selectedCategoryToShow.selectedSubCategory = c.subCategories[0];
+    };
+
+    $scope.showSubCategoryItems = function ($event, sc) {
+        $scope.selectedCategoryToShow.subCategories.forEach(function (cc) {
+            cc.selected = undefined;
+        });
+
+        sc.selected = 'selected';
+        $scope.selectedCategoryToShow.selectedSubCategory = sc;
     };
 
     $scope.openDetailPopup = function () {
@@ -263,22 +303,22 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                 $ss.saveEntity = $scope.saveEntity;
 
-                if($ss.selectedEntity.description.length > 1315) {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315) + "...";
+                if ($ss.selectedEntity.description.length > 1315) {
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315) + "...";
                     $ss.displayShowMore = true;
                 } else {
                     $ss.description = $ss.selectedEntity.description;
                     $ss.displayShowMore = false;
                 }
 
-                $ss.showMore = function() {
+                $ss.showMore = function () {
                     $ss.description = $ss.selectedEntity.description;
                     $ss.displayShowMore = false;
                     $ss.displayShowLess = true;
                 };
 
-                $ss.showLess = function() {
-                    $ss.description = $ss.selectedEntity.description.slice(0,1315);
+                $ss.showLess = function () {
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315);
                     $ss.displayShowLess = false;
                     $ss.displayShowMore = true;
                 };
@@ -305,7 +345,46 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                         }, function (err) {
                             printError(err);
                             $ss.saveResponse = err;
+                            $scope.propertiesLoading = false;
                         });
+                };
+
+                $ss.openRemoveConfirmation = function () {
+                    ngDialog.open({
+                        template: 'confirmation-popup',
+                        controller: ['$scope', function ($sss) {
+
+                            $sss.closeWindow = function () {
+                                $sss.closeThisDialog();
+                            };
+
+                            $sss.removeEntity = function () {
+
+                                $http.get('knowledgeBase/api/removeEntity/' + $scope.selectedEntity.id)
+                                    .then(function (response) {
+                                        $sss.saveResponse = 'Saved';
+                                        $sss.propertiesLoading = false;
+
+                                        var index = -1;
+                                        for (var i = 0; i < $scope.entities.length; i++) {
+                                            if ($scope.entities[i].id == $scope.selectedEntity.id) {
+                                                index = i;
+                                            }
+                                        }
+
+                                        $scope.entities.splice(index, 1);
+                                        $scope.selectedEntity = null;
+
+                                        getEntitiesByCategory();
+
+                                        $sss.closeThisDialog();
+                                    }, function (err) {
+                                        printError(err);
+                                        $sss.saveResponse = err;
+                                    });
+                            };
+
+                        }]});
                 };
 
             }]});
@@ -391,12 +470,27 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     c.entities.push(e);
                 }
             }
+        }
+    };
 
-            c.entities2row = [
-                []
-            ];
-            c.entities2row[0] = c.entities.slice(c.entities.length / 2);
-            c.entities2row[1] = c.entities.slice(0, c.entities.length / 2);
+    function getEntitiesBySubCategory() {
+        for (var i = 0; i < $scope.categories.length; i++) {
+            var c = $scope.categories[i];
+
+            for (var k = 0; k < c.subCategories.length; k++) {
+                var sc = c.subCategories[k];
+                sc.entities = [];
+
+                for (var j = 0; j < $scope.entities.length; j++) {
+                    var e = $scope.entities[j];
+
+                    if (sc.id == -1 && c.id == e.categoryId) {
+                        sc.entities.push(e);
+                    } else if (e.subCategoryId == sc.id) {
+                        sc.entities.push(e);
+                    }
+                }
+            }
         }
     };
 
@@ -454,7 +548,8 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
 //        $overlay = $($event.target).parent().find('.overlay').hide();
     };
-});
+})
+;
 
 app.config(function ($sceDelegateProvider, $sceProvider) {
     $sceProvider.enabled(false);

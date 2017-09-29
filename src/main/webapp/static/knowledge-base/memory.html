@@ -59,6 +59,9 @@
             <input type="text" class="form-control" placeholder="Category" id="category-input">
         </div>
         <div class="form-group">
+            <input type="text" class="form-control" placeholder="SubCategory" id="subcategory-input">
+        </div>
+        <div class="form-group">
             <input type="button" class="btn btn-default blue" value="Save"
                    ng-if="!isEntitySaved() && !propertiesLoading"
                    ng-click="saveEntity()">
@@ -89,8 +92,16 @@
         <!--</div>-->
 
         <div class="col-md-8 memory-box">
+            <div class="top-menu-item-wrapper" ng-repeat="c in selectedCategoryToShow.subCategories">
+                <div class="top-menu-item" ng-class="c.selected">
+                    <label>
+                        <a href="#" ng-click="showSubCategoryItems($event,c)">{{c.name}}</a>
+                    </label>
+                </div>
+            </div>
+
             <div style="list-style: none;">
-                <div class="row">
+                <div class="row" style="display:none">
                     <div class="col-md-12">
                         <label class="category-header">
                             <!--<a href="#" ng-click="showCategory(c);">-->
@@ -102,7 +113,7 @@
                 <div class="row" ng-attr-id="{{ 'entity-row-' + c.id }}">
 
                     <div id="columns">
-                        <div ng-repeat="e in selectedCategoryToShow.entities">
+                        <div ng-repeat="e in selectedCategoryToShow.selectedSubCategory.entities">
                             <a href ng-click="showEntity(e)" ng-dblclick="entityDoubleClicked(e)">
                                 <figure ng-if="e.smallImage && e.smallImage != ''">
                                     <img ng-src="knowledgeBase/api/image/{{e.smallImage}}"
@@ -130,7 +141,7 @@
             <div>
                 <label class="blue">
                     <p ng-if="selectedEntities.length > 2">
-                        <a href="#" ng-click="openLastSecondEntity()">...</a>>
+                        <a href="#" ng-click="openLastSecondEntity()">...</a>
                     </p>
                 </label>
                 <label class="entity-header" ng-repeat="entity in selectedEntities.slice(-2)">
@@ -313,7 +324,10 @@
                 </div>
                 <div class="form-group" ng-if="!isEntitySaved() && !propertiesLoading">
                     <label class="blue">Category</label>
-                    <input type="text" class="form-control" id="entity-category-input">
+                    <input type="text" class="form-control" id="entity-category-input" placeholder="Category">
+                </div>
+                <div class="form-group" ng-if="!isEntitySaved() && !propertiesLoading">
+                    <input type="text" class="form-control" id="entity-subcategory-input" placeholder="SubCategory">
                 </div>
                 <div class="form-group right-save-button">
                     <input type="button" class="btn btn-default blue" value="Save"
@@ -384,7 +398,41 @@
                             <input type="button" class="btn btn-default blue" value="Save"
                                    ng-if="isEntitySaved() && !propertiesLoading"
                                    ng-click="updateEntity()">
+                            <input type="button" class="btn btn-default blue" value="Remove"
+                                   ng-if="isEntitySaved() && !propertiesLoading"
+                                   ng-click="openRemoveConfirmation()">
                         </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</script>
+
+<script type="text/ng-template" id="confirmation-popup">
+
+    <!-- Page Content #F5F5F5 -->
+    <div class="col-md-3 col-md-offset-5 pop-up confirmation-pop-up">
+        <!-- Simple Blocks -->
+        <div class="shadow-wrapper">
+            <div class="block mb-0">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <label class="confirmation-label">Are you sure?</label>
+
+                        <form class="form-inline">
+                            <div class="form-group">
+                                <input type="button" class="btn btn-default blue" value="Yes"
+                                       ng-click="removeEntity()">
+                            </div>
+                            <div class="form-group">
+                                <input type="button" class="btn btn-default blue" value="No"
+                                       ng-click="closeWindow()">
+                            </div>
+                        </form>
                     </div>
                 </div>
 

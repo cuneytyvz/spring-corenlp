@@ -20,6 +20,11 @@ var semantic = (function () {
             nodes: [],
             links: [],
             linkIndexes: [],
+            clear: function () {
+                this.nodes = [];
+                this.links = [];
+                this.linkIndexes = [];
+            },
             merge: function (_graph) {
                 var _nodes = _graph.nodes;
                 var _links = _graph.links;
@@ -71,17 +76,23 @@ var semantic = (function () {
         var y = d3.scale.linear().domain([ 1, 0 ]).range([ 1, 0 ]);
 
         var svg = d3.select("svg").attr("width", width).attr("height", height)
+            .attr("viewBox", "0 0 960 500")
             .call(
             d3.behavior.zoom().x(x).y(y).scaleExtent([ -2, 8 ]).on(
                 "zoom", tick));
+
+        svg.html('');
 
         var node = svg.selectAll(".node");
         var link = svg.selectAll(".path");
 
         var lastSelectedNode;
         var showSimilars = false;
+        var showNames = false;
 
         var browsePath = [];
+
+        var IMAGE_SHRINK_RATIO = 0.7;
 
         function drawGraph(incomingGraph) {
 
@@ -120,8 +131,8 @@ var semantic = (function () {
                     }
                 }
 
-                for(var i = 0; i < browsePath.length; i++) {
-                    if(browsePath[i].name == d.target.name) {
+                for (var i = 0; i < browsePath.length; i++) {
+                    if (browsePath[i].name == d.target.name) {
                         showThisOne = true;
                     }
                 }
@@ -161,8 +172,8 @@ var semantic = (function () {
                     }
                 }
 
-                for(var i = 0; i < browsePath.length; i++) {
-                    if(browsePath[i].name == d.name) {
+                for (var i = 0; i < browsePath.length; i++) {
+                    if (browsePath[i].name == d.name) {
                         showThisOne = true;
                     }
                 }
@@ -177,15 +188,17 @@ var semantic = (function () {
                 }
             }
 
-            var clipPath = enterNode.append("clipPath").attr("id", function (d) {
-                return "clipPath_" + d.id;
-            });
+            var clipPath = enterNode.append("clipPath")
+                .attr("id", function (d) {
+                    return "clipPath_" + d.id;
+                })
+                .attr("class", "clippath");
 
             clipPath.append("circle").attr("r", function (d) {
                 if (d.image.height < d.image.width) {
-                    return d.image.height / 2;
+                    return d.image.height * IMAGE_SHRINK_RATIO / 2;
                 } else {
-                    return d.image.width / 2;
+                    return d.image.width * IMAGE_SHRINK_RATIO / 2;
                 }
             });
 
@@ -194,13 +207,18 @@ var semantic = (function () {
              * "#FF6600");
              */
 
+            enterNode.attr("name", function (d) {
+                return d.name.toLowerCase();
+            });
+
             enterNode.append("image").attr("width", function (d) {
-                return d.image.width;
-            }).attr("height", function (d) {
-                return d.image.height;
-            }).attr("xlink:href", function (d) {
-                return d.image.src;
-            }).attr('image-rendering', 'optimizeQuality').attr('x',
+                return d.image.width * IMAGE_SHRINK_RATIO;
+            }).attr("z-index", 99)
+                .attr("height", function (d) {
+                    return d.image.height * IMAGE_SHRINK_RATIO;
+                }).attr("xlink:href", function (d) {
+                    return d.image.src;
+                }).attr('image-rendering', 'optimizeQuality').attr('x',
                 function (d) {
                     return d.x;
                 }).attr('y', function (d) {
@@ -219,7 +237,7 @@ var semantic = (function () {
                 var r = parseInt(circle.attr("r"));
                 var y = cy + r + 15;
                 return y;
-            }).attr("class", ".text").text(function (d) {
+            }).attr("class", "text").text(function (d) {
                 return shortenName(d.name);
             });
 
@@ -236,12 +254,20 @@ var semantic = (function () {
                     return "path-" + d.id;
                 }).attr("d", function (d) {
                     var path = "M 0, 0" +
-                        " m 0, " + d.image.height / 2 + " " +
+                        " m 0, " + d.image.height * IMAGE_SHRINK_RATIO / 2 + " " +
                         " a 15,15 0 1,0 60,0" +
                         " a 15,15 0 1,0 -60,0";
 
                     return path;
                 });
+
+            node.on("mouseover", function (d, i) {
+                d3.select(this).select('.text').style({opacity: 1});
+            });
+
+            node.on("mouseout", function (d, i) {
+                d3.select(this).select('.text').style({opacity: adjustTextOpacity});
+            });
 
             node.on("click", function (d, i) {
                 var tmp = d.name.replace(" ", "+").toLowerCase();
@@ -265,15 +291,50 @@ var semantic = (function () {
                         drawGraph();
                     }, 500);
 
+                    if (lastSelectedNode) {
+                        lastSelectedNode.element.select(".selected-circle").attr("display", "none");
+                    }
+
+                    d3.select(this)
+                        .append("filter")
+                        .attr("id", function (d) {
+                            return "filter-" + d.id;
+                        })
+                        .append('feGaussianBlur')
+                        .attr("in", "SourceGraphic")
+                        .attr("stdDeviation", "5");
+
+                    var width = d3.select(this).select("image").attr("width");
+                    var height = d3.select(this).select("image").attr("height");
+
+                    d3.select(this)
+                        .insert("circle", ".clippath")
+                        .attr("cx", width * 3 / 4)
+                        .attr("cy", height * 3 / 4)
+                        .attr("r", "25")
+                        .attr("fill", "yellow")
+                        .attr("class", "selected-circle")
+                        .attr("filter", function (d) {
+                            return "url(#filter-" + d.id + ")";
+                        });
+
+                    d3.select(this).attr("display", "block");
+
                     // set selected opacity 1 / not working yet...
                     d.selected = true;
                     if (lastSelectedNode)
-                        lastSelectedNode.selected = false;
-                    lastSelectedNode = d;
+                        lastSelectedNode.data.selected = false;
+
+                    lastSelectedNode = {
+                        element: d3.select(this),
+                        data: d
+                    };
+
                 } else if (d3.event.which == 2) {
                     var win = window.open(url, "lastfm");
                     win.focus();
                 }
+
             });
 
             var img = d3.select("image");
@@ -291,6 +352,30 @@ var semantic = (function () {
                 drawGraph();
             });
 
+            $(document).bind('goToNodePosition', function (e, nodeName) {
+                for (var i = 0; i < graph.nodes.length; i++) {
+                    if (graph.nodes[i].name == nodeName) {
+                        graph.nodes[i].saved = true;
+                    }
+                }
+
+                var node = svg.select('g[name = "' + nodeName + '"]');
+                var sourceX = parseInt(node.attr('x'));
+                var sourceY = parseInt(node.attr('y'));
+
+                var targetX = parseInt(node.attr('x')) - 400;
+                var targetY = parseInt(node.attr('y')) - 250;
+
+//                if()
+//
+//                Math.abs(targetX - sourceX)
+//                for(var i = 0; i < )
+
+                svg.attr('viewBox', x + ' ' + y + " 1024 960");
+
+                drawGraph();
+            });
+
             force.start();
         }
 
@@ -303,13 +388,73 @@ var semantic = (function () {
             drawGraph();
         });
 
+        $(document).bind('showHideNames', function (e) {
+            showNames = !showNames;
+
+            node.selectAll('.text').style({'opacity': adjustTextOpacity});
+        });
 
         function transform(d) {
             return "translate(" + (x(d.x) - d.image.width / 2) + ","
                 + (y(d.y) - d.image.height / 2) + ")";
         }
 
+        function adjustTextOpacity(d) {
+            if (d.selected || showNames) {
+                return 1;
+            } else {
+                return (scaleValue - 0.2) * (1 / 0.8);
+            }
+        }
+
+        var scaleValue = 1;
+
         function tick() {
+
+            // Zoom event
+            if (d3.event != null && d3.event.scale != null) {
+                scaleValue = d3.event.scale;
+                node.selectAll('.text').style({'opacity': adjustTextOpacity});
+
+//                console.log("ScaleValue : " + scaleValue);
+
+//                // Image
+//                var img = node.select("image");
+//                img.attr("width", function (d) {
+//                    return d.image.width * IMAGE_SHRINK_RATIO * scaleValue;
+//                });
+//                img.attr("height", function (d) {
+//                    return d.image.height * IMAGE_SHRINK_RATIO * scaleValue;
+//                });
+//                img.attr('x', function (d) {
+//                    return 0;
+////                    return d.image.x - d.image.width * scaleValue / 2;
+//                });
+//                img.attr('y', function (d) {
+//                    return 0;
+////                    return d.image.y - d.image.height * scaleValue / 2;
+//                });
+//
+//                var circle = node.select(".clippath circle");
+//
+////                // ClipPath
+//                if (img.attr('height') < img.attr('width')) {
+//                    circle.attr("r", function (d) {
+//                        return img.attr('height') * IMAGE_SHRINK_RATIO / 2;
+//                    });
+//                } else {
+//                    circle.attr("r", function (d) {
+//                        return img.attr('width') * IMAGE_SHRINK_RATIO / 2;
+//                    });
+//                }
+//                circle.attr("cx", function (d) {
+//                    return img.attr('width') * IMAGE_SHRINK_RATIO / 2;
+//                });
+//                circle.attr("cy", function (d) {
+//                    return img.attr('height') * IMAGE_SHRINK_RATIO / 2;
+//                });
+
+            }
 
             link.attr('d', function (d) {
                 var deltaX = x(d.target.x) - x(d.source.x);
@@ -328,6 +473,12 @@ var semantic = (function () {
             });
 
             node.attr("transform", transform);
+            node.attr("x", function (d) {
+                return (x(d.x) - d.image.width / 2)
+            });
+            node.attr("y", function (d) {
+                return(y(d.y) - d.image.height / 2)
+            });
         }
 
         // Kaynak :
@@ -347,32 +498,29 @@ var semantic = (function () {
             var img = svg.select("#" + nodeId).select("image");
             var clipPath = svg.select("#clipPath_" + nodeId).select("circle");
             var text = svg.select("#" + nodeId).select("text");
-//            var circledTextPath = svg.
 
             // Image
-            img.attr("width", image.width);
-            img.attr("height", image.height);
+            img.attr("width", image.width * IMAGE_SHRINK_RATIO);
+            img.attr("height", image.height * IMAGE_SHRINK_RATIO);
             img.attr('x', function (d) {
-                return 0;
-//                return d.image.x - d.image.width / 2;
+                return d.image.width * IMAGE_SHRINK_RATIO / 4;
             }).attr('y', function (d) {
-                return 0;
-//                return d.image.y - d.image.height / 2;
+                return d.image.height * IMAGE_SHRINK_RATIO / 4;
             });
 
             // ClipPath
             if (image.height < image.width) {
-                clipPath.attr("r", image.height / 2);
+                clipPath.attr("r", image.height * IMAGE_SHRINK_RATIO / 2);
             } else {
-                clipPath.attr("r", image.width / 2);
+                clipPath.attr("r", image.width * IMAGE_SHRINK_RATIO / 2);
             }
-            clipPath.attr("cx", image.width / 2);
-            clipPath.attr("cy", image.height / 2);
+            clipPath.attr("cx", image.width * IMAGE_SHRINK_RATIO * 3 / 4);
+            clipPath.attr("cy", image.height * IMAGE_SHRINK_RATIO * 3 / 4);
 
             // Text
             text.attr("dx", function (d) {
                 var tmp = getVisualLength(shortenName(d.name)) / 2;
-                return (clipPath.attr("cx") - tmp) / 2;
+                return image.width * IMAGE_SHRINK_RATIO - tmp;
             });
             text.attr("dy", function (d) {
                 var cy = parseInt(clipPath.attr("cy"));
@@ -380,7 +528,7 @@ var semantic = (function () {
                 var y = cy + r + 15;
                 return y;
             });
-            text.attr("class", ".text");
+            text.attr("class", "text")
         }
 
         function createHTMLImage(url, id) {
@@ -389,7 +537,6 @@ var semantic = (function () {
             image.onload = function () {
                 imgOnLoad(this, id);
             };
-//            console.log("Image : (" + id + "," + url + ")");
             return image;
         }
 
@@ -405,8 +552,8 @@ var semantic = (function () {
             for (var i = 0; i < nodes.length; i++) {
                 nodes[i].image = createHTMLImage(nodes[i].mediumImg, nodes[i].id);
             }
-//            console.log("incomingGraph : " + JSON.stringify(data));
 
+//            console.log("incomingGraph : " + JSON.stringify(data));
             drawGraph(data);
         }
 
@@ -429,10 +576,16 @@ var semantic = (function () {
             return false;
         };
 
+        var clear = function () {
+//            graph.clear();
+//            force.nodes([]);
+//            force.links([]);
+            svg.html('');
+        };
+
         var getGraphFromLastFM = function (artist) {
             var lowerArtist = artist.toLowerCase();
 
-            // sag panel'in update edilmesi.
             d3.select("#artist_text").html(lowerArtist);
             lowerArtist = lowerArtist.replace(" ", "+");
 
@@ -460,11 +613,18 @@ var semantic = (function () {
 //                getGraphFromLastFM(artist);
             },
 
-            processIncomingData: processIncomingData
+            processIncomingData: processIncomingData,
+            clear: clear
         };
     }
 
     return {
+
+        createNewInstance: function () {
+            instance = init();
+
+            return instance;
+        },
 
         // Get the Singleton instance if one exists
         // or create one if it doesn't
@@ -476,7 +636,6 @@ var semantic = (function () {
 
             return instance;
         }
-
     };
 })
 ();

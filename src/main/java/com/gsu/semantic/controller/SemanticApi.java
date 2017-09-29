@@ -1,8 +1,6 @@
 package com.gsu.semantic.controller;
 
-import com.gsu.semantic.model.Graph;
-import com.gsu.semantic.model.Link;
-import com.gsu.semantic.model.Node;
+import com.gsu.semantic.model.*;
 import com.gsu.semantic.repository.SemanticGraphDao;
 import com.gsu.semantic.service.lastfm.Album;
 import com.gsu.semantic.service.lastfm.Lastfm;
@@ -41,11 +39,13 @@ public class SemanticApi {
     @Autowired
     private MusicGraph musicGraph;
 
-    @RequestMapping(value = "/getGraph/{node:.*}", method = RequestMethod.GET,
+    @RequestMapping(value = "/getGraph", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object getGraph(@PathVariable(value = "node") String nodeName) throws Exception {
+    Object getGraph(@RequestBody GraphRequest request) throws Exception {
+        String nodeName = request.getNodeName();
+
         Graph dbGraph = semanticGraphDao.getGraphByNodeName(nodeName);
 
         if (dbGraph != null) {
@@ -110,6 +110,15 @@ public class SemanticApi {
         return graph;
     }
 
+    @RequestMapping(value = "/saveGraphNode", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    void saveNode(@RequestParam Integer nodeId, @RequestParam Integer graphId) throws Exception {
+        if (!semanticGraphDao.isGraphNodeSaved(1, nodeId))
+            semanticGraphDao.saveGraphNode(graphId, nodeId);
+    }
+
     @RequestMapping(value = "/saveNode/{nodeId}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
@@ -117,6 +126,29 @@ public class SemanticApi {
     void saveNode(@PathVariable(value = "nodeId") Integer nodeId) throws Exception {
         if (!semanticGraphDao.isUserNodeSaved(1, nodeId))
             semanticGraphDao.saveUserNode(1, nodeId);
+    }
+
+    @RequestMapping(value = "/getSavedGraph/{id}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getSavedGraph(@PathVariable Integer id) throws Exception {
+        List<Node> nodes = semanticGraphDao.getGraphNodes(id);
+        List<Link> links = semanticGraphDao.getLinksForSourceNodes(nodes);
+
+        for (Link link : links) {
+            if (!nodes.contains(link.getTarget())) {
+                nodes.add(link.getTarget());
+            } else {
+                link.getTarget().setSaved(true);
+            }
+
+            if (nodes.contains(link.getSource())) {
+                link.getSource().setSaved(true);
+            }
+        }
+
+        return new Graph(nodes, links);
     }
 
     @RequestMapping(value = "/getUserGraph/", method = RequestMethod.GET,
@@ -182,12 +214,12 @@ public class SemanticApi {
 //        return tracks;
 //    }
 
-    @RequestMapping(value = "/albums/{artist}", method = RequestMethod.GET,
+    @RequestMapping(value = "/albums", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object albums(@PathVariable String artist) throws Exception {
-        List<Album> albums = lastfm.topAlbums(artist);
+    Object albums(@RequestBody AlbumRequest request) throws Exception {
+        List<Album> albums = lastfm.topAlbums(request.getNodeName());
 
         return albums;
     }
@@ -200,5 +232,25 @@ public class SemanticApi {
         Album alb = lastfm.albumInfo(artist, album);
 
         return alb;
+    }
+
+    @RequestMapping(value = "/createGraph/{name}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object createGraph(@PathVariable String name) throws Exception {
+        Integer id = semanticGraphDao.createGraph(1, name);
+
+        return id;
+    }
+
+    @RequestMapping(value = "/listGraphs/{userId}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object listGraphs(@PathVariable Integer userId) throws Exception {
+        List<Graph> graphs = semanticGraphDao.listGraphs(userId);
+
+        return graphs;
     }
 }

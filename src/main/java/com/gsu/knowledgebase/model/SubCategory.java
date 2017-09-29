@@ -7,18 +7,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class Category implements Serializable {
+public class SubCategory implements Serializable {
     private Long id;
+    private Long categoryId;
     private String name;
     private List<Entity> properties = new ArrayList<>();
-    private List<SubCategory> subCategories = new ArrayList<>();
 
-    public Category() {
+    public SubCategory() {
     }
 
-    public Category(ResultSet rs) throws SQLException {
-        id = rs.getLong("c.id");
-        name = rs.getString("c.name");
+    public SubCategory(ResultSet rs) throws SQLException {
+        id = rs.getLong("sc.id");
+        categoryId = rs.getLong("sc.category_id");
+        name = rs.getString("sc.name");
     }
 
     public Long getId() {
@@ -45,15 +46,13 @@ public class Category implements Serializable {
         this.properties = properties;
     }
 
-    public List<SubCategory> getSubCategories() {
-        return subCategories;
+    public Long getCategoryId() {
+        return categoryId;
     }
 
-    public void setSubCategories(List<SubCategory> subCategories) {
-        this.subCategories = subCategories;
-    }
-
-    public void addSubCategory(SubCategory subCategory) {
-        subCategories.add(subCategory);
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 }
+
+

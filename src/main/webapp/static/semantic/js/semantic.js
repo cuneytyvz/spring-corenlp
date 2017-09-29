@@ -1,16 +1,58 @@
-var app = angular.module('app', []);
+var app = angular.module('app', ['ngDialog']);
 
-app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
+app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDialog) {
 
     $scope.searchInput = 'Led Zeppelin';
 
+    $http.get("/semantic/api/listGraphs/1")
+        .then(function (response) {
+            $scope.graphs = response.data;
+
+        }, printError);
+
     $scope.search = function () {
-        fetchData($scope.searchInput.toLowerCase());
+
+        if ($scope.graph) {
+            var name = null;
+            for (var i = 0; i < $scope.graph.nodes.length; i++) {
+                if ($scope.searchInput.toLowerCase() == $scope.graph.nodes[i].name.toLowerCase()) {
+                    name = $scope.graph.nodes[i].name;
+                    break;
+                }
+            }
+
+            if (name) {
+                $.event.trigger('goToNodePosition', name.toLowerCase());
+            } else {
+                fetchData($scope.searchInput.toLowerCase());
+            }
+        } else {
+            fetchData($scope.searchInput.toLowerCase());
+        }
     };
 
-    $(document).bind('nodeClicked', function (e, node) {
-        fetchData(node.toLowerCase());
-    });
+    $scope.newGraph = function () {
+        ngDialog.open({
+            template: 'new-graph-popup',
+            controller: ['$scope', function ($ss) {
+
+                $ss.closeWindow = function () {
+                    $ss.closeThisDialog();
+                };
+
+                $ss.createGraph = function () {
+
+                    $http.get('/semantic/api/createGraph/' + $ss.graphName)
+                        .then(function (response) {
+                            $scope.graphs.push({name: $ss.graphName, id: response.data});
+
+                            $ss.closeThisDialog();
+                        }, function (err) {
+                        });
+                };
+
+            }]});
+    };
 
     $scope.detectCommunities = function () {
         var nodes = [], links = [];
@@ -38,7 +80,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
     };
 
     var fetchData = function (node) {
-        $http.get("/semantic/api/getGraph/" + escape(node))
+        $http.post("/semantic/api/getGraph", {nodeName: node})
             .then(function (response) {
                 $scope.graph = response.data;
 
@@ -53,14 +95,14 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
 
                 semantic.getInstance().processIncomingData(response.data);
 
-                $http.get("/semantic/api/albums/" + $scope.selectedNode.name)
+                $http.post("/semantic/api/albums", {nodeName: $scope.selectedNode.name})
                     .then(function (response) {
                         $scope.albums = response.data;
                         $scope.selectedNode.albums = response.data;
 
                         $timeout(function () {
                             setupAccordion();
-                            $('.info-text').find('a').attr('target','_blank');
+                            $('.info-text').find('a').attr('target', '_blank');
                         });
 
                     }, printError);
@@ -88,24 +130,64 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
         }
     }
 
+    $scope.sideBarOpen = false;
+    $scope.openCloseSideBar = function () {
+        if ($scope.sideBarOpen)
+            $('.side-menu-wrapper').animate({left: '-120px'}, 300);
+        else
+            $('.side-menu-wrapper').animate({left: '5px'}, 300);
+
+        $scope.sideBarOpen = !$scope.sideBarOpen;
+    };
+
+    $scope.getSavedGraph = function (graph) {
+//        semantic.newInstance().clear();
+        $scope.graph = {};
+
+        $http.get("/semantic/api/getSavedGraph/" + graph.id)
+            .then(function (response) {
+                semantic.createNewInstance();
+
+                $scope.selectedGraph = graph;
+                if (!response.data.nodes || response.data.nodes.length == 0) {
+                    return;
+                }
+
+                $scope.graph = response.data;
+                $scope.selectedNode = response.data.nodes[0];
+
+                semantic.getInstance().processIncomingData(response.data);
+
+            }, printError);
+    };
+
     $scope.showTracks = function (release, artist) {
         if (release.clicked) {
             release.clicked = false;
             return;
         }
 
-        $http.get("/semantic/api/tracks?artist=" + artist.name + "&album=" + release.name)
+        $http.get("/semantic/api/tracks?artist=" + encodeURIComponent(artist.name) + "&album=" + encodeURIComponent(release.name))
             .then(function (response) {
                 release.tracks = response.data;
 
             }, printError);
-    }
+    };
 
     $scope.saveNode = function () {
-        $http.get("/semantic/api/saveNode/" + $scope.selectedNode.dbId)
-            .then(function (response) {
-                $.event.trigger('nodeSaved', $scope.selectedNode.name);
-            }, printError);
+        if ($scope.selectedGraph) {
+            $http.get("/semantic/api/saveGraphNode?nodeId="
+                + $scope.selectedNode.dbId
+                + "&graphId=" + $scope.selectedGraph.id)
+                .then(function (response) {
+                    $.event.trigger('nodeSaved', $scope.selectedNode.name);
+                }, printError);
+        } else {
+            $http.get("/semantic/api/saveNode/" + $scope.selectedNode.dbId)
+                .then(function (response) {
+                    $.event.trigger('nodeSaved', $scope.selectedNode.name);
+                }, printError);
+        }
     };
 
     $scope.getUserGraph = function () {
@@ -120,6 +202,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
             }, printError);
     };
 
+    $(document).bind('nodeClicked', function (e, node) {
+        fetchData(node.toLowerCase());
+    });
+
     $scope.isNodeSaved = function () {
         return $scope.selectedNode.saved;
     };
@@ -128,12 +214,16 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
         $.event.trigger('showHideSimilars');
     };
 
+    $scope.showHideNames = function () {
+        $.event.trigger('showHideNames', $scope.showNames);
+    };
+
     $("#search-input").autocomplete({
         minLength: 2,
         source: function (request, response) {
             var term = request.term;
 
-            $http.get("/semantic/api/lookup/" + term)
+            $http.get("/semantic/api/lookup/" + encodeURIComponent(term))
                 .then(function (resp) {
                     var results = [];
                     for (var i = 0; i < resp.data.length; i++) {
@@ -160,6 +250,18 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout) {
             }
         }
     });
+
+    setInterval(function () {
+        $('body')
+            .animate({
+                backgroundColor: '#2affc'
+            }, 2000)
+            .animate({
+                backgroundColor: '#8987ff'
+            }, 2000);
+    }, 4);
+
+//    yourNumber.toString(16);
 });
 
 app.config(function ($sceDelegateProvider, $sceProvider) {

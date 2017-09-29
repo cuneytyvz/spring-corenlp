@@ -4,6 +4,7 @@ import com.gsu.common.util.ImageUtils;
 import com.gsu.knowledgebase.model.*;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
 import com.gsu.knowledgebase.service.DBPedia;
+import com.gsu.knowledgebase.service.DBpediaSpotlight;
 import com.gsu.knowledgebase.service.WebPageAnnotator;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ import javax.servlet.ServletContext;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Controller("KnowledgeBaseApi")
 @RequestMapping(value = "/knowledgeBase/api")
@@ -31,6 +34,9 @@ public class KnowledgeBaseApi {
 
     @Autowired
     private ImageUtils imageUtils;
+
+    @Autowired
+    private DBpediaSpotlight dbpediaSpotlight;
 
     @Autowired
     private ServletContext servletContext;
@@ -65,12 +71,22 @@ public class KnowledgeBaseApi {
         return id;
     }
 
+    @RequestMapping(value = "/removeEntity/{id}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object removeEntity(@PathVariable Long id) throws Exception {
+        knowledgeBaseDao.removeEntity(id);
+
+        return id;
+    }
+
     @RequestMapping(value = "/saveEntity", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object saveEntity(@RequestBody Entity entity) throws Exception {
+    Object saveEntity(@RequestBody final Entity entity) throws Exception {
         Entity pl = knowledgeBaseDao.findEntityByName(entity.getName());
         if (pl != null && !pl.getEntityType().equals("web-page-annotation")) {
             return null;
@@ -197,6 +213,16 @@ public class KnowledgeBaseApi {
 
         knowledgeBaseDao.saveSubproperties(subproperties);
 
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<String> entities = dbpediaSpotlight.annotateText(entity.getDescription());
+
+
+            }
+        });
+
         return entity;
     }
 
@@ -321,5 +347,25 @@ public class KnowledgeBaseApi {
         Collection<Category> categories = knowledgeBaseDao.findAllCategories();
 
         return categories;
+    }
+
+    @RequestMapping(value = "/getSubCategories/{categoryId}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getSubCategories(@PathVariable Long categoryId) throws Exception {
+        Collection<SubCategory> subCategories = knowledgeBaseDao.findSubCategories(categoryId);
+
+        return subCategories;
+    }
+
+    @RequestMapping(value = "/getAllSubCategories", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getAllSubCategories() throws Exception {
+        Collection<SubCategory> subCategories = knowledgeBaseDao.findAllSubCategories();
+
+        return subCategories;
     }
 }

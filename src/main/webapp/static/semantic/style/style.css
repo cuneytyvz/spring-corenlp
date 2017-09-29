@@ -221,9 +221,11 @@ circle {
 
 .node text {
     pointer-events: none;
-    font-size: 12px;
+    font-size: 12pt;
     font-weight: bold;
-    fill: #4D4D4D;
+    /*fill: #4D4D4D;*/
+    fill: #d9c53f;
+    z-index: 99;
 }
 
 footer {
@@ -270,6 +272,7 @@ html[xmlns] .clearfix {
     position: absolute;
     top: 350px;
     left: 25px;
+    opacity: 0.9;
 }
 
 .album-box {
@@ -305,4 +308,92 @@ div.panel {
     padding: 0 18px;
     background-color: white;
     display: none;
+}
+
+.show_names {
+    position: absolute !important;
+    top: 50px;
+    right: 300px;
+}
+
+/* coloring */
+.album-box {
+    background-color: #66b2dd;
+    /*background-color : #8787ff;*/
+    box-shadow: 1px 1px 20px 20px #6892fc;
+
+}
+
+.album-box-edge {
+    /*background-color: #3791ca;*/
+    background-color: #4f9aff;
+}
+
+.selected-circle {
+    z-index: -1;
+}
+
+button.accordion {
+    background-color: #66b2dd;
+}
+
+button.accordion.active, button.accordion:hover {
+    background-color: #85ceee;
+}
+
+header {
+    /*background-color: #66b2dd;*/
+    background-color: #779ce8;
+}
+
+section#right {
+    background: none;
+}
+
+.info-title, .info-text {
+    /*color: #d9c53f;*/
+    color: #fff;
+}
+
+.pop-up .shadow-wrapper {
+    box-shadow: 0px 0px 5px 10px #71a5df;
+}
+
+.pop-up {
+    background-color: #71a5df;
+    box-shadow: 1px 1px 20px 20px #6892fc;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+}
+
+.pop-up .block {
+    padding-bottom: 5px;
+}
+
+.side-menu-wrapper {
+    position: absolute;
+    top: 150px;
+    left: -120px;
+    width: 150px;
+}
+
+.side-menu {
+
+}
+
+.menu-item {
+    width: 200px;
+}
+
+.menu-item a {
+    color: #f6f328;
+}
+
+.side-menu-icon {
+    margin-bottom : 30px;
+}
+
+.side-menu-icon img {
+    width: 30px;
+    float: right;
 }

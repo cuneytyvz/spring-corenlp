@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -57,6 +58,16 @@ public class Util {
         if(con.getResponseCode()==301)
             return con.getHeaderField("Location");
         else return null;
+    }
+
+    public static boolean isUTF8MB4(String s) {
+        for (int i = 0; i < s.length(); ++i) {
+            byte[] bytes = s.substring(i, i + 1).getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > 3) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void main(String[] args) throws MalformedURLException, IOException {

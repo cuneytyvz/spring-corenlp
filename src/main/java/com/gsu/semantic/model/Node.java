@@ -25,7 +25,8 @@ public class Node {
     private String bioSummary;
     private Double weight = 1.0;
     private List<Tag> tags;
-    boolean saved = false;
+    private boolean saved = false;
+    private Integer graphId;
 
     public Node() {
     }

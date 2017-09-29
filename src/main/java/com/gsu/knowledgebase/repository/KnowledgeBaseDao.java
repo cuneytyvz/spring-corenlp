@@ -23,7 +23,7 @@ public class KnowledgeBaseDao {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
                 ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?";
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?";
 
         Connection conn = null;
 
@@ -59,6 +59,65 @@ public class KnowledgeBaseDao {
             ps.setString(13, entity.getShortDescription());
             ps.setString(14, entity.getSmallImage());
             ps.setString(15, entity.getNote());
+            ps.setLong(16, entity.getSubCategoryId());
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveAnnotationEntities(List<Entity> entity) throws Exception {
+
+        String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
+                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "entity", "id");
+
+//            ps.setLong(1, id);
+//            ps.setString(2, entity.getName());
+//            ps.setString(3, entity.getDescription());
+//            ps.setString(4, entity.getDbpediaUri());
+//            ps.setString(5, entity.getWikidataId());
+//
+//            if (entity.getCategoryId() == null) {
+//                ps.setNull(6, Types.BIGINT);
+//            } else {
+//                ps.setLong(6, entity.getCategoryId());
+//            }
+//
+//            ps.setTimestamp(7, DateUtils.getCurrentTimeStamp());
+//            ps.setString(8, entity.getEntityType());
+//            if (entity.getWebPageEntityId() == null) {
+//                ps.setNull(9, Types.BIGINT);
+//            } else {
+//                ps.setLong(9, entity.getWebPageEntityId());
+//            }
+//
+//            ps.setString(10, entity.getWebUri());
+//            ps.setString(11, entity.getImage());
+//            ps.setString(12, entity.getWikipediaUri());
+//            ps.setString(13, entity.getShortDescription());
+//            ps.setString(14, entity.getSmallImage());
+//            ps.setString(15, entity.getNote());
+//            ps.setLong(16, entity.getSubCategoryId());
             ps.execute();
 
             ps.close();
@@ -116,6 +175,35 @@ public class KnowledgeBaseDao {
             ps.setString(13, entity.getSmallImage());
             ps.setString(14, entity.getNote());
             ps.setLong(15, entity.getId());
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long removeEntity(Long id) throws Exception {
+
+        String sql = "delete from entity where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, id);
 
             ps.execute();
 
@@ -206,7 +294,11 @@ public class KnowledgeBaseDao {
                 ps.setString(11, property.getPropertyType());
                 ps.setLong(12, property.getMetaPropertyId());
 
-                ps.execute();
+                try {
+                    ps.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
             ps.close();
@@ -310,7 +402,11 @@ public class KnowledgeBaseDao {
                 ps.setString(3, subproperty.getName());
                 ps.setString(4, subproperty.getValue());
 
-                ps.execute();
+                try {
+                    ps.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
             ps.close();
@@ -724,18 +820,94 @@ public class KnowledgeBaseDao {
     }
 
     public Collection<Category> findAllCategories() {
-        String sql = "select * from category c;";
+        String sql = "select * from category c left join subcategory sc on c.id = sc.category_id;";
 
         Connection conn = null;
 
-        List<Category> categories = new ArrayList<>();
+        Map<Long, Category> map = new HashMap<>();
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                categories.add(new Category(rs));
+                Long id = rs.getLong("c.id");
+
+                SubCategory sc = new SubCategory(rs);
+                if (map.containsKey(id)) {
+                    if (sc.getId() != 0)
+                        map.get(id).addSubCategory(sc);
+                } else {
+                    Category c = new Category(rs);
+                    if (sc.getId() != 0)
+                        c.addSubCategory(sc);
+
+                    map.put(id, c);
+                }
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<SubCategory> findSubCategories(Long categoryId) {
+        String sql = "select * from subcategory sc where sc.category_id = ?;";
+
+        Connection conn = null;
+
+        List<SubCategory> categories = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, categoryId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                categories.add(new SubCategory(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return categories;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<SubCategory> findAllSubCategories() {
+        String sql = "select * from subcategory sc;";
+
+        Connection conn = null;
+
+        List<SubCategory> categories = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                categories.add(new SubCategory(rs));
             }
 
             rs.close();

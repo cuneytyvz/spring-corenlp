@@ -1,11 +1,14 @@
 var lodService = (function () {
 
     var getItem = function ($scope, $http, $q, uri, callback) {
+        $scope.propertiesLoading = true;
         dbpedia.getItem($http, uri, function (item) {
             $scope.selectedEntity = item;
 
             wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                 parseWikidataResponse($scope, wikidataItem);
+
+                $scope.propertiesLoading = false;
 
                 callback($scope);
             });
@@ -17,11 +20,11 @@ var lodService = (function () {
             $scope.selectedEntity.properties = $scope.selectedEntity.properties.concat(wikidataItem.properties);
             $scope.selectedEntity.shortDescription = wikidataItem.description;
 
-//            if (!$scope.selectedEntity.image)
-//                $scope.selectedEntity.image = wikidataItem.image;
-
-            if (wikidataItem.image)
+            if (!$scope.selectedEntity.image)
                 $scope.selectedEntity.image = wikidataItem.image;
+
+//            if (wikidataItem.image)
+//                $scope.selectedEntity.image = wikidataItem.image;
         }
     }
 
