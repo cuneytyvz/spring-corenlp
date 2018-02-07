@@ -20,6 +20,19 @@ public class Graph {
         this.links = links;
     }
 
+    public Graph(Integer id, List<Node> nodes, List<Link> links) {
+        this.id = id;
+        this.nodes = nodes;
+        this.links = links;
+    }
+
+    public Graph(Integer id, String name, List<Node> nodes, List<Link> links) {
+        this.id = id;
+        this.name = name;
+        this.nodes = nodes;
+        this.links = links;
+    }
+
     public List<Node> getNodes() {
         return nodes;
     }

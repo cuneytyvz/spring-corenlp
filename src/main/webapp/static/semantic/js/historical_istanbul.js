@@ -20,6 +20,8 @@ app.controller('Controller', function ($scope, $http) {
 
                 $scope.places.push(item);
             });
+
+            $scope.selectedPlace = $scope.places[0];
         }, printError);
 
     var cache = {};
@@ -104,6 +106,14 @@ app.controller('Controller', function ($scope, $http) {
                         properties: []
                     };
 
+                    if (item['http://dbpedia.org/ontology/thumbnail'] != null && item['http://dbpedia.org/ontology/thumbnail'].length > 0 ) {
+                        place.smallImage = item['http://dbpedia.org/ontology/thumbnail'][0].value;
+                    }
+
+                    if (item['http://xmlns.com/foaf/0.1/depiction'] != null && item['http://xmlns.com/foaf/0.1/depiction'].length > 0) {
+                        place.image = item['http://xmlns.com/foaf/0.1/depiction'][0].value;
+                    }
+
 
                     for (var property in item) {
                         if (item.hasOwnProperty(property)) {
@@ -145,6 +155,10 @@ app.controller('Controller', function ($scope, $http) {
             return false;
         }
     });
+
+    $scope.imgLocal = function (img) {
+        return !img.includes('http');
+    };
 
     $scope.savePlace = function () {
         $http.post('historicalIstanbul/api/savePlace', $scope.selectedPlace)

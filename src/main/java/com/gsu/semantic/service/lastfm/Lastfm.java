@@ -279,6 +279,6 @@ public class Lastfm {
     }
 
     public static String toId(String str) {
-        return URLEncoder.encode(str.replace(" ", "_")).replace("%", "_");
+        return URLEncoder.encode(str.replace(" ", "_")).replace("%", "_").replace(".", "_").replace(":", "_");
     }
 }

@@ -50,13 +50,13 @@ public class WebPageAnnotator {
         String text = ArticleExtractor.INSTANCE.getText(html);
 
         Goose goose = new Goose(new Configuration());
-        Article article = goose.extractContent(url);
+//        Article article = goose.extractContent(url);
 
         String cut = text.length() < 5000 ? text : text.substring(0, 5000);
 
         Map response = new RestTemplate().getForObject(
-                "http://model.dbpedia-spotlight.org/en/annotate?text=" +
-                        cut +
+                "http://model.dbpedia-spotlight.org/en/annotate?text="
+                        + cut +
                         "&confidence=0.5&support=0&spotter=Default&disambiguator=Default&policy=whitelist&types=&sparql="
                 , Map.class);
 //        if (response.get("Resources") == null) {
@@ -67,10 +67,9 @@ public class WebPageAnnotator {
         for (Map r : (List<Map>) response.get("Resources")) {
             String uri = (String) r.get("@URI");
 
-            if(!entities.contains(uri)) {
+            if (!entities.contains(uri)) {
                 entities.add(uri);
             }
-
         }
 
         return entities;
@@ -100,7 +99,7 @@ public class WebPageAnnotator {
         Elements elements = doc.select("img");
 
         List<String> images = new ArrayList<>();
-        for (Element element: elements) {
+        for (Element element : elements) {
             images.add(element.attr("src"));
         }
 

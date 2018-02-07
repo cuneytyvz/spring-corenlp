@@ -1,32 +1,34 @@
 package com.gsu.knowledgebase.service;
 
+import com.gsu.knowledgebase.model.AnnotationItem;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DBpediaSpotlight {
 
-    public List<String> annotateText(String text) {
+    public Collection<AnnotationItem> annotateText(String text) {
         Map response = new RestTemplate().getForObject(
                 "http://model.dbpedia-spotlight.org/en/annotate?text=" +
                         text +
                         "&confidence=0.5&support=0&spotter=Default&disambiguator=Default&policy=whitelist&types=&sparql="
                 , Map.class);
 
-        List<String> entities = new ArrayList<>();
+        Map<String, AnnotationItem> items = new HashMap<>();
         for (Map r : (List<Map>) response.get("Resources")) {
-            String uri = (String) r.get("@URI");
+            AnnotationItem item = new AnnotationItem();
+            item.setOffset(Integer.parseInt((String) r.get("@offset")));
+            item.setUri((String) r.get("@URI"));
+            item.setSurfaceForm((String) r.get("@surfaceForm"));
+            item.setTypes((String) r.get("@types"));
 
-            if(!entities.contains(uri)) {
-                entities.add(uri);
+            if (!items.containsKey(item.getUri())) {
+                items.put(item.getUri(), item);
             }
-
         }
 
-        return entities;
+        return items.values();
     }
 }

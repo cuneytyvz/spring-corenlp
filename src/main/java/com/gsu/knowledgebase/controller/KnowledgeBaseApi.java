@@ -120,7 +120,6 @@ public class KnowledgeBaseApi {
             }
         }
 
-
         Long id = knowledgeBaseDao.saveEntity(entity);
         entity.setId(id);
 
@@ -200,10 +199,7 @@ public class KnowledgeBaseApi {
         knowledgeBaseDao.saveProperties(entity.getProperties());
 
         List<Subproperty> subproperties = new ArrayList<>();
-        for (
-                Property property
-                : entity.getProperties())
-
+        for (Property property : entity.getProperties())
         {
             for (Subproperty subproperty : property.getSubproperties()) {
                 subproperty.setPropertyId(property.getId());
@@ -217,11 +213,21 @@ public class KnowledgeBaseApi {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                List<String> entities = dbpediaSpotlight.annotateText(entity.getDescription());
+                Collection<AnnotationItem> items = dbpediaSpotlight.annotateText(entity.getDescription());
 
+                for(AnnotationItem i : items) {
+                    i.setReferencedEntityId(entity.getId());
+                }
 
+                try {
+                    knowledgeBaseDao.saveAnnotationItems(new ArrayList<AnnotationItem>(items));
+                } catch (Exception e) {
+                    System.err.println("ERROR at dbpediaspotlight, saving annotation items...");
+                    e.printStackTrace();
+                }
             }
         });
+
 
         return entity;
     }
@@ -297,6 +303,22 @@ public class KnowledgeBaseApi {
         }
 
         return entities;
+    }
+
+    @RequestMapping(value = "/getAnnotationEntities/{entityId}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getAnnotationEntities(@PathVariable("entityId") Integer entityId ) throws Exception {
+        Collection<AnnotationItem> annotationItems = knowledgeBaseDao.findAnnotationItems(entityId);
+
+//        for (AnnotationItem item : annotationItems) {
+//            if (e.getEntityType().equals("web-page")) {
+//                e.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(e.getId()));
+//            }
+//        }
+
+        return annotationItems;
     }
 
     @RequestMapping(value = "/getEntityList", method = RequestMethod.GET,

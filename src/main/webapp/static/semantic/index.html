@@ -100,6 +100,15 @@
                         </div>
                     </div>
 
+                    <!--<div class="album-box-edge">-->
+                        <!--<div class="album-box">-->
+                            <!--<button class="accordion" ng-repeat="n in graph.nodes"-->
+                                    <!--ng-click="showTracks(a,selectedNode)">-->
+                                <!--{{a.name}}-->
+                            <!--</button>-->
+                        <!--</div>-->
+                    <!--</div>-->
+
                     <div class="album-box-edge">
                         <div class="album-box">
                             <!--<div>-->
@@ -184,8 +193,11 @@
                         <!--</div>-->
                         <div class="form-group right-save-button">
                             <input type="button" class="btn btn-default blue" value="Save"
-                                   ng-if="!isNodeSaved()"
+                                   ng-if="!selectedNode.saved"
                                    ng-click="saveNode()">
+                            <input type="button" class="btn btn-default blue" value="Remove"
+                                   ng-if="selectedNode.saved"
+                                   ng-click="removeNode()">
                         </div>
                     </div>
                 </div>

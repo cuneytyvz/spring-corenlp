@@ -120,6 +120,10 @@ var semantic = (function () {
                 })
                 .style({
                     opacity: adjustLinkOpacity});
+
+            link.exit()
+                .remove();
+
             // ***** //
 
             function adjustLinkOpacity(d) {
@@ -160,6 +164,9 @@ var semantic = (function () {
                 .style({
                     opacity: adjustNodeOpacity})
                 .call(force.drag);
+
+            node.exit()
+                .remove();
 
             function adjustNodeOpacity(d) {
 
@@ -273,6 +280,8 @@ var semantic = (function () {
                 var tmp = d.name.replace(" ", "+").toLowerCase();
                 tmp = escape(tmp);
 
+                d
+
                 // lastfm url
                 var url = "http://www.lastfm.com.tr/music/" + tmp;
 
@@ -287,38 +296,9 @@ var semantic = (function () {
                         browsePath = [];
                     }
 
-                    setTimeout(function () {
-                        drawGraph();
-                    }, 500);
-
                     if (lastSelectedNode) {
                         lastSelectedNode.element.select(".selected-circle").attr("display", "none");
                     }
-
-                    d3.select(this)
-                        .append("filter")
-                        .attr("id", function (d) {
-                            return "filter-" + d.id;
-                        })
-                        .append('feGaussianBlur')
-                        .attr("in", "SourceGraphic")
-                        .attr("stdDeviation", "5");
-
-                    var width = d3.select(this).select("image").attr("width");
-                    var height = d3.select(this).select("image").attr("height");
-
-                    d3.select(this)
-                        .insert("circle", ".clippath")
-                        .attr("cx", width * 3 / 4)
-                        .attr("cy", height * 3 / 4)
-                        .attr("r", "25")
-                        .attr("fill", "yellow")
-                        .attr("class", "selected-circle")
-                        .attr("filter", function (d) {
-                            return "url(#filter-" + d.id + ")";
-                        });
-
-                    d3.select(this).attr("display", "block");
 
                     // set selected opacity 1 / not working yet...
                     d.selected = true;
@@ -329,6 +309,12 @@ var semantic = (function () {
                         element: d3.select(this),
                         data: d
                     };
+
+//                    highlightNode(lastSelectedNode);
+
+//                    setTimeout(function () {
+//                        drawGraph();
+//                    }, 300);
 
                 } else if (d3.event.which == 2) {
                     var win = window.open(url, "lastfm");
@@ -348,6 +334,24 @@ var semantic = (function () {
                         graph.nodes[i].saved = true;
                     }
                 }
+
+                drawGraph();
+            });
+
+            $(document).bind('nodeRemoved', function (e, nodeName) {
+                var ii = -1;
+                for (var i = 0; i < graph.nodes.length; i++) {
+                    if (graph.nodes[i].name == nodeName) {
+                        ii = i;
+                    }
+                }
+
+                if (ii != -1)
+                    graph.nodes.splice(ii, 1);
+
+                graph.links = graph.links.filter(function (l) {
+                    return l.source.name.toLowerCase() !== nodeName.toLowerCase() && l.target.name.toLowerCase() !== nodeName.toLowerCase();
+                });
 
                 drawGraph();
             });
@@ -373,6 +377,10 @@ var semantic = (function () {
 
                 svg.attr('viewBox', x + ' ' + y + " 1024 960");
 
+                drawGraph();
+            });
+
+            $(document).bind('drawGraph', function (e, nodeName) {
                 drawGraph();
             });
 
@@ -403,7 +411,8 @@ var semantic = (function () {
             if (d.selected || showNames) {
                 return 1;
             } else {
-                return (scaleValue - 0.2) * (1 / 0.8);
+                return (scaleValue - 0.05) * (1 / 0.8);
+//                return (scaleValue - 0.4) * (1 / 0.8);
             }
         }
 
@@ -528,7 +537,46 @@ var semantic = (function () {
                 var y = cy + r + 15;
                 return y;
             });
-            text.attr("class", "text")
+            text.attr("class", "text");
+
+            svg.select("#" + nodeId).attr("selected", function (d) {
+                    if (d.selected) {
+                        lastSelectedNode = {
+                            element: svg.select("#" + nodeId),
+                            data: d
+                        };
+
+                        highlightNode(svg.select("#" + nodeId));
+                    }
+                }
+            );
+        }
+
+        function highlightNode(node) {
+            node
+                .append("filter")
+                .attr("id", function (d) {
+                    return "filter-" + d.id;
+                })
+                .append('feGaussianBlur')
+                .attr("in", "SourceGraphic")
+                .attr("stdDeviation", "5");
+
+            var width = node.select("image").attr("width");
+            var height = node.select("image").attr("height");
+
+            node
+                .insert("circle", ".clippath")
+                .attr("cx", width * 3 / 4)
+                .attr("cy", height * 3 / 4)
+                .attr("r", "25")
+                .attr("fill", "yellow")
+                .attr("class", "selected-circle")
+                .attr("filter", function (d) {
+                    return "url(#filter-" + d.id + ")";
+                });
+
+            node.attr("display", "block");
         }
 
         function createHTMLImage(url, id) {

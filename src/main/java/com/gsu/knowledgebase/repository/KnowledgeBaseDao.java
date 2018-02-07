@@ -77,11 +77,10 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public Long saveAnnotationEntities(List<Entity> entity) throws Exception {
+    public Long saveAnnotationItems(List<AnnotationItem> items) throws Exception {
 
-        String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?";
+        String sql = "insert into annotation_item set id = ?, surface_form = ?, types = ?, offset = ?, uri = ?" +
+                ", entity_id = ?, referenced_entity_id = ?;";
 
         Connection conn = null;
 
@@ -89,40 +88,67 @@ public class KnowledgeBaseDao {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
-            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "entity", "id");
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "annotation_item", "id");
 
-//            ps.setLong(1, id);
-//            ps.setString(2, entity.getName());
-//            ps.setString(3, entity.getDescription());
-//            ps.setString(4, entity.getDbpediaUri());
-//            ps.setString(5, entity.getWikidataId());
-//
-//            if (entity.getCategoryId() == null) {
-//                ps.setNull(6, Types.BIGINT);
-//            } else {
-//                ps.setLong(6, entity.getCategoryId());
-//            }
-//
-//            ps.setTimestamp(7, DateUtils.getCurrentTimeStamp());
-//            ps.setString(8, entity.getEntityType());
-//            if (entity.getWebPageEntityId() == null) {
-//                ps.setNull(9, Types.BIGINT);
-//            } else {
-//                ps.setLong(9, entity.getWebPageEntityId());
-//            }
-//
-//            ps.setString(10, entity.getWebUri());
-//            ps.setString(11, entity.getImage());
-//            ps.setString(12, entity.getWikipediaUri());
-//            ps.setString(13, entity.getShortDescription());
-//            ps.setString(14, entity.getSmallImage());
-//            ps.setString(15, entity.getNote());
-//            ps.setLong(16, entity.getSubCategoryId());
-            ps.execute();
+            for (AnnotationItem item : items) {
+                ps.setLong(1, id++);
+                ps.setString(2, item.getSurfaceForm());
+                ps.setString(3, item.getTypes());
+                ps.setInt(4, item.getOffset());
+                ps.setString(5, item.getUri());
+
+                if (item.getEntityId() == null) {
+                    ps.setNull(6, Types.BIGINT);
+                } else {
+                    ps.setLong(6, item.getEntityId());
+                }
+
+                ps.setLong(7, item.getReferencedEntityId());
+
+                ps.execute();
+            }
 
             ps.close();
 
             return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public List<AnnotationItem> findAnnotationItems(Integer entityId) throws Exception {
+
+        String sql = "select * from annotation_item ai left join entity e on e.id = ai.referenced_entity_id where referenced_entity_id = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1,entityId);
+
+            List<AnnotationItem> items = new ArrayList<>();
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                AnnotationItem item = new AnnotationItem(rs);
+                if (rs.getLong("e.id") != 0) {
+                    item.setReferencedEntity(new Entity(rs));
+                }
+
+                items.add(item);
+            }
+
+            ps.close();
+
+            return items;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -296,6 +322,7 @@ public class KnowledgeBaseDao {
 
                 try {
                     ps.execute();
+
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }

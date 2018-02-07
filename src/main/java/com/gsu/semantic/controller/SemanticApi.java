@@ -4,7 +4,6 @@ import com.gsu.semantic.model.*;
 import com.gsu.semantic.repository.SemanticGraphDao;
 import com.gsu.semantic.service.lastfm.Album;
 import com.gsu.semantic.service.lastfm.Lastfm;
-import com.gsu.semantic.service.lastfm.Track;
 import com.gsu.semantic.service.musicbrainz.Musicbrainz;
 import com.gsu.semantic.service.musicbrainz.Release;
 import com.gsu.semantic.service.musicgraph.LookupResponseItem;
@@ -128,6 +127,24 @@ public class SemanticApi {
             semanticGraphDao.saveUserNode(1, nodeId);
     }
 
+    @RequestMapping(value = "/removeGraphNode", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    void removeNode(@RequestParam Integer nodeId, @RequestParam Integer graphId) throws Exception {
+        if (semanticGraphDao.isGraphNodeSaved(graphId, nodeId))
+            semanticGraphDao.removeGraphNode(graphId, nodeId);
+    }
+
+    @RequestMapping(value = "/removeNode/{nodeId}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    void removeNode(@PathVariable(value = "nodeId") Integer nodeId) throws Exception {
+        if (semanticGraphDao.isUserNodeSaved(1, nodeId))
+            semanticGraphDao.removeUserNode(1, nodeId);
+    }
+
     @RequestMapping(value = "/getSavedGraph/{id}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
@@ -148,7 +165,7 @@ public class SemanticApi {
             }
         }
 
-        return new Graph(nodes, links);
+        return new Graph(id, nodes, links);
     }
 
     @RequestMapping(value = "/getUserGraph/", method = RequestMethod.GET,

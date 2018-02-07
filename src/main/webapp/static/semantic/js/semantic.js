@@ -12,7 +12,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
     $scope.search = function () {
 
-        if ($scope.graph) {
+        if ($scope.graph && $scope.graph.nodes) {
             var name = null;
             for (var i = 0; i < $scope.graph.nodes.length; i++) {
                 if ($scope.searchInput.toLowerCase() == $scope.graph.nodes[i].name.toLowerCase()) {
@@ -82,30 +82,46 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
     var fetchData = function (node) {
         $http.post("/semantic/api/getGraph", {nodeName: node})
             .then(function (response) {
-                $scope.graph = response.data;
+//                $scope.graph = response.data; // modify this part to append nodes and links instead of directly assigning new values...
+
+                if ($scope.graph == null) {
+                    $scope.graph = {nodes: [], links: []};
+                }
 
                 for (var i = 0; i < response.data.nodes.length; i++) {
-                    var n = response.data.nodes[i];
+                    var n = _.find($scope.graph.nodes, {dbId: response.data.nodes[i].dbId});
+
+                    if(!n) {
+                        $scope.graph.nodes.push(response.data.nodes[i]);
+                    }
+                }
+
+                $scope.graph.links.push(response.data.links);
+
+                for (var i = 0; i < $scope.graph.nodes.length; i++) {
+                    var n = $scope.graph.nodes[i];
 
                     if (n.name.toLowerCase() == node) {
-                        $scope.selectedNode = n;
                         n.selected = true;
+                        $scope.selectedNode = n;
                     }
                 }
 
                 semantic.getInstance().processIncomingData(response.data);
+//                $.event.trigger('drawGraph');
 
-                $http.post("/semantic/api/albums", {nodeName: $scope.selectedNode.name})
-                    .then(function (response) {
-                        $scope.albums = response.data;
-                        $scope.selectedNode.albums = response.data;
-
-                        $timeout(function () {
-                            setupAccordion();
-                            $('.info-text').find('a').attr('target', '_blank');
-                        });
-
-                    }, printError);
+//                $http.post("/semantic/api/albums", {nodeName: $scope.selectedNode.name})
+//                    .then(function (response) {
+//                        $scope.albums = response.data;
+//                        $scope.selectedNode.albums = response.data;
+//
+//                        $.event.trigger('dataFetched');
+//                        $timeout(function () {
+//                            setupAccordion();
+//                            $('.info-text').find('a').attr('target', '_blank');
+//                        });
+//
+//                    }, printError);
             }, printError);
     };
 
@@ -142,19 +158,20 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
     $scope.getSavedGraph = function (graph) {
 //        semantic.newInstance().clear();
-        $scope.graph = {};
+        $scope.graph = {nodes : [], links : []};
 
         $http.get("/semantic/api/getSavedGraph/" + graph.id)
             .then(function (response) {
                 semantic.createNewInstance();
 
-                $scope.selectedGraph = graph;
+                $scope.selectedGraph = response.data;
+                $scope.graph = response.data;
                 if (!response.data.nodes || response.data.nodes.length == 0) {
                     return;
                 }
 
-                $scope.graph = response.data;
                 $scope.selectedNode = response.data.nodes[0];
+                $scope.selectedNode.selected = true;
 
                 semantic.getInstance().processIncomingData(response.data);
 
@@ -181,11 +198,29 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 + "&graphId=" + $scope.selectedGraph.id)
                 .then(function (response) {
                     $.event.trigger('nodeSaved', $scope.selectedNode.name);
+                    $scope.selectedNode.saved = true;
                 }, printError);
         } else {
             $http.get("/semantic/api/saveNode/" + $scope.selectedNode.dbId)
                 .then(function (response) {
                     $.event.trigger('nodeSaved', $scope.selectedNode.name);
+                    $scope.selectedNode.saved = true;
+
+                }, printError);
+        }
+    };
+
+    $scope.removeNode = function () {
+        if ($scope.selectedGraph) {
+            $http.get("/semantic/api/removeGraphNode?graphId= " + $scope.selectedGraph.id + "&nodeId="
+                + $scope.selectedNode.dbId)
+                .then(function (response) {
+                    $.event.trigger('nodeRemoved', $scope.selectedNode.name);
+                }, printError);
+        } else {
+            $http.get("/semantic/api/removeNode/" + $scope.selectedNode.dbId)
+                .then(function (response) {
+                    $.event.trigger('nodedRemoved', $scope.selectedNode.name);
                 }, printError);
         }
     };
@@ -202,8 +237,11 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }, printError);
     };
 
-    $(document).bind('nodeClicked', function (e, node) {
-        fetchData(node.toLowerCase());
+    $(document).bind('nodeClicked', function (e, nodeName) {
+        if (nodeName != $scope.selectedNode.name) {
+            fetchData(nodeName.toLowerCase());
+//            $scope.selectedNode = _.find($scope.graph.nodes, {name: nodeName});
+        }
     });
 
     $scope.isNodeSaved = function () {

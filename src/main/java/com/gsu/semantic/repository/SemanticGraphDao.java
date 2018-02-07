@@ -21,7 +21,7 @@ public class SemanticGraphDao {
     private MaxIdCalculator maxIdCalculator;
 
     @Autowired
-    private DataSource hiDataSource;
+    private DataSource sgDataSource;
 
     public Integer saveNode(Node node) {
 
@@ -31,7 +31,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "node", "id");
@@ -71,7 +71,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ps.setString(1, node.getName());
@@ -101,6 +101,63 @@ public class SemanticGraphDao {
         }
     }
 
+    public void removeUserNode(Integer userId, Integer nodeId) {
+
+        String sql = "delete from user_node where user_id = ? and node_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = sgDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, userId);
+            ps.setInt(2, nodeId);
+
+            ps.execute();
+
+            ps.close();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void removeGraphNode(Integer graphId, Integer nodeId) {
+
+        String sql = "delete from graph_node where graph_id = ? and node_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = sgDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, graphId);
+            ps.setInt(2, nodeId);
+
+            ps.execute();
+
+            ps.close();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
 
     public void saveGraph(Graph graph) {
 
@@ -108,7 +165,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
 
             String sql = "insert into node set id = ?, name = ?, mbid = ?, url = ?" +
                     ", small_img = ?, medium_img = ?, large_img = ?, bio = ?, bio_summary = ?";
@@ -164,7 +221,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
 
             String sql = "insert into graph set id = ?,user_id = ?, name = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -196,7 +253,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
 
             String sql = "select * from graph where user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -240,7 +297,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "graph_node", "id");
@@ -273,7 +330,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "user_node", "id");
@@ -305,7 +362,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
             ps.setInt(2, nodeId);
@@ -338,7 +395,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, graphId);
             ps.setInt(2, nodeId);
@@ -372,7 +429,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "tag", "id");
@@ -404,7 +461,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "node_tag", "id");
@@ -436,7 +493,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             Integer id = maxIdCalculator.getMaxIntIdFromTable(conn, true, "link", "id");
@@ -469,7 +526,7 @@ public class SemanticGraphDao {
 
         List<Link> links = new ArrayList<>();
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ResultSet rs = ps.executeQuery();
@@ -499,7 +556,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, sourceName);
             ps.setString(2, destName);
@@ -533,7 +590,7 @@ public class SemanticGraphDao {
 
         List<Node> nodes = new ArrayList<>();
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ResultSet rs = ps.executeQuery();
@@ -562,7 +619,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, name);
 
@@ -594,7 +651,7 @@ public class SemanticGraphDao {
         Connection conn = null;
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, name);
 
@@ -628,7 +685,7 @@ public class SemanticGraphDao {
 
         List<Link> links = new ArrayList<>();
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ps.setString(1, name);
@@ -679,7 +736,7 @@ public class SemanticGraphDao {
 
         List<Node> nodes = new ArrayList<>();
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
 
@@ -718,12 +775,12 @@ public class SemanticGraphDao {
 
         List<Link> links = new ArrayList<>();
 
-        if (nodes == null) {
+        if (nodes.size() == 0) {
             return links;
         }
 
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
 
             for (Node node : nodes) {
@@ -757,7 +814,7 @@ public class SemanticGraphDao {
 
         List<Node> nodes = new ArrayList<>();
         try {
-            conn = hiDataSource.getConnection();
+            conn = sgDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, graphId);
 
@@ -769,9 +826,9 @@ public class SemanticGraphDao {
                 nodes.add(n);
             }
 
-            if (nodes.size() == 0) {
-                return null;
-            }
+//            if (nodes.size() == 0) {
+//                return null;
+//            }
 
             ps.close();
 

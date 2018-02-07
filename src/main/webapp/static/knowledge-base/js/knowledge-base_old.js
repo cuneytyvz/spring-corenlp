@@ -303,14 +303,22 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                 $ss.saveEntity = $scope.saveEntity;
 
+                if ($ss.selectedEntity.description.length > 1315) {
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315) + "...";
+                    $ss.displayShowMore = true;
+                } else {
+                    $ss.description = $ss.selectedEntity.description;
+                    $ss.displayShowMore = false;
+                }
+
                 $ss.showMore = function () {
-                    $ss.descriptionShown = $ss.description;
+                    $ss.description = $ss.selectedEntity.description;
                     $ss.displayShowMore = false;
                     $ss.displayShowLess = true;
                 };
 
                 $ss.showLess = function () {
-                    $ss.descriptionShown = $ss.description.slice(0, 1315);
+                    $ss.description = $ss.selectedEntity.description.slice(0, 1315);
                     $ss.displayShowLess = false;
                     $ss.displayShowMore = true;
                 };
@@ -319,30 +327,18 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     .then(function (response) {
                         $ss.annotationEntities = response.data;
 
-                        $ss.description = '';
+                        $ss.newDescription = "";
                         for (var i = 0; i < $ss.annotationEntities.length; i++) {
+//                            $ss.description = ;
                             console.log('');
 
-                            var before = $ss.selectedEntity.description.slice(0, $ss.annotationEntities[i].offset);
-                            var after = $ss.selectedEntity.description.slice($ss.annotationEntities[i].offset + $ss.annotationEntities[i].surfaceForm.length, $ss.selectedEntity.description.length);
+                            var before = $ss.description.slice(0, $ss.annotationEntities[i].offset);
+                            var after = $ss.description.slice($ss.annotationEntities[i].offset + $ss.annotationEntities[i].surfaceForm.length, $ss.description.length);
 
-                            $ss.description += before + '<a target="_blank" href="'+ $ss.annotationEntities[i].uri +'">' + $ss.annotationEntities[i].surfaceForm + '</a>' + after;
+                            $ss.newDescription += before + '<a href="">' + $ss.annotationEntities[i].surfaceForm + '</a>' + after;
                         }
 
-                        if($ss.description == '') {
-                            $ss.description = $ss.selectedEntity.description;
-                        }
-
-                        $ss.descriptionShown = $ss.description;
-//                        if ($ss.selectedEntity.description.length > 1315) {
-//                            $ss.descriptionShown = $ss.description.slice(0, 1315) + "...";
-//                            $ss.displayShowMore = true;
-//                        } else {
-//                            $ss.descriptionShown = $ss.description;
-//                            $ss.displayShowMore = false;
-//                        }
-
-//                        $scope.$digest();
+//                        $ss.description = $ss.newDescription;
                     }, printError);
 
                 $ss.displayShowNotes = false;

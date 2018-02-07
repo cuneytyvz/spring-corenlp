@@ -24,7 +24,7 @@ var dbpedia = (function () {
 
     // live.
     var getItem = function ($http, uri, onSuccess) {
-        var jsonLDUri = 'http://dbpedia.org/sparql?default-graph-uri=' +
+        var jsonLDUri = 'http://live.dbpedia.org/sparql?default-graph-uri=' +
             'http%3A%2F%2Fdbpedia.org&query=DESCRIBE%20' +
             '%3C' + uri + '%3E' + // <dbpedia.org/resource/item>
             '&' +

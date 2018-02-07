@@ -14,7 +14,8 @@ public class AnnotationItem {
     public int offset;
     public String uri;
     public Long entityId;
-    public Long relatedEntityId;
+    public Long referencedEntityId;
+    public Entity referencedEntity;
 
     public AnnotationItem() {
 
@@ -23,8 +24,8 @@ public class AnnotationItem {
     public AnnotationItem(ResultSet rs) throws SQLException {
         id = rs.getLong("ai.id");
         entityId = rs.getLong("ai.entity_id");
-        entityId = rs.getLong("ai.related_entity_id");
-        surfaceForm = rs.getString("ai.surcafeForm");
+        referencedEntityId = rs.getLong("ai.referenced_entity_id");
+        surfaceForm = rs.getString("ai.surface_form");
         types = rs.getString("ai.types");
         offset = rs.getInt("ai.offset");
         uri = rs.getString("ai.uri");
@@ -78,11 +79,19 @@ public class AnnotationItem {
         this.entityId = entityId;
     }
 
-    public Long getRelatedEntityId() {
-        return relatedEntityId;
+    public Long getReferencedEntityId() {
+        return referencedEntityId;
     }
 
-    public void setRelatedEntityId(Long relatedEntityId) {
-        this.relatedEntityId = relatedEntityId;
+    public void setReferencedEntityId(Long referencedEntityId) {
+        this.referencedEntityId = referencedEntityId;
+    }
+
+    public Entity getReferencedEntity() {
+        return referencedEntity;
+    }
+
+    public void setReferencedEntity(Entity referencedEntity) {
+        this.referencedEntity = referencedEntity;
     }
 }
