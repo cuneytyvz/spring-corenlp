@@ -24,10 +24,24 @@ public class Property {
     private Integer visibility;
     private Long metaPropertyId;
     private MetaProperty metaProperty;
+    private Entity customEntity;
+    private Long customEntityId;
     private List<Subproperty> subproperties = new ArrayList<>();
 
     public Property() {
     }
+
+    public Property(MetaProperty mp) {
+        uri = mp.getUri();
+        datatype = mp.getDatatype();
+        description = mp.getDescription();
+        name = mp.getName();
+        propertyType = mp.getPropertyType();
+        source = mp.getSource();
+        visibility = mp.getVisibility();
+        metaPropertyId = mp.getId();
+    }
+
 
     public Property(ResultSet rs) throws SQLException {
         id = rs.getLong("pr.id");
@@ -40,6 +54,7 @@ public class Property {
         source = rs.getString("pr.source");
         description = rs.getString("pr.description");
         propertyType = rs.getString("pr.property_type");
+        customEntityId = rs.getLong("pr.custom_entity_id");
     }
 
     public Long getId() {
@@ -168,5 +183,21 @@ public class Property {
 
     public void setMetaProperty(MetaProperty metaProperty) {
         this.metaProperty = metaProperty;
+    }
+
+    public Entity getCustomEntity() {
+        return customEntity;
+    }
+
+    public void setCustomEntity(Entity customEntity) {
+        this.customEntity = customEntity;
+    }
+
+    public Long getCustomEntityId() {
+        return customEntityId;
+    }
+
+    public void setCustomEntityId(Long customEntityId) {
+        this.customEntityId = customEntityId;
     }
 }

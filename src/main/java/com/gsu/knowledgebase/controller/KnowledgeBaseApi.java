@@ -71,6 +71,58 @@ public class KnowledgeBaseApi {
         return id;
     }
 
+    @RequestMapping(value = "/saveCustomProperty", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object saveCustomProperty(@RequestBody CustomProperty customProperty) throws Exception {
+        Entity s = customProperty.getSubject();
+        MetaProperty mp = customProperty.getPredicate();
+        Entity o = customProperty.getObject();
+
+        if (mp.getId() == null) {
+            mp.setVisibility(3);
+            Long id = knowledgeBaseDao.saveMetaProperty(mp);
+            mp.setId(id);
+        }
+
+        if (o.getId() == null) {
+            Entity e = knowledgeBaseDao.findEntityByDbpediaUriWikidataId(o);
+
+            if (e == null) {
+                o.setSource("custom");
+                Long id = knowledgeBaseDao.saveEntity(o);
+
+                o.setId(id);
+            } else {
+                customProperty.setObject(e);
+            }
+        }
+
+        Property p = new Property(mp);
+        if (o.getEntityType().equals("semantic-web")) {
+            if (o.getDbpediaUri() != null && o.getDbpediaUri().length() > 0) {
+                p.setValue(o.getDbpediaUri());
+            } else {
+                p.setValue(o.getWikidataId());
+            }
+        } else { // custom entity
+            p.setValue(o.getName());
+            p.setCustomEntityId(o.getId());
+        }
+
+        p.setEntityId(customProperty.getSubject().getId());
+        p.setValueLabel(o.getName());
+
+        // if such a triple does not exists then save...
+        List<Property> results = knowledgeBaseDao.findPropertiesByTriples(s.getId(), p.getMetaPropertyId(), p.getValueLabel());
+        if (results == null || results.size() == 0)
+            knowledgeBaseDao.saveProperty(p);
+
+        return null;
+    }
+
     @RequestMapping(value = "/removeEntity/{id}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
@@ -199,8 +251,7 @@ public class KnowledgeBaseApi {
         knowledgeBaseDao.saveProperties(entity.getProperties());
 
         List<Subproperty> subproperties = new ArrayList<>();
-        for (Property property : entity.getProperties())
-        {
+        for (Property property : entity.getProperties()) {
             for (Subproperty subproperty : property.getSubproperties()) {
                 subproperty.setPropertyId(property.getId());
                 subproperties.add(subproperty);
@@ -215,7 +266,7 @@ public class KnowledgeBaseApi {
             public void run() {
                 Collection<AnnotationItem> items = dbpediaSpotlight.annotateText(entity.getDescription());
 
-                for(AnnotationItem i : items) {
+                for (AnnotationItem i : items) {
                     i.setReferencedEntityId(entity.getId());
                 }
 
@@ -309,7 +360,7 @@ public class KnowledgeBaseApi {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object getAnnotationEntities(@PathVariable("entityId") Integer entityId ) throws Exception {
+    Object getAnnotationEntities(@PathVariable("entityId") Integer entityId) throws Exception {
         Collection<AnnotationItem> annotationItems = knowledgeBaseDao.findAnnotationItems(entityId);
 
 //        for (AnnotationItem item : annotationItems) {
@@ -335,6 +386,35 @@ public class KnowledgeBaseApi {
 //        }
 
         return entities;
+    }
+
+    @RequestMapping(value = "/autocompleteProperty/{prefix}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object autocompleteProperty(@PathVariable("prefix") String prefix) throws Exception {
+        Collection<MetaProperty> metaProperties = knowledgeBaseDao.findPropertiesByPrefix(prefix);
+
+        List<MetaProperty> withoutSameAs = new ArrayList<>();
+
+        for (MetaProperty mp1 : metaProperties) {
+            if (mp1.getSameAs() == null || mp1.getSameAs() == 0) {
+                withoutSameAs.add(mp1);
+            } else {
+                boolean sameAsExists = false;
+                for (MetaProperty mp2 : metaProperties) {
+                    if (mp2.getSameAs() != null && mp1.getSameAs().equals(mp2.getSameAs())) {
+                        sameAsExists = true;
+                    }
+                }
+
+                if (!sameAsExists) {
+                    withoutSameAs.add(mp1);
+                }
+            }
+        }
+
+        return withoutSameAs;
     }
 
     @RequestMapping(value = "/getEntityById/{id}", method = RequestMethod.GET,

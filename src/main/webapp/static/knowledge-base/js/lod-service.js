@@ -1,16 +1,19 @@
 var lodService = (function () {
 
-    var getItem = function ($scope, $http, $q, uri, callback) {
-        $scope.propertiesLoading = true;
+    var getItem = function ($http, $q, uri, callback) {
         dbpedia.getItem($http, uri, function (item) {
-            $scope.selectedEntity = item;
+            var response = item;
 
             wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
-                parseWikidataResponse($scope, wikidataItem);
+                if (wikidataItem) {
+                    response.properties = response.properties.concat(wikidataItem.properties);
+                    response.shortDescription = wikidataItem.description;
 
-                $scope.propertiesLoading = false;
+                    if (!response.image)
+                        response.image = wikidataItem.image;
+                }
 
-                callback($scope);
+                callback(response);
             });
         });
     };
@@ -28,34 +31,36 @@ var lodService = (function () {
         }
     }
 
-    var fetchPropertyFromRelevantSource = function ($scope, $http, $q, property, callback) {
-        $scope.propertiesLoading = true;
-
+    var fetchPropertyFromRelevantSource = function ($http, $q, property, callback,errCallback) {
         if (property.source == 'wikidata') {
             wikidata.getItem($http, $q, property.value, function (wikidataItem) {
                 if (!wikidataItem) {
-                    $scope.propertiesLoading = false;
+                    errCallback();
                     return;
                 }
 
-                $scope.selectedEntity = wikidataItem;
+                callback(wikidataItem);
 
-                callback($scope);
-                $scope.propertiesLoading = false;
             });
         } else {
             dbpedia.getItem($http, property.value, function (item) {
                 if (!item) {
-                    $scope.propertiesLoading = false;
+                    errCallback();
                     return;
                 }
-                $scope.selectedEntity = item;
+
+                var response = item;
 
                 wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
-                    parseWikidataResponse($scope,wikidataItem);
-                    callback($scope);
+                    if (wikidataItem) {
+                        response.properties = response.properties.concat(wikidataItem.properties);
+                        response.shortDescription = wikidataItem.description;
 
-                    $scope.propertiesLoading = false;
+                        if (!response.image)
+                            response.image = wikidataItem.image;
+                    }
+
+                    callback(response);
                 });
 
             });

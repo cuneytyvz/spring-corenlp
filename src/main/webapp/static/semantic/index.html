@@ -86,46 +86,42 @@
             <div id="graph">
                 <svg>
 
-                    <div class="side-menu-wrapper">
-                        <div class="side-menu-icon">
-                            <a href="#" ng-click="openCloseSideBar()">
-                                <img src="static/semantic/img/sidemenu-icon.png"/>
+                    <div class="side-menu-items">
+                        <div class="graph-box-edge graphs">
+                            <div class="graph-box">
+
+                                <button class="accordion" ng-repeat="g in graphs"
+                                        ng-click="getSavedGraph(g)">
+                                    {{g.name}}
+                                </button>
+                            </div>
+                            <a href="#" ng-click="openGraphMenu()">
+                                <div class="side-menu">
+                                    <div class="side-menu-edge">
+                                        <p class="">Graphs</p>
+                                    </div>
+                                </div>
                             </a>
                         </div>
 
-                        <div class="side-menu">
-                            <div class="menu-item" ng-repeat="g in graphs">
-                                <a href="#" ng-click="getSavedGraph(g)">{{g.name}}</a>
+                        <div class="graph-box-edge albums">
+                            <div class="graph-box">
+
+                                <button class="accordion" ng-repeat="a in selectedNode.albums"
+                                        ng-click="showTracks(a,selectedNode)">
+                                    {{a.name}}
+                                </button>
+                                <div class="panel" ng-repeat="t in a.tracks">
+                                    <p>{{t.title}}</p>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!--<div class="album-box-edge">-->
-                        <!--<div class="album-box">-->
-                            <!--<button class="accordion" ng-repeat="n in graph.nodes"-->
-                                    <!--ng-click="showTracks(a,selectedNode)">-->
-                                <!--{{a.name}}-->
-                            <!--</button>-->
-                        <!--</div>-->
-                    <!--</div>-->
-
-                    <div class="album-box-edge">
-                        <div class="album-box">
-                            <!--<div>-->
-                            <!--<ul>-->
-                            <!--<li ng-repeat="r in releases">-->
-                            <!--{{r.title}}-->
-                            <!--</li>-->
-                            <!--</ul>-->
-                            <!--</div>-->
-
-                            <button class="accordion" ng-repeat="a in selectedNode.albums"
-                                    ng-click="showTracks(a,selectedNode)">
-                                {{a.name}}
-                            </button>
-                            <div class="panel" ng-repeat="t in a.tracks">
-                                <p>{{t.title}}</p>
-                            </div>
+                            <a href="#" ng-click="openAlbumMenu()">
+                                <div class="side-menu albums">
+                                    <div class="side-menu-edge">
+                                        <p class="">Albums</p>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </svg>

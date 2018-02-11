@@ -24,6 +24,7 @@ public class Entity implements Serializable {
     private Long subCategoryId = 1l;
     private String categoryName = "Other";
     private String subCategoryName = "All";
+    private String source;
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
@@ -47,6 +48,7 @@ public class Entity implements Serializable {
         note = rs.getString("e.note");
         image = rs.getString("e.image");
         smallImage = rs.getString("e.small_image");
+        source = rs.getString("e.source");
     }
 
     public Long getId() {
@@ -200,5 +202,13 @@ public class Entity implements Serializable {
 
     public void setSubCategoryName(String subCategoryName) {
         this.subCategoryName = subCategoryName;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

@@ -23,7 +23,7 @@ public class KnowledgeBaseDao {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
                 ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?";
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?, source = ?";
 
         Connection conn = null;
 
@@ -60,6 +60,7 @@ public class KnowledgeBaseDao {
             ps.setString(14, entity.getSmallImage());
             ps.setString(15, entity.getNote());
             ps.setLong(16, entity.getSubCategoryId());
+            ps.setString(17, entity.getSource());
             ps.execute();
 
             ps.close();
@@ -132,7 +133,7 @@ public class KnowledgeBaseDao {
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1,entityId);
+            ps.setInt(1, entityId);
 
             List<AnnotationItem> items = new ArrayList<>();
 
@@ -251,7 +252,7 @@ public class KnowledgeBaseDao {
     public Long saveProperty(Property property) {
 
         String sql = "insert into PROPERTY set id = ?, description = ?, name = ?, lang = ?, value = ?, " +
-                " uri = ?, datatype = ?, source = ?, entity_id = ?, value_label = ?, property_type = ?";
+                " uri = ?, datatype = ?, source = ?, entity_id = ?, value_label = ?, property_type = ?, meta_property_id = ?";
 
         Connection conn = null;
 
@@ -274,6 +275,7 @@ public class KnowledgeBaseDao {
             ps.setLong(9, property.getEntityId());
             ps.setString(10, property.getValueLabel());
             ps.setString(11, property.getPropertyType());
+            ps.setLong(12, property.getMetaPropertyId());
 
             ps.execute();
 
@@ -532,6 +534,47 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public Long saveMetaProperty(MetaProperty property) {
+
+        String sql = "insert into meta_property set id = ?, name = ?, uri = ?, source = ?," +
+                "visibility = ?, description = ?, property_type = ?, datatype = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "meta_property", "id");
+            property.setId(id);
+
+            ps.setLong(1, id);
+            ps.setString(2, property.getName());
+            ps.setString(3, property.getUri());
+            ps.setString(4, property.getSource());
+            ps.setInt(5, 0);
+            ps.setString(6, property.getDescription());
+            ps.setString(7, property.getPropertyType());
+            ps.setString(8, property.getDatatype());
+
+            ps.execute();
+
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public Collection<Entity> findAllEntities() {
         String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
                 " left join meta_property mp on pr.uri = mp.uri  and mp.visibility = 1 " +
@@ -586,7 +629,7 @@ public class KnowledgeBaseDao {
 
     public Entity findEntityById(Long id) {
         String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
-                " left join meta_property mp on pr.uri = mp.uri   " + // and mp.visibility != 0
+                " left join meta_property mp on pr.meta_property_id = mp.id " + // pr.uri = mp.uri
                 " left join category c on e.category_id = c.id   " + // and mp.visibility != 0
                 " where e.id = ?";
 
@@ -618,7 +661,6 @@ public class KnowledgeBaseDao {
                 Integer show = rs.getInt("mp.visibility");
                 property.setVisibility(show);
 
-
                 entity.getProperties().add(property);
             }
 
@@ -640,7 +682,9 @@ public class KnowledgeBaseDao {
 
     public Collection<Entity> findAllEntitiesLazy() {
         String sql = "select * from entity e " +
-                " where entity_type <> 'web-page-annotation' &&  entity_type <> 'non-semantic-web';";
+                " where entity_type <> 'web-page-annotation' " +
+                " and  entity_type <> 'non-semantic-web' " +
+                " and source = 'memory-item';";
 
         Connection conn = null;
 
@@ -667,6 +711,43 @@ public class KnowledgeBaseDao {
             ps.close();
 
             return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<MetaProperty> findPropertiesByPrefix(String prefix) {
+        String sql = "select * from meta_property mp where LOWER(mp.name) like ? or LOWER(mp.proper_name) like ?";
+
+        Connection conn = null;
+
+        HashMap<Long, Entity> map = new HashMap<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, prefix.toLowerCase() + '%');
+            ps.setString(2, prefix.toLowerCase() + '%');
+
+            ResultSet rs = ps.executeQuery();
+
+            List<MetaProperty> metaProperties = new ArrayList<>();
+            while (rs.next()) {
+                MetaProperty mp = new MetaProperty(rs);
+
+                metaProperties.add(mp);
+            }
+
+            rs.close();
+            ps.close();
+
+            return metaProperties;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -711,8 +792,9 @@ public class KnowledgeBaseDao {
     }
 
 
-    public List<Property> findPropertiesByEntity(Long id) {
-        String sql = "select * from property pr left join meta_property mp on mp.id = pr.meta_property_id where pr.id = >;";
+    public List<Property> findPropertiesByTriples(Long subjectEntityId, Long predicatePropertyId, String objectValue) {
+        String sql = "select * from property pr left join meta_property mp on mp.id = pr.meta_property_id " +
+                " where pr.entity_id = ? and meta_property_id = ? and value_label = ?;";
 
         Connection conn = null;
 
@@ -720,16 +802,16 @@ public class KnowledgeBaseDao {
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setLong(1, id);
+            ps.setLong(1, subjectEntityId);
+            ps.setLong(2, predicatePropertyId);
+            ps.setString(3, objectValue);
 
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Integer show = rs.getInt("visibility");
                 Property p = new Property(rs);
                 MetaProperty mp = new MetaProperty(rs);
                 p.setMetaProperty(mp);
-                p.setVisibility(show);
 
                 properties.add(p);
             }
@@ -983,6 +1065,62 @@ public class KnowledgeBaseDao {
                 try {
                     conn.close();
                 } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Entity findEntityByDbpediaUriWikidataId(Entity e) {
+        String sql = "select * from entity e left join property pr on pr.entity_id = e.id where ";
+
+        int counter = 0;
+        if (e.getDbpediaUri() != null && e.getDbpediaUri().length() > 0) {
+            sql += " dbpedia_uri = ? ";
+            counter++;
+        }
+        if (e.getWikidataId() != null && e.getWikidataId().length() > 0) {
+            if (counter > 0)
+                sql += " or ";
+
+            sql += " wikidata_id = ?";
+            counter++;
+        }
+
+        Connection conn = null;
+
+        Entity entity = null;
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            counter = 1;
+            if (e.getDbpediaUri() != null && e.getDbpediaUri().length() > 0) {
+                ps.setString(counter++, e.getDbpediaUri());
+            }
+
+            if (e.getWikidataId() != null && e.getWikidataId().length() > 0) {
+                ps.setString(counter++, e.getWikidataId());
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                entity = new Entity(rs);
+
+                Property property = new Property(rs);
+                entity.getProperties().add(property);
+            }
+
+            rs.close();
+            ps.close();
+
+            return entity;
+        } catch (SQLException e1) {
+            throw new RuntimeException(e1);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e2) {
                 }
             }
         }

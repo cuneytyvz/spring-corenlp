@@ -64,34 +64,34 @@ public class SemanticApi {
             links.add(new Link(node, n, 1.0));
         }
 
-        final Graph graph = new Graph(nodes, links);
+        Graph graph = new Graph(nodes, links);
 
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                for (Node node : graph.getNodes()) {
-                    Node dbNode = semanticGraphDao.getNodeByName(node.getName());
+//        final ExecutorService executor = Executors.newSingleThreadExecutor();
+//        executor.execute(new Runnable() {
+//            @Override
+//            public void run() {
+                for (Node n : graph.getNodes()) {
+                    Node dbNode = semanticGraphDao.getNodeByName(n.getName());
 
                     if (dbNode == null) {
-                        Integer id = semanticGraphDao.saveNode(node);
-                        node.setDbId(id);
+                        Integer id = semanticGraphDao.saveNode(n);
+                        n.setDbId(id);
                     } else if (dbNode.getBio() == null) {
-                        node.setDbId(dbNode.getDbId());
-                        Integer id = semanticGraphDao.updateNode(node);
+                        n.setDbId(dbNode.getDbId());
+                        Integer id = semanticGraphDao.updateNode(n);
                     } else {
-                        node.setDbId(dbNode.getDbId());
+                        n.setDbId(dbNode.getDbId());
                     }
                 }
 
-                for (Node node : graph.getNodes()) {
+                for (Node n : graph.getNodes()) {
                     for (Link link : graph.getLinks()) {
-                        if (link.getSource().getName().equals(node.getName())) {
-                            link.setSource(node);
+                        if (link.getSource().getName().equals(n.getName())) {
+                            link.setSource(n);
                         }
 
-                        if (link.getTarget().getName().equals(node.getName())) {
-                            link.setTarget(node);
+                        if (link.getTarget().getName().equals(n.getName())) {
+                            link.setTarget(n);
                         }
                     }
                 }
@@ -103,8 +103,8 @@ public class SemanticApi {
                         semanticGraphDao.saveLink(link.getSource().getDbId(), link.getTarget().getDbId());
                     }
                 }
-            }
-        });
+//            }
+//        });
 
         return graph;
     }
@@ -114,7 +114,7 @@ public class SemanticApi {
     public
     @ResponseBody
     void saveNode(@RequestParam Integer nodeId, @RequestParam Integer graphId) throws Exception {
-        if (!semanticGraphDao.isGraphNodeSaved(1, nodeId))
+        if (!semanticGraphDao.isGraphNodeSaved(graphId, nodeId))
             semanticGraphDao.saveGraphNode(graphId, nodeId);
     }
 

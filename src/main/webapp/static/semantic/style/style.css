@@ -265,30 +265,68 @@ html[xmlns] .clearfix {
     color: #4D4D4D;
 }
 
-.album-box-edge {
+.graph-box-edge {
     height: 350px;
     width: 300px;
     background-color: #006bff;
     position: absolute;
     top: 350px;
-    left: 25px;
+    left: -290px;
     opacity: 0.9;
+    background-color: #4f9aff;
 }
 
-.album-box {
+.graph-box {
     margin-top: 10px;
     margin-left: 10px;
     background-color: white;
     height: 330px;
     width: 280px;
     overflow-y: scroll;
+    background-color: #66b2dd;
+    box-shadow: 1px 1px 20px 5px #6892fc;
+}
+
+.side-menu {
+    margin-left: 10px;
+    background-color: #6892fc;
+    left: 290px;
+    position: absolute;
+    top: 10px;
+    width: 20px;
+    height: 75px;
+    box-shadow: 1px 1px 20px 10px #6892fc;
+}
+
+.side-menu.albums {
+    top: 100px;
+}
+
+.side-menu-edge {
+    height: 100px;
+    margin-left: 20px;
+}
+
+.side-menu p {
+    color: #f6f328;
+    transform: rotate(90deg);
+    transform-origin: left top 0;
+    font-weight: 500;
+    font-size: 17px;
+    font-family: Times New Roman;
+}
+
+/* coloring */
+.graph-box {
+
+
 }
 
 /* Accordion */
 /* Style the buttons that are used to open and close the accordion panel */
 button.accordion {
     background-color: #eee;
-    color: #444;
+    color: #f6f328;
     cursor: pointer;
     padding: 18px;
     width: 100%;
@@ -310,23 +348,10 @@ div.panel {
     display: none;
 }
 
-.show_names {
+.show_names {top: 75px;
     position: absolute !important;
     top: 50px;
     right: 300px;
-}
-
-/* coloring */
-.album-box {
-    background-color: #66b2dd;
-    /*background-color : #8787ff;*/
-    box-shadow: 1px 1px 20px 20px #6892fc;
-
-}
-
-.album-box-edge {
-    /*background-color: #3791ca;*/
-    background-color: #4f9aff;
 }
 
 .selected-circle {
@@ -370,16 +395,6 @@ section#right {
     padding-bottom: 5px;
 }
 
-.side-menu-wrapper {
-    position: absolute;
-    top: 150px;
-    left: -120px;
-    width: 150px;
-}
-
-.side-menu {
-
-}
 
 .menu-item {
     width: 200px;
@@ -387,13 +402,4 @@ section#right {
 
 .menu-item a {
     color: #f6f328;
-}
-
-.side-menu-icon {
-    margin-bottom : 30px;
-}
-
-.side-menu-icon img {
-    width: 30px;
-    float: right;
 }

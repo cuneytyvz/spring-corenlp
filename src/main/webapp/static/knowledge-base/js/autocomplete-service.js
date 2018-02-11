@@ -22,7 +22,10 @@ var autocompleteService = (function () {
                 $scope.searchValue = ui.item.value;
 
                 $scope.selectedEntities = [];
-                lodService.getItem($scope, $http, $q, ui.item.uri, callback);
+
+                $scope.propertiesLoading = true;
+                lodService.getItem($http, $q, ui.item.uri, callback);
+                $scope.propertiesLoading = false;
 
             }, change: function (event, ui) { // not-selected
                 if (ui.item === null) {
@@ -43,6 +46,78 @@ var autocompleteService = (function () {
         });
     };
 
+    var configureCustomObject = function ($http, $q, callback, changeCallback) {
+        $("#custom-object-input").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var term = request.term;
+                if (term in cache) {
+                    response(cache[ term ]);
+                    return;
+                }
+
+                dbpedia.prefixSearch($http, request.term, function (results) {
+                    cache[ term ] = response;
+                    response(results);
+                });
+
+            }, select: function (event, ui) {
+                this.value = ui.item.value;
+
+                lodService.getItem($http, $q, ui.item.uri, callback);
+
+            }, change: function (event, ui) { // not-selected
+                if (ui.item === null) {
+                    var r = {name: $('#custom-object-input').val(), entityType: 'non-semantic-web'};
+
+                    callback(r.name == '' ? null : r);
+                } else {
+                }
+            }
+        });
+    };
+
+    var configureCustomProperty = function ($http, $q, callback, changeCallback) {
+        $("#custom-property-input").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var term = request.term;
+                if (term in cache) {
+                    response(cache[ term ]);
+                    return;
+                }
+
+                $http.get('knowledgeBase/api/autocompleteProperty/' + request.term)
+                    .then(function (dbResponse) {
+                        cache[ term ] = dbResponse.data;
+
+                        var results = [];
+                        for (var i = 0; i < dbResponse.data.length; i++) {
+                            results.push({id: dbResponse.data[i].id, value: dbResponse.data[i].name, object: dbResponse.data[i]});
+                        }
+
+                        response(results);
+
+                    }, function (err) {
+                        printError(err);
+                    });
+                return;
+
+            }, select: function (event, ui) {
+                this.value = ui.item.value;
+
+                callback(ui.item.object);
+
+            }, change: function (event, ui) { // not-selected
+                if (ui.item === null) {
+                    var r = {name: $('#custom-property-input').val(), source: 'custom'};
+                    callback(r.name == '' ? null : r);
+                } else {
+                }
+            }
+        });
+    };
+
     var configureCategory = function ($scope) {
 
         $("#category-input").autocomplete({
@@ -53,7 +128,7 @@ var autocompleteService = (function () {
                     var c = $scope.categories[i];
 
                     if (c.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
-                        cats.push({id: c.id, label: c.name, value: c.name, subCategories : c.subCategories});
+                        cats.push({id: c.id, label: c.name, value: c.name, subCategories: c.subCategories});
                 }
 
                 response(cats);
@@ -84,7 +159,7 @@ var autocompleteService = (function () {
                                 var c = $scope.categories[i];
 
                                 if (c.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
-                                    cats.push({id: c.id, label: c.name, value: c.name, subCategories : c.subCategories});
+                                    cats.push({id: c.id, label: c.name, value: c.name, subCategories: c.subCategories});
                             }
 
                             response(cats);
@@ -184,6 +259,8 @@ var autocompleteService = (function () {
 
     return {
         configureCategory: configureCategory,
-        configureEntity: configureEntity
+        configureEntity: configureEntity,
+        configureCustomObject: configureCustomObject,
+        configureCustomProperty: configureCustomProperty
     }
 })();

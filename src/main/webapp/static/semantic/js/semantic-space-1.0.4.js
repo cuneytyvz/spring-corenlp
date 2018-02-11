@@ -19,6 +19,7 @@ var semantic = (function () {
         var graph = {
             nodes: [],
             links: [],
+            selectedNode: null,
             linkIndexes: [],
             clear: function () {
                 this.nodes = [];
@@ -26,6 +27,8 @@ var semantic = (function () {
                 this.linkIndexes = [];
             },
             merge: function (_graph) {
+                this.selectedNode = _graph.selectedNode;
+
                 var _nodes = _graph.nodes;
                 var _links = _graph.links;
                 for (var i = 0; i < _nodes.length; i++) {
@@ -54,7 +57,7 @@ var semantic = (function () {
                             return node.id;
                         }).indexOf(_links[i].target.id);
 
-                        var link = new Link(sourceIndex, targetIndex,
+                        var link = new Link(this.nodes[sourceIndex], this.nodes[targetIndex],
                             _links[i].value);
 
                         this.links.push(link);
@@ -98,9 +101,6 @@ var semantic = (function () {
 
             if (incomingGraph)
                 graph.merge(incomingGraph);
-
-//            console.log("Merged graph : " + JSON.stringify(graph));
-            var test = force.nodes();
 
             // Join
             node = node.data(force.nodes(), function (d) {
@@ -280,8 +280,6 @@ var semantic = (function () {
                 var tmp = d.name.replace(" ", "+").toLowerCase();
                 tmp = escape(tmp);
 
-                d
-
                 // lastfm url
                 var url = "http://www.lastfm.com.tr/music/" + tmp;
 
@@ -335,7 +333,7 @@ var semantic = (function () {
                     }
                 }
 
-                drawGraph();
+//                drawGraph();
             });
 
             $(document).bind('nodeRemoved', function (e, nodeName) {
@@ -357,27 +355,7 @@ var semantic = (function () {
             });
 
             $(document).bind('goToNodePosition', function (e, nodeName) {
-                for (var i = 0; i < graph.nodes.length; i++) {
-                    if (graph.nodes[i].name == nodeName) {
-                        graph.nodes[i].saved = true;
-                    }
-                }
-
-                var node = svg.select('g[name = "' + nodeName + '"]');
-                var sourceX = parseInt(node.attr('x'));
-                var sourceY = parseInt(node.attr('y'));
-
-                var targetX = parseInt(node.attr('x')) - 400;
-                var targetY = parseInt(node.attr('y')) - 250;
-
-//                if()
-//
-//                Math.abs(targetX - sourceX)
-//                for(var i = 0; i < )
-
-                svg.attr('viewBox', x + ' ' + y + " 1024 960");
-
-                drawGraph();
+                goToNodePosition(nodeName);
             });
 
             $(document).bind('drawGraph', function (e, nodeName) {
@@ -385,6 +363,31 @@ var semantic = (function () {
             });
 
             force.start();
+        }
+
+        function slowlyGoToNodePosition(nodeName,ms, count, remained) {
+            setTimeout(function () {
+                goToNodePosition(nodeName);
+
+                if (!remained) remained = count;
+                if (remained-- > 0) {
+                    slowlyGoToNodePosition(ms, count, remained)
+                } else {
+                    return;
+                }
+
+            }, ms / count);
+        }
+
+        function goToNodePosition(nodeName) {
+            var node = svg.select('g[name = "' + nodeName + '"]');
+
+            if(node[0][0] == null) return;
+
+            var x = parseInt(node.attr('x')) - 500;
+            var y = parseInt(node.attr('y')) - 100;
+
+            svg.attr('viewBox', x + ' ' + y + " 960 500");
         }
 
         setTimeout(function () {
@@ -589,11 +592,6 @@ var semantic = (function () {
         }
 
         function processIncomingData(data) {
-            // Process
-            var graph = {
-                nodes: [],
-                links: []
-            };
 
             // image url'inin alınarak Image() objesine dönüstürülmesi.
             var nodes = data.nodes;
@@ -601,7 +599,10 @@ var semantic = (function () {
                 nodes[i].image = createHTMLImage(nodes[i].mediumImg, nodes[i].id);
             }
 
-//            console.log("incomingGraph : " + JSON.stringify(data));
+            if (lastSelectedNode) {
+                lastSelectedNode.element.select(".selected-circle").attr("display", "none");
+            }
+
             drawGraph(data);
         }
 
