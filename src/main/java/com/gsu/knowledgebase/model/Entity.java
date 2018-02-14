@@ -19,12 +19,15 @@ public class Entity implements Serializable {
     private String webUri;
     private String image;
     private String smallImage;
+    private String secondaryImage;
+    private String smallSecondaryImage;
     private String note;
     private Long categoryId = 1l;
     private Long subCategoryId = 1l;
     private String categoryName = "Other";
     private String subCategoryName = "All";
     private String source;
+    private String webPageText;
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
@@ -48,7 +51,10 @@ public class Entity implements Serializable {
         note = rs.getString("e.note");
         image = rs.getString("e.image");
         smallImage = rs.getString("e.small_image");
+        secondaryImage = rs.getString("e.secondary_image");
+        smallSecondaryImage = rs.getString("e.small_secondary_image");
         source = rs.getString("e.source");
+        webPageText = rs.getString("e.web_page_text");
     }
 
     public Long getId() {
@@ -210,5 +216,29 @@ public class Entity implements Serializable {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public String getSecondaryImage() {
+        return secondaryImage;
+    }
+
+    public void setSecondaryImage(String secondaryImage) {
+        this.secondaryImage = secondaryImage;
+    }
+
+    public String getSmallSecondaryImage() {
+        return smallSecondaryImage;
+    }
+
+    public void setSmallSecondaryImage(String smallSecondaryImage) {
+        this.smallSecondaryImage = smallSecondaryImage;
+    }
+
+    public String getWebPageText() {
+        return webPageText;
+    }
+
+    public void setWebPageText(String webPageText) {
+        this.webPageText = webPageText;
     }
 }

@@ -23,7 +23,8 @@ public class KnowledgeBaseDao {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
                 ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?, source = ?";
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?, source = ?," +
+                " secondary_image = ?, small_secondary_image = ?, web_page_text = ?";
 
         Connection conn = null;
 
@@ -61,6 +62,9 @@ public class KnowledgeBaseDao {
             ps.setString(15, entity.getNote());
             ps.setLong(16, entity.getSubCategoryId());
             ps.setString(17, entity.getSource());
+            ps.setString(18, entity.getSecondaryImage());
+            ps.setString(19, entity.getSmallSecondaryImage());
+            ps.setString(20, entity.getWebPageText());
             ps.execute();
 
             ps.close();

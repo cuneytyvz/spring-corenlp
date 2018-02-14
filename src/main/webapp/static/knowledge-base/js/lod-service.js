@@ -11,6 +11,8 @@ var lodService = (function () {
 
                     if (!response.image)
                         response.image = wikidataItem.image;
+
+                    response.secondaryImage = wikidataItem.image;
                 }
 
                 callback(response);
@@ -58,6 +60,8 @@ var lodService = (function () {
 
                         if (!response.image)
                             response.image = wikidataItem.image;
+
+                        response.secondaryImage = wikidataItem.image;
                     }
 
                     callback(response);

@@ -23,30 +23,43 @@ var autocompleteService = (function () {
 
                 $scope.selectedEntities = [];
 
+                var e = _.find($scope.entities, {dbpediaUri: ui.item.uri}); // is property(entity) included in database?
+
                 $scope.propertiesLoading = true;
-                lodService.getItem($http, $q, ui.item.uri, callback);
-                $scope.propertiesLoading = false;
+                if (e) {
+                    $http.get('knowledgeBase/api/getEntityById/' + e.id)
+                        .then(function(response){
+                            callback(response.data);
+                        }, function (err) {
+                            printError(err);
+                        });
+                    return;
+                } else {
+                    lodService.getItem($http, $q, ui.item.uri, callback);
+                }
 
             }, change: function (event, ui) { // not-selected
                 if (ui.item === null) {
-                    if (isUrl($("#entity-input").val())) {
-                        $scope.selectedEntity = {
-                            name: '',
-                            webUri: $("#entity-input").val(),
-                            entityType: 'web-page'
-                        };
-                    } else {
-                        $scope.selectedEntity = {
-                            name: $("#entity-input").val(),
-                            entityType: 'non-semantic-web'
+                    $scope.$apply(function () {
+                        if (isUrl($("#entity-input").val())) {
+                            $scope.selectedEntity = {
+                                name: '',
+                                webUri: $("#entity-input").val(),
+                                entityType: 'web-page'
+                            };
+                        } else {
+                            $scope.selectedEntity = {
+                                name: $("#entity-input").val(),
+                                entityType: 'non-semantic-web'
+                            }
                         }
-                    }
+                    });
                 }
             }
         });
     };
 
-    var configureCustomObject = function ($http, $q, callback, changeCallback) {
+    var configureCustomObject = function (entities,$http, $q, callback, changeCallback) {
         $("#custom-object-input").autocomplete({
             minLength: 2,
             source: function (request, response) {
@@ -64,7 +77,19 @@ var autocompleteService = (function () {
             }, select: function (event, ui) {
                 this.value = ui.item.value;
 
-                lodService.getItem($http, $q, ui.item.uri, callback);
+                var e = _.find(entities, {dbpediaUri: ui.item.uri}); // is property(entity) included in database?
+
+                if (e) {
+                    $http.get('knowledgeBase/api/getEntityById/' + e.id)
+                        .then(function(response){
+                            callback(response.data);
+                        }, function (err) {
+                            printError(err);
+                        });
+                    return;
+                } else {
+                    lodService.getItem($http, $q, ui.item.uri, callback);
+                }
 
             }, change: function (event, ui) { // not-selected
                 if (ui.item === null) {

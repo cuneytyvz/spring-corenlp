@@ -101,6 +101,8 @@ public class KnowledgeBaseApi {
         }
 
         Property p = new Property(mp);
+        p.setSource("custom");
+
         if (o.getEntityType().equals("semantic-web")) {
             if (o.getDbpediaUri() != null && o.getDbpediaUri().length() > 0) {
                 p.setValue(o.getDbpediaUri());
@@ -117,10 +119,14 @@ public class KnowledgeBaseApi {
 
         // if such a triple does not exists then save...
         List<Property> results = knowledgeBaseDao.findPropertiesByTriples(s.getId(), p.getMetaPropertyId(), p.getValueLabel());
-        if (results == null || results.size() == 0)
-            knowledgeBaseDao.saveProperty(p);
+        if (results == null || results.size() == 0) {
+            Long id = knowledgeBaseDao.saveProperty(p);
+            p.setId(id);
+        } else {
+            p.setId(results.get(0).getId());
+        }
 
-        return null;
+        return p;
     }
 
     @RequestMapping(value = "/removeEntity/{id}", method = RequestMethod.GET,
@@ -146,6 +152,9 @@ public class KnowledgeBaseApi {
 
         if (entity.getEntityType().equals("web-page")) {
             try {
+                entity.setWebPageText(webPageAnnotator.getWebPageTextAsHtml(entity.getWebUri()));
+                entity.setDescription(entity.getWebPageText());
+
                 String title = webPageAnnotator.getWebPageTitle(entity.getWebUri());
                 if (title == null || title.isEmpty())
                     entity.setName(entity.getWebUri());
@@ -157,6 +166,11 @@ public class KnowledgeBaseApi {
                 entity.setName(entity.getWebUri());
                 e.printStackTrace();
             }
+        }
+
+        // commons.wikimedia redirect problem workaround
+        if (entity.getImage() != null && entity.getImage().contains("commons.wikimedia")) {
+            entity.setImage(entity.getSecondaryImage());
         }
 
         if (entity.getImage() != null && !entity.getImage().isEmpty()) {
@@ -172,64 +186,22 @@ public class KnowledgeBaseApi {
             }
         }
 
-        Long id = knowledgeBaseDao.saveEntity(entity);
-        entity.setId(id);
+        if (entity.getSecondaryImage() != null && !entity.getSecondaryImage().isEmpty()) {
+            BufferedImage bf = imageUtils.readImageFromUri(entity.getSecondaryImage());
 
-        if (entity.getEntityType().equals("web-page")) {
-            List<String> uris = webPageAnnotator.annotateWebPage(entity.getWebUri());
+            if (bf != null) {
+                String filename = imageUtils.saveJpegPngImage(bf, entity.getName().replace(" ", "_") + "_" + entity.getWikidataId() + "_secondary");
+                entity.setSecondaryImage(filename);
 
-            Map<String, Entity> webPageEntities = new HashMap<>();
-            for (String dbpediaUri : uris) {
-                try {
-                    if (webPageEntities.get(dbpediaUri) == null) {
-                        Entity webPageEntity = dbPedia.getEntityByUri(dbpediaUri);
-                        webPageEntity.setWebPageEntityId(id);
-
-                        webPageEntities.put(webPageEntity.getDbpediaUri(), webPageEntity);
-                    } else {
-                        // do nothing...
-                    }
-
-                } catch (Exception e) {
-                    System.err.println("Error at dbPedia.getEntityByUri");
-                    e.printStackTrace();
-                }
-            }
-
-            for (String key : webPageEntities.keySet()) {
-                Entity webPageEntity = webPageEntities.get(key);
-
-                Long webPageEntityId = knowledgeBaseDao.saveEntity(webPageEntity);
-                for (Property property : webPageEntity.getProperties()) {
-                    property.setEntityId(webPageEntityId);
-                }
-
-                // save to metaproperty if not exists before
-                // fetch from metaproperty
-                // if not exists there, save this prop to metaproperty first
-                for (Property p : webPageEntity.getProperties()) {
-                    MetaProperty mp = knowledgeBaseDao.findMetapropertyByUri(p.getUri());
-                    if (mp == null) {
-                        Long mpId = knowledgeBaseDao.saveMetaProperty(p);
-                        p.setMetaPropertyId(mpId);
-                    } else {
-                        p.setMetaPropertyId(mp.getId());
-                    }
-                }
-
-                knowledgeBaseDao.saveProperties(webPageEntity.getProperties());
-
-                List<Subproperty> subproperties = new ArrayList<>();
-                for (Property property : webPageEntity.getProperties()) {
-                    for (Subproperty subproperty : property.getSubproperties()) {
-                        subproperty.setPropertyId(property.getId());
-                        subproperties.add(subproperty);
-                    }
-                }
-
-                knowledgeBaseDao.saveSubproperties(subproperties);
+                BufferedImage scaledImage = imageUtils.getScaledImage(bf, ImageUtils.SCALED_IMAGE_WIDTH, ImageUtils.SCALED_IMAGE_HEIGHT);
+                String smallFilename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId() + "_secondary");
+                entity.setSmallSecondaryImage(smallFilename);
             }
         }
+
+
+        final Long id = knowledgeBaseDao.saveEntity(entity);
+        entity.setId(id);
 
         for (Property property : entity.getProperties()) {
             property.setEntityId(id);
@@ -260,8 +232,8 @@ public class KnowledgeBaseApi {
 
         knowledgeBaseDao.saveSubproperties(subproperties);
 
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(new Runnable() {
+        final ExecutorService executor2 = Executors.newSingleThreadExecutor();
+        executor2.execute(new Runnable() {
             @Override
             public void run() {
                 Collection<AnnotationItem> items = dbpediaSpotlight.annotateText(entity.getDescription());

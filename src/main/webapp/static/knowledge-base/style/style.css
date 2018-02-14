@@ -155,12 +155,17 @@ label {
 }
 
 .info-text > a {
-    font-size: 14px;
+    font-size: 18px;
+    color: #9abdca; /* #a8cedd */
+}
+
+.info-text a:hover {
+    color: #47a6c8 !important;
 }
 
 .info-image > img {
     width: 100%;
-    border: 1px solid #555758;
+    border: 1px solid #9d8b5b; /* #555758 */
 }
 
 .description {
@@ -402,7 +407,8 @@ div#columns:hover figure:not(:hover) {
 }
 
 .figure-text {
-    line-height: 180px;
+    line-height: 70px;
+    /*line-height: 180px;*/
     width: 155px;
     text-align: center;
     border: 2px dashed #f69c55;
@@ -468,16 +474,16 @@ div#columns:hover figure:not(:hover) {
 
 /*Top Menu*/
 /*.top-menu {*/
-    /*width: 50px;*/
-    /*height: 100%;*/
-    /*position: absolute;*/
-    /*top: 0;*/
-    /*left: 0;*/
-    /*padding-left: 0;*/
-    /*padding-right: 0;*/
-    /*display: table;*/
-    /*overflow-y: scroll;*/
-    /*max-height: 550px;*/
+/*width: 50px;*/
+/*height: 100%;*/
+/*position: absolute;*/
+/*top: 0;*/
+/*left: 0;*/
+/*padding-left: 0;*/
+/*padding-right: 0;*/
+/*display: table;*/
+/*overflow-y: scroll;*/
+/*max-height: 550px;*/
 /*}*/
 
 .top-menu {
@@ -528,12 +534,13 @@ div#columns:hover figure:not(:hover) {
     background-color: #d9cea7;
     box-shadow: 0 0 5px 3px #e1d5ad;
 }
+
 /*/*/
 
 .pop-up {
     padding-left: 0;
     padding-right: 0;
-    margin-top: 60px;
+    margin-top: 40px;
     background-color: #dfddc8;
     /*box-shadow: 10px 10px 10px #e1d5ad;*/
     box-shadow: 1px 1px 20px 20px #e1d5ad;
@@ -564,7 +571,7 @@ div#columns:hover figure:not(:hover) {
 .detail-info .image > img {
     width: 250px;
     /*height: 100%;*/
-    border: 1px solid #555758;
+    border: 1px solid #9d8b5b; /* #555758 */
     float: left;
     margin-right: 15px;
 }
@@ -667,19 +674,127 @@ textarea {
 }
 
 ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
-  z-index: 200;
+    z-index: 200;
 }
 
 .pop-up-entity-text-input {
     border: none;
     background-color: #dfddc8;;
     box-shadow: none;
-    color:white;
+    color: white;
 }
 
-/*
-background: -webkit-linear-gradient(top, #04b3d2, #48dfff);
-background: -moz-linear-gradient(top, #04b3d2, #48dfff);
-background: -o-linear-gradient(top, #04b3d2, #48dfff);
-background: linear-gradient(top, #04b3d2, #48dfff);
-*/
+.custom-property-add-title {
+    font-weight: 900;
+}
+
+.custom-property-add-title a {
+    color: white;
+    text-decoration: none
+}
+
+.custom-property-add-title a.hover {
+    color: white;
+    text-decoration: none
+}
+
+.custom-property-add-title a.selected {
+    font-weight: 900;
+}
+
+.custom-property-add-title a.not-selected {
+    font-weight: 500;
+}
+
+.custom-property-add-title a.show {
+    display: inherit !important;
+}
+
+.show-custom-properties {
+    overflow-y: scroll;
+    width: 400px;
+}
+
+.show-add-custom-properties .property-box {
+    max-width: 400px;
+    height: 150px;
+}
+
+.edit-topic .notes textarea {
+    height: 190px;
+}
+
+.edit-topic .property-box .property-value {
+    color: white;
+}
+
+.edit-topic .property-box .property-divider {
+    border-color: white;
+}
+
+.show-add-custom-properties {
+    width: 500px;
+}
+
+.show-add-custom-properties .filter {
+    float: right;
+}
+
+.show-add-custom-properties .filter a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+}
+
+.show-add-custom-properties .filter a.hover {
+    color: white;
+    text-decoration: none
+}
+
+.show-add-custom-properties .filter a.selected {
+    font-weight: 700;
+}
+
+.context-menu {
+    display: none;
+    position: absolute;
+    z-index: 10;
+}
+
+.context-menu--active {
+    display: block;
+}
+
+.custom-annotation-results {
+    display: none;
+    list-style: none;
+    border: solid 1px #d1cfba;
+    position: absolute;
+    background: #dfddc8;
+    width: 200px;
+}
+
+.custom-annotation-results a li {
+    display: block;
+    width: 10px;
+    height: 20px;
+    margin-left: -35px;
+    margin-top: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: white;
+    width:190px;
+    list-style-position:inside;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-annotation-results a:hover li {
+    background: #8f8d7a;
+    width:190px;
+}
+
+.custom-annotation-results a:hover {
+    text-decoration: none;
+}

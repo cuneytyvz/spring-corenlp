@@ -45,6 +45,31 @@ public class WebPageAnnotator {
 
     }
 
+    public String getWebPageText(String url) throws Exception {
+        try {
+            String html = myHttpClient.getAsString(url);
+            String text = ArticleExtractor.INSTANCE.getText(html);
+
+            return text;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public String getWebPageTextAsHtml(String url) {
+        try {
+            String requestUrl = "https://boilerpipe-web.appspot.com/extract?" +
+                    "url=" + URLEncoder.encode(url) +
+                    "&extractor=ArticleExtractor&output=htmlFragment&extractImages=&token=";
+
+            String html = myHttpClient.getAsString(requestUrl);
+
+            return html;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     public List<String> annotateWebPage(String url) throws Exception {
         String html = myHttpClient.getAsString(url);
         String text = ArticleExtractor.INSTANCE.getText(html);
