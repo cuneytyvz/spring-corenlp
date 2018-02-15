@@ -360,6 +360,46 @@ public class KnowledgeBaseApi {
         return entities;
     }
 
+    @RequestMapping(value = "/addEntityToCategory", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object addEntityToCategory(@RequestParam Long entityId, @RequestParam Long categoryId) throws Exception {
+        knowledgeBaseDao.addEntityToCategory(entityId, categoryId);
+
+        return null;
+    }
+
+    @RequestMapping(value = "/addEntityToSubCategory", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object addEntityToSubCategory(@RequestParam Long entityId, @RequestParam Long subCategoryId) throws Exception {
+        knowledgeBaseDao.addEntityToSubCategory(entityId, subCategoryId);
+
+        return null;
+    }
+
+    @RequestMapping(value = "/removeEntityFromCategory", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object removeEntityFromCategory(@RequestParam Long entityId) throws Exception {
+        knowledgeBaseDao.removeEntityFromCategory(entityId);
+
+        return null;
+    }
+
+    @RequestMapping(value = "/removeEntityFromSubCategory", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object removeEntityFromSubCategory(@RequestParam Long entityId) throws Exception {
+        knowledgeBaseDao.removeEntityFromSubCategory(entityId);
+
+        return null;
+    }
+
     @RequestMapping(value = "/autocompleteProperty/{prefix}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public

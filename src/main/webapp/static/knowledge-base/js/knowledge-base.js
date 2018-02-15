@@ -32,7 +32,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                         $scope.categories[0].selected = 'selected';
 
                         for (var i = 0; i < $scope.categories.length; i++) {
-                            $scope.categories[i].subCategories.unshift({id: -1, name: 'All'})
+                            if ($scope.categories[i].id != 1)
+                                $scope.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
+
+                            $scope.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
                         }
 
                         $scope.selectedCategoryToShow = $scope.categories[0];
@@ -136,7 +139,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $scope.propertiesLoading = false;
             });
     };
-
 
     $scope.isPropertyLink = function (property) {
         return (property.source == "wikidata" && (property.datatype == "wikibase-item") || (property.datatype == "external-id"))
@@ -289,6 +291,66 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         }
     };
 
+    $scope.removeEntityFromCategory = function (category) {
+
+        if ($scope.clickedEntity.categoryId != 1 && ($scope.clickedEntity.subCategoryId == null || $scope.clickedEntity.subCategoryId == 0) ) {
+            $http.get('knowledgeBase/api/removeEntityFromCategory?entityId=' + $scope.clickedEntity.id)
+                .then(function (response) {
+
+                    $scope.clickedEntity.categoryId = 1;
+
+                    getEntitiesByCategory();
+                    getEntitiesBySubCategory();
+                    $('.custom-context-menu.memory-box').fadeOut(200);
+                }, function (err) {
+                    printError(err);
+                });
+        } else if ($scope.clickedEntity.categoryId != 1 && !($scope.clickedEntity.subCategoryId == null || $scope.clickedEntity.subCategoryId == 0)) {
+            $http.get('knowledgeBase/api/removeEntityFromSubCategory?entityId=' + $scope.clickedEntity.id)
+                .then(function (response) {
+                    $scope.clickedEntity.subCategoryId = null;
+
+                    getEntitiesByCategory();
+                    getEntitiesBySubCategory();
+                    $('.custom-context-menu.memory-box').fadeOut(200);
+                }, function (err) {
+                    printError(err);
+                });
+        } else {
+            console.log("ERROR category is already in the other group!!");
+        }
+    };
+
+    $scope.addEntityToCategory = function (category) {
+
+        if (category.type == 'category') {
+            $http.get('knowledgeBase/api/addEntityToCategory?entityId=' + $scope.clickedEntity.id + "&categoryId=" + category.item.id)
+                .then(function (response) {
+
+                    $scope.clickedEntity.categoryId = category.item.id;
+
+                    getEntitiesByCategory();
+                    getEntitiesBySubCategory();
+                    $('.custom-context-menu.memory-box').fadeOut(200);
+                }, function (err) {
+                    printError(err);
+                });
+        } else if (category.type == 'subcategory') {
+            $http.get('knowledgeBase/api/addEntityToSubCategory?entityId=' + $scope.clickedEntity.id + "&subCategoryId=" + category.item.id)
+                .then(function (response) {
+                    $scope.clickedEntity.subCategoryId = category.item.id;
+
+                    getEntitiesByCategory();
+                    getEntitiesBySubCategory();
+                    $('.custom-context-menu.memory-box').fadeOut(200);
+                }, function (err) {
+                    printError(err);
+                });
+        } else {
+            console.log("ERROR memory box item does not have category type !!!!");
+        }
+    };
+
     $scope.showCategoryItems = function ($event, c) {
         $scope.categories.forEach(function (cc) {
             cc.selected = undefined;
@@ -297,7 +359,89 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         c.selected = 'selected';
         $scope.selectedCategoryToShow = c;
         $scope.selectedCategoryToShow.selectedSubCategory = c.subCategories[0];
+
+        // set up initial memory box context menu items as all subcategories below this category
+        $scope.memoryBoxContextMenuItems = [];
+        if ($scope.selectedCategoryToShow.id != 1) {
+            _.each($scope.selectedCategoryToShow.subCategories, function (sc) {
+                if (sc.id != -1 && sc.id != -2) {
+                    $scope.memoryBoxContextMenuItems.push({type: 'subcategory', item: sc});
+                }
+            });
+        } else {
+            _.each($scope.categories, function (c) {
+                if (c.id != 1) {
+                    $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
+                }
+            });
+        }
+
+        $timeout(function () {
+            configureMemoryBoxContextMenu();
+        }, 0);
     };
+
+    $scope.memoryBoxContextMenuItems = [];
+
+    function configureMemoryBoxContextMenu() {
+        var selectionX, selectionY;
+        $(".entity").on("mousedown", function (e) {
+            selectionX = e.pageX;
+            selectionY = e.pageY;
+        });
+
+        var DELAY = 300, clicks = 0, timer = null;
+        $(".entity").bind("click", function (e) {
+            clicks++;  //count clicks
+
+            var id = parseInt($(this).attr('id'));
+            _.each($scope.entities, function (e) {
+                if (e.id == id) {
+                    $scope.clickedEntity = e;
+                }
+            });
+
+            if (clicks === 1) {
+                timer = setTimeout(function () {
+                    $('.custom-context-menu.memory-box').css({
+                        'left': selectionX + 5,
+                        'top': selectionY - 55
+                    }).fadeIn(200);
+
+                    var l = $scope.memoryBoxContextMenuItems.length;
+                    var height = 21 + 26 * l;
+
+                    if($scope.memoryBoxContextMenuItems.length == 0 && $scope.selectedCategoryToShow.subCategories.length > 2)
+                        height -= 21;
+
+                    if ($scope.selectedCategoryToShow.id != 1 && $scope.selectedCategoryToShow.subCategories.length > 2)
+                        height += 26;
+
+                    $('.custom-context-menu.memory-box').css('height', height);
+
+                    clicks = 0;             //after action performed, reset counter
+                }, DELAY);
+            } else {
+                clearTimeout(timer);    //prevent single-click action
+                clicks = 0;             //after action performed, reset counter
+            }
+
+
+        });
+
+        $(".entity").bind("mouseleave", function (e) {
+            var t = $(".custom-context-menu.memory-box").position().top;
+            var l = $(".custom-context-menu.memory-box").position().left;
+
+            if (e.pageX < l || e.pageY < t) {
+                $('.custom-context-menu.memory-box').fadeOut(200);
+            }
+        });
+
+        $(".custom-context-menu.memory-box").bind("mouseleave", function (e) {
+            $('.custom-context-menu.memory-box').fadeOut(200);
+        });
+    }
 
     $scope.showSubCategoryItems = function ($event, sc) {
         $scope.selectedCategoryToShow.subCategories.forEach(function (cc) {
@@ -306,6 +450,21 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         sc.selected = 'selected';
         $scope.selectedCategoryToShow.selectedSubCategory = sc;
+
+        $scope.memoryBoxContextMenuItems = [];
+
+        $scope.memoryBoxContextMenuItems = [];
+        if ($scope.selectedCategoryToShow.id != 1) {
+            _.each($scope.selectedCategoryToShow.subCategories, function (sc) {
+                if (sc.id != -1 && sc.id != -2) {
+                    $scope.memoryBoxContextMenuItems.push({type: 'subcategory', item: sc});
+                }
+            });
+        }
+
+        $timeout(function () {
+            configureMemoryBoxContextMenu();
+        }, 0);
     };
 
     $scope.openDetailPopup = function () {
@@ -322,6 +481,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $ss.isPropertyLink = $scope.isPropertyLink;
                 $ss.isDbpediaResource = $scope.isDbpediaResource;
                 $ss.saveEntity = $scope.saveEntity;
+
+                $ss.isWebPageEntity = function () {
+                    return $ss.selectedEntity.entityType == 'web-page';
+                }
 
                 $scope.$on('ngDialog.opened', function (e, $dialog) {
                     autocompleteService.configureCustomObject($scope.entities, $http, $q, function (response) {
@@ -436,8 +599,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $ss.openProperty = function (parameter) {
                     if (parameter && parameter.value) {
                         var dbpediaUri = parameter.value;
+                        source = parameter.source;
                     } else {
                         var dbpediaUri = $ss.annotationEntities[parameter].uri;
+                        source = 'dbpedia';
                     }
 
                     if ($ss.selectedEntity.dbpediaUri == dbpediaUri) {
@@ -463,7 +628,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     } else {
                         $ss.annotationEntityLoading = true;
                         lodService.fetchPropertyFromRelevantSource($http, $q,
-                            {value: dbpediaUri, source: 'dbpedia'},
+                            {value: dbpediaUri, source: source},
                             function (response) {
                                 setEditTopicMargin();
 
@@ -520,7 +685,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                         lastSelectedText = selectedText.toString();
 
                         dbpedia.prefixSearch($http, selectedText, function (results) {
-                            $('.custom-annotation-results').css({
+                            $('.custom-context-menu.annotation-results').css({
                                 'left': selectionX + 5,
                                 'top': selectionY - 55
                             }).fadeIn(200);
@@ -528,7 +693,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                             $ss.customAnnotationResults = results;
                         });
                     } else {
-                        $('.custom-annotation-results').fadeOut(200);
+                        $('.custom-context-menu.annotation-results').fadeOut(200);
                     }
                 });
 
@@ -818,6 +983,19 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 }
             }
         }
+
+        // Initially context menu items are set to all categories, because initial selected category is other
+        // and has no subcategories...
+        $timeout(function () {
+            $scope.memoryBoxContextMenuItems = [];
+            _.each($scope.categories, function (c) {
+                if (c.id != 1) {
+                    $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
+                }
+            });
+
+            configureMemoryBoxContextMenu();
+        }, 0);
     };
 
     $scope.getImageUrl = function (e) {
@@ -849,7 +1027,9 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 for (var j = 0; j < $scope.entities.length; j++) {
                     var e = $scope.entities[j];
 
-                    if (sc.id == -1 && c.id == e.categoryId) {
+                    if (sc.id == -2 && c.id == e.categoryId && (e.subCategoryId == 0 || e.subCategoryId == null)) {
+                        sc.entities.push(e);
+                    } else if (sc.id == -1 && c.id == e.categoryId) {
                         sc.entities.push(e);
                     } else if (e.subCategoryId == sc.id && c.id == e.categoryId) {
                         sc.entities.push(e);

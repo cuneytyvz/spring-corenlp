@@ -116,7 +116,8 @@
                 <div class="row" ng-attr-id="{{ 'entity-row-' + c.id }}">
 
                     <div id="columns">
-                        <div ng-repeat="e in selectedCategoryToShow.selectedSubCategory.entities">
+                        <div class="entity" id="{{e.id}}"
+                             ng-repeat="e in selectedCategoryToShow.selectedSubCategory.entities">
                             <a href ng-click="showEntity(e)" ng-dblclick="entityDoubleClicked(e)">
                                 <figure ng-if="e.smallImage && e.smallImage != ''">
                                     <img ng-src="knowledgeBase/api/image/{{e.smallImage}}"
@@ -348,6 +349,20 @@
 </div>
 </div>
 
+
+<div class="custom-context-menu memory-box">
+    <span ng-if="memoryBoxContextMenuItems.length != 0" class="title">Add To...</span>
+    <ul>
+        <a ng-repeat="i in memoryBoxContextMenuItems" href="#" ng-click="addEntityToCategory(i)">
+            <li>{{i.item.name}}</li>
+        </a>
+        <a href="#" ng-if="selectedCategoryToShow.id != 1" ng-click="removeEntityFromCategory()">
+            <li style="margin-left: -45px;">Remove from this category</li>
+        </a>
+    </ul>
+
+</div>
+
 <script type="text/ng-template" id="detail-popup">
 
 <div ng-if="propertiesLoading" class="pop-up-overlay">
@@ -390,6 +405,13 @@
                 <!--<a href="#" ng-if="displayHideNotes" ng-click="hideNotes()">Hide notes</a>-->
                 <!--</div>-->
             </div>
+        </div>
+    </div>
+    <div class="row" style="margin-top: 10px;" ng-if="isWebPageEntity()">
+        <div class="col-md-12">
+            <a target="_blank" ng-href="{{selectedEntity.webUri}}">
+                Go to web page
+            </a>
         </div>
     </div>
     <div class="edit-topic">
@@ -612,10 +634,10 @@
 </div>
 </div>
 
-<div class="custom-annotation-results">
+<div class="custom-context-menu annotation-results">
     <ul>
         <a ng-repeat="result in customAnnotationResults" href="#" ng-click="openCustomAnnotation(result)">
-            <li >{{result.label}}</li>
+            <li>{{result.label}}</li>
         </a>
     </ul>
 </div>

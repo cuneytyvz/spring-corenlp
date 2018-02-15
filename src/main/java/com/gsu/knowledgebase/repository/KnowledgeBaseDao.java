@@ -349,6 +349,119 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public void addEntityToCategory(Long entityId, Long categoryId) {
+
+        String sql = "update entity set category_id = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, categoryId);
+            ps.setLong(2, entityId);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void addEntityToSubCategory(Long entityId, Long subCategoryId) {
+
+        String sql = "update entity set subcategory_id = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, subCategoryId);
+            ps.setLong(2, entityId);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void removeEntityFromCategory(Long entityId) {
+
+        String sql = "update entity set category_id = ?, subcategory_id = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, 1);
+            ps.setLong(2, entityId);
+            ps.setNull(3, Types.BIGINT);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void removeEntityFromSubCategory(Long entityId) {
+
+        String sql = "update entity set subcategory_id = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setNull(1, Types.BIGINT);
+            ps.setLong(2, entityId);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public void updateProperties(List<Property> properties) {
 
         String sql = "update property set meta_property_id = ? where id = ?";

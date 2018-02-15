@@ -755,17 +755,8 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     font-weight: 700;
 }
 
-.context-menu {
-    display: none;
-    position: absolute;
-    z-index: 10;
-}
 
-.context-menu--active {
-    display: block;
-}
-
-.custom-annotation-results {
+.custom-context-menu {
     display: none;
     list-style: none;
     border: solid 1px #d1cfba;
@@ -774,13 +765,14 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     width: 200px;
 }
 
-.custom-annotation-results a li {
+.custom-context-menu a li {
     display: block;
     width: 10px;
     height: 20px;
     margin-left: -35px;
-    margin-top: 5px;
-    padding: 5px 10px;
+    /*margin-top: 5px;*/
+    margin-bottom: 5px;
+    padding: 0px 10px;
     cursor: pointer;
     color: white;
     width:190px;
@@ -790,11 +782,16 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     text-overflow: ellipsis;
 }
 
-.custom-annotation-results a:hover li {
+.custom-context-menu a:hover li {
     background: #8f8d7a;
     width:190px;
 }
 
-.custom-annotation-results a:hover {
+.custom-context-menu a:hover {
     text-decoration: none;
+}
+
+.custom-context-menu.memory-box .title {
+    color: white;
+    padding-left: 3px;
 }
