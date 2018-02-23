@@ -111,21 +111,21 @@ form.searchbox {
 }
 
 label.blue {
-    color: #555758;
+    color:  #404142;
     font-family: "Times New Roman";
 }
 
 label {
-    color: #555758;
+    color:  #404142;
     font-family: "Times New Roman";
 }
 
 .blue {
-    color: #555758;
+    color:  #404142;
 }
 
 .entity-header {
-    color: #555758;
+    color: #404142;
     font-size: 15px;
 }
 
@@ -146,12 +146,21 @@ label {
     font-family: "Times New Roman";
 }
 
+.info-text.info-summary{
+    margin-bottom: 5px;
+}
+
 .info-text {
     margin-top: -5px;
     margin-left: 15px;
     color: white;
     font-size: 18px;
     font-family: "Times New Roman";
+}
+
+.info-text.short-description {
+    max-height: 150px;
+    overflow-y: scroll;
 }
 
 .info-text > a {
@@ -169,7 +178,7 @@ label {
 }
 
 .description {
-    max-height: 150px;
+    max-height: 200px; /* 150 */
     overflow-y: scroll;
 }
 
@@ -632,10 +641,23 @@ div#columns:hover figure:not(:hover) {
 
 .pop-up .sub-topic .sub-topic-inner {
     margin-left: 10px;
-    margin-top: 10px;
+    /*margin-top: 10px;*/
     margin-right: 10px;
     margin-bottom: 10px;
     height: 100%;
+}
+
+.pop-up .sub-topic .sub-topic-inner .browser-arrows{
+    padding-bottom: 20px;
+}
+
+.pop-up .sub-topic .sub-topic-inner .browser-arrows  a {
+
+    color: #9abdca;
+}
+
+.pop-up .sub-topic .sub-topic-inner .browser-arrows a:hover {
+    color: #47a6c8 !important;
 }
 
 .ngdialog-close {
@@ -711,7 +733,6 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
 }
 
 .show-custom-properties {
-    overflow-y: scroll;
     width: 400px;
 }
 
@@ -736,25 +757,33 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     width: 500px;
 }
 
-.show-add-custom-properties .filter {
+.show-add-custom-properties .filter,
+.property-filter .filter {
     float: right;
 }
 
-.show-add-custom-properties .filter a {
+.show-add-custom-properties .filter a,
+.property-filter .filter a {
     color: white;
     text-decoration: none;
     font-weight: 300;
 }
 
-.show-add-custom-properties .filter a.hover {
+.property-filter .filter a {
+    color:  #404142;;
+    margin-right: 5px
+}
+
+.show-add-custom-properties .filter a.hover,
+.property-filter .filter a.hover {
     color: white;
     text-decoration: none
 }
 
-.show-add-custom-properties .filter a.selected {
+.show-add-custom-properties .filter a.selected,
+.property-filter .filter a.selected {
     font-weight: 700;
 }
-
 
 .custom-context-menu {
     display: none;
@@ -765,7 +794,11 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     width: 200px;
 }
 
-.custom-context-menu a li {
+.custom-context-menu .title {
+    margin-top: 3px;
+}
+
+.custom-context-menu a li, .custom-context-menu li {
     display: block;
     width: 10px;
     height: 20px;
@@ -775,16 +808,21 @@ ul.ui-menu.ui-widget.ui-widget-content.ui-autocomplete.ui-front {
     padding: 0px 10px;
     cursor: pointer;
     color: white;
-    width:190px;
-    list-style-position:inside;
+    width: 190px;
+    list-style-position: inside;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.custom-context-menu ul {
+    margin-bottom: 0px;
+    margin-top: 3px;
+}
+
 .custom-context-menu a:hover li {
     background: #8f8d7a;
-    width:190px;
+    width: 190px;
 }
 
 .custom-context-menu a:hover {

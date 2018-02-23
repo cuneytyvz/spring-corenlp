@@ -23,7 +23,7 @@
     <script src="static/knowledge-base/js/lib/leaflet.js"></script>
 
     <!--Bootstrap -->
-    <link rel="stylesheet" href="static/knowledge-base/js/lib/bootstrap.min.css">
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/bootstrap/css/bootstrap.min.css">
     <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"-->
     <!--integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">-->
     <script src="static/knowledge-base/js/lib/bootstrap.min.js"></script>
@@ -71,203 +71,207 @@
 
 <div class="core clearfix">
 <section class="space container">
-    <div class="top-menu">
-        <div class="top-menu-item-wrapper" ng-repeat="c in selectedCategoryToShow.subCategories">
-            <div class="top-menu-item" ng-class="c.selected">
+<div class="top-menu">
+    <div class="top-menu-item-wrapper" ng-repeat="c in selectedCategoryToShow.subCategories">
+        <div class="top-menu-item" ng-class="c.selected">
+            <label>
+                <a href="#" ng-click="showSubCategoryItems($event,c)">{{c.name}}</a>
+            </label>
+        </div>
+    </div>
+</div>
+<div class="row">
+
+    <div class="col-md-1 side-menu">
+        <div class="side-menu-item-wrapper" ng-repeat="c in categories">
+            <div class="side-menu-item" ng-class="c.selected">
                 <label>
-                    <a href="#" ng-click="showSubCategoryItems($event,c)">{{c.name}}</a>
+                    <a href="#" ng-click="showCategoryItems($event,c)">{{c.name}}</a>
                 </label>
             </div>
         </div>
     </div>
-    <div class="row">
+    <!--<div class="col-md-1">-->
+    <!--<table class="side-menu-table">-->
+    <!--<tr ng-repeat="c in categories">-->
+    <!--<td>-->
+    <!--<a href="#">{{c.name}}</a>-->
+    <!--</td>-->
+    <!--</tr>-->
+    <!--</table>-->
+    <!--</div>-->
 
-        <div class="col-md-1 side-menu">
-            <div class="side-menu-item-wrapper" ng-repeat="c in categories">
-                <div class="side-menu-item" ng-class="c.selected">
-                    <label>
-                        <a href="#" ng-click="showCategoryItems($event,c)">{{c.name}}</a>
+    <div class="col-md-8 memory-box">
+
+        <div style="list-style: none;">
+            <div class="row" style="display:none">
+                <div class="col-md-12">
+                    <label class="category-header">
+                        <!--<a href="#" ng-click="showCategory(c);">-->
+                        {{selectedCategoryToShow.name}}
+                        <!--</a>-->
                     </label>
                 </div>
             </div>
-        </div>
-        <!--<div class="col-md-1">-->
-        <!--<table class="side-menu-table">-->
-        <!--<tr ng-repeat="c in categories">-->
-        <!--<td>-->
-        <!--<a href="#">{{c.name}}</a>-->
-        <!--</td>-->
-        <!--</tr>-->
-        <!--</table>-->
-        <!--</div>-->
+            <div class="row" ng-attr-id="{{ 'entity-row-' + c.id }}">
 
-        <div class="col-md-8 memory-box">
-
-            <div style="list-style: none;">
-                <div class="row" style="display:none">
-                    <div class="col-md-12">
-                        <label class="category-header">
-                            <!--<a href="#" ng-click="showCategory(c);">-->
-                            {{selectedCategoryToShow.name}}
-                            <!--</a>-->
-                        </label>
-                    </div>
-                </div>
-                <div class="row" ng-attr-id="{{ 'entity-row-' + c.id }}">
-
-                    <div id="columns">
-                        <div class="entity" id="{{e.id}}"
-                             ng-repeat="e in selectedCategoryToShow.selectedSubCategory.entities">
-                            <a href ng-click="showEntity(e)" ng-dblclick="entityDoubleClicked(e)">
-                                <figure ng-if="e.smallImage && e.smallImage != ''">
-                                    <img ng-src="knowledgeBase/api/image/{{e.smallImage}}"
-                                         ng-mouseover="mouseOver($event,e)" ng-mouseleave="mouseLeave($event,e)">
-                                    <figcaption>{{e.name}}</figcaption>
-                                </figure>
-                                <figure ng-if="!e.smallImage">
-                                    <div ng-if="!e.smallImage" class="figure-text">
-                                        {{e.name}}
-                                    </div>
-                                </figure>
-                            </a>
-                        </div>
+                <div id="columns">
+                    <div class="entity" id="{{e.id}}"
+                         ng-repeat="e in selectedCategoryToShow.selectedSubCategory.entities">
+                        <a href ng-click="showEntity(e)" ng-dblclick="entityDoubleClicked(e)">
+                            <figure ng-if="e.smallImage && e.smallImage != ''">
+                                <img ng-src="knowledgeBase/api/image/{{e.smallImage}}"
+                                     ng-mouseover="mouseOver($event,e)" ng-mouseleave="mouseLeave($event,e)">
+                                <figcaption>{{e.name}}</figcaption>
+                            </figure>
+                            <figure ng-if="!e.smallImage">
+                                <div ng-if="!e.smallImage" class="figure-text">
+                                    {{e.name}}
+                                </div>
+                            </figure>
+                        </a>
                     </div>
                 </div>
             </div>
-            <br/><br/><br/>
         </div>
+        <br/><br/><br/>
+    </div>
 
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType != 'web-page'"
-             ng-class="propertyBoxClass">
-            <div ng-if="propertiesLoading" class="overlay">
-                <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
-            </div>
-            <div>
-                <label class="blue">
-                    <p ng-if="selectedEntities.length > 2">
-                        <a href="#" ng-click="openLastSecondEntity()">...</a>
-                    </p>
-                </label>
-                <label class="entity-header" ng-repeat="entity in selectedEntities.slice(-2)">
-                    <span ng-if="$index == 1 || selectedEntities.length == 1">{{entity.name}}</span>
+    <div class="col-md-3 property-box" ng-show="selectedEntity.entityType != 'web-page'"
+         ng-class="propertyBoxClass">
+        <div ng-if="propertiesLoading" class="overlay">
+            <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+        </div>
+        <div>
+            <label class="blue">
+                <p ng-if="selectedEntities.length > 2">
+                    <a href="#" ng-click="openLastSecondEntity()">...</a>
+                </p>
+            </label>
+            <label class="entity-header" ng-repeat="entity in selectedEntities.slice(-2)">
+                <span ng-if="$index == 1 || selectedEntities.length == 1">{{entity.name}}</span>
                         <span ng-if="$index == 0 && selectedEntities.length > 1">
                             <a href="#" ng-click="openLastEntity()">{{entity.name}}</a>
                         </span>
-                    <span ng-if="$index < 1 && selectedEntities.length > 1">&nbsp;>&nbsp;</span>
-                </label>
-                <br>
+                <span ng-if="$index < 1 && selectedEntities.length > 1">&nbsp;>&nbsp;</span>
+            </label>
+            <br>
 
-                <label ng-if="selectedEntity" class=""
-                       style="font-size: 15px; font-weight: 300; font-style: italic;">
-                    {{selectedEntity.categoryName}}
-                </label>
-
-                <br>
-
-                <div ng-repeat="property in filteredProperties()">
-                    <label class="property-value">{{property.name}}</label>
-                    <br>
-
-                    <div ng-repeat="val in property.values">
-                        <label class="property-value"
-                               ng-if="!isPropertyLink(val)">{{val.value}}</label>
-                        <label class="property-value" ng-if="isPropertyLink(val)">
-                            <a ng-if="(val.datatype != 'external-id' && isDbpediaResource(val) || val.datatype == 'wikibase-item')
-                            || val.source == 'custom'"
-                               href="#" ng-click="openProperty(val)">
-                                {{val.valueLabel}}
-                            </a>
-                            <a ng-if="val.datatype != 'wikibase-item' && val.datatype != 'external-id'  && !isDbpediaResource(val)"
-                               ng-href="{{val.value}}" target="_blank">
-                                <span ng-if="val.valueLabel">{{val.valueLabel}}</span>
-                                <span ng-if="!val.valueLabel">{{val.value}}</span>
-                            </a>
-                            <a ng-if="val.datatype == 'external-id'"
-                               href="{{val.metaProperty.externalSourceUri}}{{val.value}}" target="_blank">
-                                {{val.metaProperty.externalSourceUri}}{{val.value}}
-                            </a>
-                        </label>
-                    </div>
-                    <hr class="property-divider">
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType == 'web-page'">
-            <label class="blue">
-                Entities
+            <label ng-if="selectedEntity" class=""
+                   style="font-size: 15px; font-weight: 300; font-style: italic;">
+                {{selectedEntity.categoryName}}
             </label>
 
-            <div ng-repeat="entity in selectedEntity.annotationEntities">
-                <label class="property-value">
-                    <a href ng-click="showEntity(entity)">{{entity.name}}</a>
-                </label>
+            <br>
+
+            <div ng-repeat="property in filteredProperties()">
+                <label class="property-value">{{property.name}}</label>
+                <br>
+
+                <div ng-repeat="val in property.values">
+                    <label class="property-value"
+                           ng-if="!isPropertyLink(val)">{{val.value}}</label>
+                    <label class="property-value" ng-if="isPropertyLink(val)">
+                        <a ng-if="(val.datatype != 'external-id' && isDbpediaResource(val) || val.datatype == 'wikibase-item')
+                            || val.source == 'custom'"
+                           href="#" ng-click="openProperty(val)">
+                            {{val.valueLabel}}
+                        </a>
+                        <a ng-if="val.datatype != 'wikibase-item' && val.datatype != 'external-id'  && !isDbpediaResource(val)"
+                           ng-href="{{val.value}}" target="_blank">
+                            <span ng-if="val.valueLabel">{{val.valueLabel}}</span>
+                            <span ng-if="!val.valueLabel">{{val.value}}</span>
+                        </a>
+                        <a ng-if="val.datatype == 'external-id'"
+                           href="{{val.metaProperty.externalSourceUri}}{{val.value}}" target="_blank">
+                            {{val.metaProperty.externalSourceUri}}{{val.value}}
+                        </a>
+                    </label>
+                </div>
+                <hr class="property-divider">
             </div>
         </div>
-        <br>
+    </div>
 
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType == 'web-page'">
+    <div class="col-md-3 property-box" ng-show="selectedEntity.entityType == 'web-page'">
+        <label class="blue">
+            Entities
+        </label>
+
+        <div ng-repeat="entity in selectedEntity.annotationEntities">
+            <label class="property-value">
+                <a href ng-click="showEntity(entity)">{{entity.name}}</a>
+            </label>
+        </div>
+    </div>
+    <br>
+
+    <div class="col-md-3 property-box" ng-show="selectedEntity.entityType == 'web-page'">
+        <label class="blue">
+            Existing Entities
+        </label>
+
+        <div ng-repeat="entity in existingEntities">
+            <label class="property-value">
+                <a href ng-click="showEntity(entity)">{{entity.name}}</a>
+            </label>
+        </div>
+    </div>
+
+    <br>
+
+    <div ng-if="selectedEntity && selectedEntity.entityType != 'web-page'"
+         class="col-md-3 property-filter">
+        <!--<a href="#" ng-click="removePropertyFilter()">See All</a>-->
+        <!--<div class="col-md-12">-->
+        <div class="filter">
+            <a href="#" ng-click="showOnlyCustomProperties()" class="custom">Custom</a>
+            <a href="#" ng-click="showOnlyFilteredProperties()"
+               class="filtered selected">Filtered</a>
+            <a href="#" ng-click="showAllProperties()" class="all">All</a>
+        </div>
+        <!--</div>-->
+    </div>
+
+    <div class="col-md-3 property-box" ng-show="selectedEntity.entityType != 'web-page'"
+         ng-class="propertyBoxClass">
+        <div ng-if="propertiesLoading" class="overlay">
+            <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+        </div>
+        <div ng-show="selectedEntity">
             <label class="blue">
                 Existing Entities
             </label>
 
-            <div ng-repeat="entity in existingEntities">
-                <label class="property-value">
-                    <a href ng-click="showEntity(entity)">{{entity.name}}</a>
-                </label>
-            </div>
-        </div>
+            <br>
 
-        <br>
-
-        <div ng-if="selectedEntity && selectedEntity.entityType != 'web-page' && propertiesFiltered"
-             class="col-md-3 property-filter">
-            <a href="#" ng-click="removePropertyFilter()">See All</a>
-        </div>
-        <div ng-if="selectedEntity && selectedEntity.entityType != 'web-page' && !propertiesFiltered"
-             class="col-md-3 property-filter">
-            <a href="#" ng-click="addPropertyFilter()">Filter</a>
-        </div>
-
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType != 'web-page'"
-             ng-class="propertyBoxClass">
-            <div ng-if="propertiesLoading" class="overlay">
-                <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
-            </div>
-            <div ng-show="selectedEntity">
-                <label class="blue">
-                    Existing Entities
-                </label>
-
+            <div ng-repeat="property in existingElements">
+                <label class="property-value">{{property.name}}</label>
                 <br>
 
-                <div ng-repeat="property in existingElements">
-                    <label class="property-value">{{property.name}}</label>
-                    <br>
-
-                    <div ng-repeat="val in property.values">
-                        <label class="property-value"
-                               ng-if="!isPropertyLink(val)">{{val.value}}</label>
-                        <label class="property-value" ng-if="isPropertyLink(val)">
-                            <a ng-if="val.datatype != 'external-id' && isDbpediaResource(val)"
-                               href="#" ng-click="openProperty(val)">
-                                {{val.valueLabel}}
-                            </a>
-                            <a ng-if="val.datatype != 'external-id' && !isDbpediaResource(val)"
-                               href="#" ng-click="openProperty(val)">
-                                {{val.valueLabel}}
-                            </a>
-                            <a ng-if="val.datatype == 'external-id'"
-                               href="{{val.metaProperty.externalSourceUri}}{{val.value}}" target="_blank">
-                                {{val.metaProperty.externalSourceUri}}{{val.value}}
-                            </a>
-                        </label>
-                    </div>
-                    <hr class="property-divider">
+                <div ng-repeat="val in property.values">
+                    <label class="property-value"
+                           ng-if="!isPropertyLink(val)">{{val.value}}</label>
+                    <label class="property-value" ng-if="isPropertyLink(val)">
+                        <a ng-if="val.datatype != 'external-id' && isDbpediaResource(val)"
+                           href="#" ng-click="openProperty(val)">
+                            {{val.valueLabel}}
+                        </a>
+                        <a ng-if="val.datatype != 'external-id' && !isDbpediaResource(val)"
+                           href="#" ng-click="openProperty(val)">
+                            {{val.valueLabel}}
+                        </a>
+                        <a ng-if="val.datatype == 'external-id'"
+                           href="{{val.metaProperty.externalSourceUri}}{{val.value}}" target="_blank">
+                            {{val.metaProperty.externalSourceUri}}{{val.value}}
+                        </a>
+                    </label>
                 </div>
+                <hr class="property-divider">
             </div>
         </div>
     </div>
+</div>
 
 </section>
 
@@ -295,7 +299,7 @@
                 <div ng-if="selectedEntity" class="form-group">
                     <label class="info-title mb-5">{{selectedEntity.name}}</label>
 
-                    <div class="info-text">{{selectedEntity.shortDescription}}</div>
+                    <div class="info-text short-description">{{selectedEntity.shortDescription}}</div>
                 </div>
 
                 <div ng-if="selectedEntity" class="form-group">
@@ -351,8 +355,9 @@
 
 
 <div class="custom-context-menu memory-box">
-    <span ng-if="memoryBoxContextMenuItems.length != 0" class="title">Add To...</span>
     <ul>
+        <li ng-if="memoryBoxContextMenuItems.length != 0" class="title">Add To...</li>
+
         <a ng-repeat="i in memoryBoxContextMenuItems" href="#" ng-click="addEntityToCategory(i)">
             <li>{{i.item.name}}</li>
         </a>
@@ -360,7 +365,6 @@
             <li style="margin-left: -45px;">Remove from this category</li>
         </a>
     </ul>
-
 </div>
 
 <script type="text/ng-template" id="detail-popup">
@@ -392,6 +396,8 @@
 
                 <div class="text">
                     <label class="info-title mb-5">{{selectedEntity.name}}</label>
+
+                    <div class="info-text info-summary">{{selectedEntity.infoSummary}}</div>
 
                     <div class="info-text" compile="descriptionShown"></div>
                 </div>
@@ -529,6 +535,17 @@
             <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
         </div>
         <div>
+            <div class="browser-arrows">
+                <a href="#" ng-click="openLastProperty()">
+                    <span class="glyphicon glyphicon-chevron-left"
+                          ng-if="selectedSideEntityIndex > 0" style="float:left"></span>
+                </a>
+                <a href="#" ng-click="openNextProperty()">
+                    <span class="glyphicon glyphicon-chevron-right"
+                          ng-if="selectedSideEntityIndex < selectedSideEntities.length - 1" style="float:right">
+            </span>
+                </a>
+            </div>
             <!--<label class="info-label mb-15">image:</label>-->
             <a href="#" ng-click="openDetailPopup()">
 
@@ -553,7 +570,7 @@
                 <div ng-if="selectedSideEntity" class="form-group">
                     <label class="info-title mb-5">{{selectedSideEntity.name}}</label>
 
-                    <div ng-if="selectedSideEntity.entityType == 'semantic-web'" class="info-text">
+                    <div ng-if="selectedSideEntity.entityType == 'semantic-web'" class="info-text short-description">
                         {{selectedSideEntity.shortDescription}}
                     </div>
                     <div class="form-group"
@@ -634,7 +651,7 @@
 </div>
 </div>
 
-<div class="custom-context-menu annotation-results">
+<div class="custom-context-menu annotation-results" ng-if="customAnnotationResults.length > 0">
     <ul>
         <a ng-repeat="result in customAnnotationResults" href="#" ng-click="openCustomAnnotation(result)">
             <li>{{result.label}}</li>

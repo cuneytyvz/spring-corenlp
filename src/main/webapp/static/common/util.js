@@ -26,3 +26,33 @@ function isUrl(s) {
 
     return urlPattern.test(s) || matcher.test(s);
 }
+
+function formatDate(date) {
+    var monthNames = [
+        "January", "February", "March",
+        "April", "May", "June", "July",
+        "August", "September", "October",
+        "November", "December"
+    ];
+
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    var year = date.getFullYear();
+
+    return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
+
+function firstLetterUppercase(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function firstLettersUppercase(string) {
+    var returnStr = '';
+    var strs = string.split(' ');
+    for (var i = 0; i < strs.length; i++) {
+        returnStr += firstLetterUppercase(strs[i]);
+        if (i != strs.length - 1)  returnStr += ' ';
+    }
+
+    return returnStr;
+}

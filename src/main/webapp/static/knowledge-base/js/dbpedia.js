@@ -43,6 +43,11 @@ var dbpedia = (function () {
                 var description = item['http://dbpedia.org/ontology/abstract'] ? _.find(item['http://dbpedia.org/ontology/abstract'], {lang: 'en'}).value : "";
                 var wikipediaUri = item['http://xmlns.com/foaf/0.1/isPrimaryTopicOf'] ? item['http://xmlns.com/foaf/0.1/isPrimaryTopicOf'][0].value : "";
 
+                if (!_.find(item['http://www.w3.org/2000/01/rdf-schema#label'], {lang: 'en'})) {
+                    onSuccess(null);
+                    return;
+                }
+
                 var entity = {
                     name: _.find(item['http://www.w3.org/2000/01/rdf-schema#label'], {lang: 'en'}).value,
                     description: description,

@@ -8,3 +8,4 @@ function httpGet(theUrl)
     
     return xmlHttp.responseText;
 }
+
