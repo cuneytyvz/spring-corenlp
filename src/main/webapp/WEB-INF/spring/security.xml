@@ -1,0 +1,173 @@
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<!--<beans:beans xmlns="http://www.springframework.org/schema/security"-->
+             <!--xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+             <!--xmlns:beans="http://www.springframework.org/schema/beans"-->
+             <!--xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd-->
+                        <!--http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">-->
+
+    <!--&lt;!&ndash; Disabled Security for Static Resources &ndash;&gt;-->
+    <!--<global-method-security pre-post-annotations="enabled" secured-annotations="enabled"/>-->
+    <!--<http pattern="/static/**" security="none"/>-->
+
+    <!--<beans:bean id="shaPasswordEncoder" class="org.springframework.security.authentication.encoding.ShaPasswordEncoder">-->
+        <!--<beans:constructor-arg value="256"/>-->
+    <!--</beans:bean>-->
+
+    <!--<beans:bean id="customerAdminUserService" class="com.istiletisim.showroomist.service.CustomerAdminUserService"/>-->
+
+    <!--&lt;!&ndash; Ajax Aware Handler &ndash;&gt;-->
+    <!--<beans:bean id="customerAdminAuthEntryPoint"-->
+                <!--class="com.istiletisim.showroomist.spring.AjaxAwareLoginUrlAuthenticationEntryPoint"-->
+                <!--scope="singleton">-->
+        <!--<beans:constructor-arg name="loginFormUrl" value="/customer/"/>-->
+    <!--</beans:bean>-->
+
+    <!--<http authentication-manager-ref="customerAdminAuthenticationManager" entry-point-ref="customerAdminAuthEntryPoint"-->
+          <!--pattern="/customer/**"-->
+          <!--use-expressions="true" disable-url-rewriting="true">-->
+
+        <!--<custom-filter position="BASIC_AUTH_FILTER" ref="customerAdminLoginFilter"/>-->
+        <!--<logout logout-success-url="/customer" invalidate-session="true" delete-cookies="JSESSIONID"-->
+                <!--logout-url="/customer/j_spring_security_logout"/>-->
+
+        <!--<intercept-url pattern="/customer/" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/language/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/pricing" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/faq" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/contact" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/index/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/login/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/register/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/forgot-password/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/recover/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/create-password/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/robots.txt" access="permitAll"/>-->
+        <!--<intercept-url pattern="/error/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/switchlang/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/clearCache" access="permitAll"/>-->
+        <!--<intercept-url pattern="/customer/**"-->
+                       <!--access="hasRole('ROLE_ADMIN') || hasRole('ROLE_MODERATOR')-->
+                       <!--|| hasRole('ROLE_CUSTOMER') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER')"/>-->
+
+
+        <!--<access-denied-handler error-page="/customer/error/403"/>-->
+        <!--<session-management session-authentication-error-url="/error/sessionExpired"/>-->
+    <!--</http>-->
+
+    <!--<authentication-manager id="customerAdminAuthenticationManager">-->
+        <!--<authentication-provider user-service-ref="customerAdminUserService">-->
+            <!--<password-encoder ref="shaPasswordEncoder"/>-->
+        <!--</authentication-provider>-->
+    <!--</authentication-manager>-->
+
+    <!--<beans:bean id="customerAdminLoginFilter"-->
+                <!--class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter">-->
+        <!--<beans:property name="authenticationManager" ref="customerAdminAuthenticationManager"/>-->
+        <!--<beans:property name="filterProcessesUrl" value="/customer/j_spring_security_check"/>-->
+        <!--<beans:property name="authenticationSuccessHandler">-->
+            <!--<beans:bean class="com.istiletisim.showroomist.spring.cadmin.AuthenticationSuccessHandler"/>-->
+        <!--</beans:property>-->
+        <!--<beans:property name="authenticationFailureHandler">-->
+            <!--<beans:bean class="com.istiletisim.showroomist.spring.cadmin.AuthenticationFailureHandler"/>-->
+        <!--</beans:property>-->
+    <!--</beans:bean>-->
+
+    <!--&lt;!&ndash; ************************** &ndash;&gt;-->
+
+    <!--&lt;!&ndash; MAIN APP SECURITY CONFIG &ndash;&gt;-->
+    <!--<beans:bean id="userService" class="com.istiletisim.showroomist.service.UserService"/>-->
+
+    <!--&lt;!&ndash; Ajax Aware Handler &ndash;&gt;-->
+    <!--<beans:bean id="mainAuthEntryPoint"-->
+                <!--class="com.istiletisim.showroomist.spring.AjaxAwareLoginUrlAuthenticationEntryPoint"-->
+                <!--scope="singleton">-->
+        <!--<beans:constructor-arg name="loginFormUrl" value="/welcome"/>-->
+    <!--</beans:bean>-->
+    <!---->
+    <!--<http request-matcher="regex" pattern="^/products/customer/\d+/login$" security="none"/>-->
+    <!--<http request-matcher="regex" pattern="^/products/customer/\d+/register$" security="none"/>-->
+
+    <!--<http authentication-manager-ref="authenticationManager" entry-point-ref="mainAuthEntryPoint" pattern="/**"-->
+          <!--use-expressions="true" disable-url-rewriting="true">-->
+        <!--<custom-filter position="BASIC_AUTH_FILTER" ref="loginFilter"/>-->
+        <!--<logout logout-success-url="/" invalidate-session="true" delete-cookies="JSESSIONID"-->
+                <!--logout-url="/j_spring_security_logout"/>-->
+
+
+		<!--<intercept-url pattern="/assets/images/brands/**" access="permitAll"/>-->
+		<!--<intercept-url pattern="/welcome/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/login/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/error/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/about/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/services/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/contact/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/sendForgotMail" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/register" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/recover" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/confirm" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/update/socialregister/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/usercountry" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/image/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/mail/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/product/latest" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/user/switchlang/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/clearCache" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/sociallogin/credentials" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/sociallogin/redirect_after_login" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/sociallogin/authuser/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/country/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/locale/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/presssector/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/presstitle/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/api/blog/**" access="permitAll"/>-->
+        <!--<intercept-url pattern="/products/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/history/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/profile/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/basket/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/dealers/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/journals/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+		<!--<intercept-url pattern="/pressreleases/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+        <!--<intercept-url pattern="/samplerequest/submit/"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER') || hasRole('ROLE_CUSTOMER')"/>-->
+		<!---->
+        <!--<intercept-url pattern="/api/**"-->
+                       <!--access="hasRole('ROLE_MODERATOR') || hasRole('ROLE_MARKETING') || hasRole('ROLE_WEB_SHOWROOM')-->
+                       <!--|| hasRole('ROLE_ADMIN')  || hasRole('ROLE_CUSTOMER')  || hasRole('ROLE_BRAND') || hasRole('ROLE_BRAND_USER')"/>-->
+        <!--<intercept-url pattern="/**" access="permitAll"/>-->
+
+        <!--&lt;!&ndash;<intercept-url pattern="/**"&ndash;&gt;-->
+        <!--&lt;!&ndash;access="hasRole('ROLE_WEB_SHOWROOM') || hasRole('ROLE_ADMIN') || hasRole('ROLE_MODERATOR')"/>&ndash;&gt;-->
+
+        <!--<access-denied-handler error-page="/error/403"/>-->
+        <!--<session-management session-authentication-error-url="/error/sessionExpired"/>-->
+    <!--</http>-->
+
+    <!--<authentication-manager id="authenticationManager">-->
+        <!--<authentication-provider user-service-ref="userService">-->
+            <!--<password-encoder ref="shaPasswordEncoder"/>-->
+        <!--</authentication-provider>-->
+    <!--</authentication-manager>-->
+
+    <!--<beans:bean id="loginFilter"-->
+                <!--class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter">-->
+        <!--<beans:property name="authenticationManager" ref="authenticationManager"/>-->
+        <!--<beans:property name="filterProcessesUrl" value="/j_spring_security_check"/>-->
+        <!--<beans:property name="authenticationSuccessHandler">-->
+            <!--<beans:bean class="com.istiletisim.showroomist.spring.AuthenticationSuccessHandler"/>-->
+        <!--</beans:property>-->
+        <!--<beans:property name="authenticationFailureHandler">-->
+            <!--<beans:bean class="com.istiletisim.showroomist.spring.AuthenticationFailureHandler"/>-->
+        <!--</beans:property>-->
+    <!--</beans:bean>-->
+
+    <!--&lt;!&ndash; ************************** &ndash;&gt;-->
+
+
+<!--</beans:beans>-->

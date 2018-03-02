@@ -12,6 +12,28 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 $scope.metaProperties = response.data;
             }, printError);
 
+        $scope.selectedEntityHidden = true;
+
+        $scope.hideSelectedEntity = function () {
+            $scope.selectedEntityHidden = true;
+
+            $('.property-box-column').hide();
+            $('.right').hide();
+            $('.memory-box').removeClass('col-md-8');
+            $('.memory-box').addClass('col-md-11');
+            $('.space').animate({width: '100%'});
+        };
+
+        $scope.showSelectedEntity = function () {
+            $scope.selectedEntityHidden = false;
+
+            $('.property-box-column').show();
+            $('.right').show();
+            $('.memory-box').addClass('col-md-8');
+            $('.memory-box').removeClass('col-md-11');
+            $('.space').animate({width: '80%'});
+        };
+
         $http.get('knowledgeBase/api/getEntityList')
             .then(function (response) {
                 response.data.forEach(function (item) {
@@ -47,11 +69,41 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 });
             }, printError);
 
+        function setSideMenuItemWidths() {
+
+            $('.side-menu-item-wrapper a span').css('margin-left', function () {
+                var lineHeight = $(this).height();
+
+                if (lineHeight > 55) {
+                    var margin = $(this).parent().parent().width() -
+                        ($(this).parent().parent().width() - lineHeight);
+                    margin = -margin / 4;
+
+                    return margin + 'px';
+                } else {
+                    return '0px';
+                }
+            });
+
+            $('.side-menu-item-wrapper a ').css('line-height', function () {
+                if ($(this).find('span').html() == '+')
+                    return 0;
+                else
+                    return $(this).find('span').height() + 'px';
+            });
+
+        }
+
+        $timeout(function () {
+            setSideMenuItemWidths();
+        }, 0);
+
         autocompleteService.configureEntity($scope, $http, $q, afterEntityResponseFetched);
         autocompleteService.configureCategory($scope);
 
         function afterEntityResponseFetched(response) {
             $scope.propertiesLoading = false;
+            $('body').css('cursor', 'default');
 
             $scope.selectedEntity = response;
             for (var i = 0; i < $scope.selectedEntity.properties.length; i++) {
@@ -72,15 +124,137 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
             $scope.existingElements = getExistingProperties();
 
+            $scope.infoSummary = $scope.getInfoSummary($scope.selectedEntity);
+
+            $scope.showSelectedEntity();
         }
 
-        $scope.entityDoubleClicked = function (e) {
-            $scope.showEntity(e);
-            $scope.openDetailPopup(e);
+        $scope.getBirthDate = function (entity) {
+            var birthDateArray = _.filter(entity.properties, function (p) {
+                return p.uri == 'http://dbpedia.org/property/birthDate'; // http://dbpedia.org/ontology/birthDate https://www.wikidata.org/wiki/Property:P569
+            });
 
+            if (birthDateArray.length == 0) {
+                birthDateArray = _.filter(entity.properties, function (p) {
+                    return p.uri == 'https://www.wikidata.org/wiki/Property:P569'; // http://dbpedia.org/ontology/birthDate https://www.wikidata.org/wiki/Property:P569
+                });
+            }
+
+            var betterBirthDateString = '';
+            if (birthDateArray.length > 0) {
+                if (new Date(birthDateArray[0].value) == 'Invalid Date') {
+                    betterBirthDateString = birthDateArray[0].value;
+                } else {
+                    var birthDate = new Date(birthDateArray[0].value);
+                    betterBirthDateString = formatDate(birthDate);
+                }
+            }
+
+            return betterBirthDateString;
+        }
+
+        $scope.getBirthPlace = function (entity) {
+            var birthPlaceArray = _.filter(entity.properties, function (p) {
+                return p.uri == 'https://www.wikidata.org/wiki/Property:P19'
+            });
+
+            var birthPlace = '';
+            if (birthPlaceArray.length > 0)
+                birthPlace = birthPlaceArray[0].valueLabel;
+
+            return birthPlace;
+        }
+
+        $scope.isPerson = function (entity) {
+            var personProperty = _.filter(entity.properties, function (p) {
+                return p.uri == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' &&
+                    (p.value == 'http://xmlns.com/foaf/0.1/Person' || p.value == 'http://dbpedia.org/ontology/Person');
+            });
+
+            return personProperty && personProperty.length > 0;
+        }
+
+        $scope.getInfoSummary = function (entity) {
+            if ($scope.isPerson(entity)) {
+
+                var birthDate = $scope.getBirthDate(entity);
+                var birthPlace = $scope.getBirthPlace(entity);
+
+                var infoSummary = birthDate;
+                if (infoSummary.length > 0 && birthPlace.length > 0)
+                    infoSummary += ', ';
+
+                if (birthPlace.length > 0)
+                    infoSummary += birthPlace;
+
+                return infoSummary;
+            }
         };
 
-        $scope.showEntity = function (e) {
+        $scope.addCategory = function () {
+            ngDialog.open({
+                template: '../static/knowledge-base/pop-ups/add-category-pop-up.html',
+                controller: ['$scope', function ($ss) {
+                    $ss.add = function () {
+                        $http.get('knowledgeBase/api/saveCategory/' + $ss.categoryName)
+                            .then(function (response) {
+                                $scope.categories.push({id: response.data, name: $ss.categoryName});
+                                $ss.closeThisDialog();
+                                $timeout(function () {
+                                    setSideMenuItemWidths();
+                                }, 0);
+                            }, function (err) {
+                                printError(err);
+                            });
+                    }
+                }]});
+        };
+
+        $scope.addSubcategory = function () {
+            ngDialog.open({
+                template: '../static/knowledge-base/pop-ups/add-subcategory-pop-up.html',
+                controller: ['$scope', function ($ss) {
+                    $ss.add = function () {
+                        $http.get('knowledgeBase/api/saveSubcategory/' + $scope.selectedCategoryToShow.id + '/' + $ss.subcategoryName)
+                            .then(function (response) {
+                                $scope.selectedCategoryToShow.subCategories.push(
+                                    {id: response.data, categoryId: $scope.selectedCategoryToShow.id, name: $ss.subcategoryName});
+                                $ss.closeThisDialog();
+                            }, function (err) {
+                                printError(err);
+                            });
+                    }
+                }]});
+        };
+
+        $scope.entityDoubleClicked = function (e) {
+            $scope.doubleClicked = true;
+
+            $scope.showEntity(e, $scope.openDetailPopup);
+
+            setTimeout(function () {
+                $scope.doubleClicked = false;
+            }, 300);
+        };
+
+        $scope.entityClicked = function (e) {
+            setTimeout(function () {
+                if (!$scope.doubleClicked) {
+                    if ($scope.previousSelectedEntity && e.id == $scope.previousSelectedEntity.id) {
+                        $scope.hideSelectedEntity();
+                        $scope.previousSelectedEntity = null;
+                        return;
+                    }
+
+                    $scope.previousSelectedEntity = e;
+
+                    $scope.showEntity(e);
+                    $scope.showSelectedEntity();
+                }
+            }, 300);
+        };
+
+        $scope.showEntity = function (e, callback) {
             $scope.showProperties = 0;
 
             $http.get('knowledgeBase/api/getEntityById/' + e.id)
@@ -99,12 +273,15 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     } else {
                         $scope.existingElements = getExistingProperties();
                     }
+
+                    if (callback)
+                        callback(e);
                 }, function (err) {
                     printError(err);
                 });
         };
 
-        $scope.saveEntity = function () {
+        $scope.saveEntity = function (callFromSubScope) {
             var pg = $scope.selectedEntity.propertyGroups;
             delete $scope.selectedEntity.propertyGroups;
 
@@ -130,6 +307,11 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     $scope.selectedEntity = response.data;
                     $scope.selectedEntity.saved = true;
                     $scope.selectedEntity.propertyGroups = pg;
+
+                    $scope.entityImage = $scope.selectedEntity.image;
+
+                    if (callFromSubScope)
+                        callFromSubScope($scope.selectedEntity);
 
                     getEntitiesByCategory();
                     getEntitiesBySubCategory();
@@ -262,29 +444,74 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
 
             var props = [];
-            if ($scope.showProperties == 1) {
-                for (var i = 0; i < $scope.selectedEntity.propertyGroups.length; i++) {
-                    if ($scope.selectedEntity.propertyGroups[i].visibility != 0) {
-                        props.push($scope.selectedEntity.propertyGroups[i]);
-                    }
-                }
-            } else if ($scope.showProperties == 0) {
+            for (var i = 0; i < $scope.selectedEntity.propertyGroups.length; i++) {
+                var prop = $scope.selectedEntity.propertyGroups[i];
 
-                for (var i = 0; i < $scope.selectedEntity.propertyGroups.length; i++) {
-                    if ($scope.selectedEntity.propertyGroups[i].visibility == 3) {
-                        props.push($scope.selectedEntity.propertyGroups[i]);
-                    }
-                }
-            }
-            else { // 2
-                for (var i = 0; i < $scope.selectedEntity.propertyGroups.length; i++) {
-                    if ($scope.selectedEntity.propertyGroups[i].source == 'custom') {
-                        props.push($scope.selectedEntity.propertyGroups[i]);
-                    }
-                }
+                var push = false;
+                if ($scope.showProperties == 1 && prop.visibility != 0)
+                    push = true;
+                else if ($scope.showProperties == 0 && prop.visibility == 3)
+                    push = true;
+                else if (prop.source == 'custom')  // 2
+                    push = true;
+
+                var p = $scope.filterValuesBySearch(prop, $scope.propertySearchFilter);
+                if (push && p)
+                    props.push(p);
+
             }
 
             return props;
+        };
+
+        $scope.setExternalUrls = function (propertyGroup) {
+            for (var j = 0; j < propertyGroup.values.length; j++) {
+                propertyGroup.values[j].externalUrl = $scope.getExternalUrl(propertyGroup.values[j]);
+            }
+        };
+
+        $scope.getExternalUrl = function (propertyValue) {
+            if (!propertyValue.metaProperty) { // not fetched from database
+                propertyValue.metaProperty = _.find($scope.metaProperties, {uri: propertyValue.uri});
+            }
+
+            if (propertyValue.metaProperty)
+                return propertyValue.metaProperty.externalSourceUri + propertyValue.value;
+            else
+                return'';
+        };
+
+        $scope.filterValuesBySearch = function (pg, filter) {
+            if (!filter || filter.length == 0)
+                return pg;
+
+            var filter = filter.toLowerCase();
+
+            var property = {
+                name: pg.name,
+                source: pg.source,
+                uri: pg.uri,
+                values: [],
+                visibility: pg.visibility
+            };
+            for (var j = 0; j < pg.values.length; j++) {
+                var isUri = pg.values[j].uri ? pg.values[j].uri.toLowerCase().includes(filter) : false;
+                var isValue = pg.values[j].value ? pg.values[j].value.toLowerCase().includes(filter) : false;
+                var isValueLabel = pg.values[j].valueLabel ? pg.values[j].valueLabel.toLowerCase().includes(filter) : false;
+                var isDescription = pg.values[j].description ? pg.values[j].description.toLowerCase().includes(filter) : false;
+                var isSource = pg.values[j].source ? pg.values[j].source.toLowerCase().includes(filter) : false;
+                var isName = pg.values[j].name ? pg.values[j].name.toLowerCase().includes(filter) : false;
+
+                if (isUri || isValue || isValueLabel || isDescription || isSource || isName) {
+                    property.values.push(pg.values[j]);
+                }
+            }
+
+            if (property.values.length > 0) {
+                return property;
+            } else {
+                return null
+            }
         };
 
         $scope.image = function (e) {
@@ -463,7 +690,12 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             });
         }
 
+        $scope.openNewEntityPopup = function () {
+            newEntityPopup.open($scope, $http, $q, $timeout, ngDialog);
+        };
+
         $scope.showSubCategoryItems = function ($event, sc) {
+
             $scope.selectedCategoryToShow.subCategories.forEach(function (cc) {
                 cc.selected = undefined;
             });
@@ -488,528 +720,23 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         };
 
         $scope.openDetailPopup = function () {
-            if (!$scope.selectedEntity.id) {
-                return;
-            }
-
-            ngDialog.open({
-                template: 'detail-popup',
-                controller: ['$scope', function ($ss) {
-                    $ss.selectedEntity = $scope.selectedEntity;
-                    $ss.isEntitySaved = $scope.isEntitySaved;
-
-                    $ss.isPropertyLink = $scope.isPropertyLink;
-                    $ss.isDbpediaResource = $scope.isDbpediaResource;
-                    $ss.saveEntity = $scope.saveEntity;
-
-                    $ss.selectedSideEntities = [];
-
-                    $ss.isWebPageEntity = function () {
-                        return $ss.selectedEntity.entityType == 'web-page';
-                    };
-
-                    function getInfoSummary(entity) {
-                        if (isPerson(entity)) {
-                            var birthDateArray = _.filter(entity.properties, function (p) {
-                                return p.uri == 'http://dbpedia.org/property/birthDate'; // http://dbpedia.org/ontology/birthDate https://www.wikidata.org/wiki/Property:P569
-                            });
-
-                            if (birthDateArray.length == 0) {
-                                birthDateArray = _.filter(entity.properties, function (p) {
-                                    return p.uri == 'https://www.wikidata.org/wiki/Property:P569'; // http://dbpedia.org/ontology/birthDate https://www.wikidata.org/wiki/Property:P569
-                                });
-                            }
-
-                            var betterBirthDateString = '';
-                            if (birthDateArray.length > 0) {
-                                if (new Date(birthDateArray[0].value) == 'Invalid Date') {
-                                    betterBirthDateString = birthDateArray[0].value;
-                                } else {
-                                    var birthDate = new Date(birthDateArray[0].value);
-                                    betterBirthDateString = formatDate(birthDate);
-                                }
-                            }
-
-                            var birthPlaceArray = _.filter(entity.properties, function (p) {
-                                return p.uri == 'https://www.wikidata.org/wiki/Property:P19'
-                            });
-
-                            var birthPlace = '';
-                            if (birthPlaceArray.length > 0)
-                                var birthPlace = birthPlaceArray[0].valueLabel;
-
-                            var occupations = _.filter(entity.properties, function (p) {
-                                return p.uri == 'https://www.wikidata.org/wiki/Property:P106'
-                            });
-
-                            var infoSummary = betterBirthDateString;
-                            if (infoSummary.length > 0 && birthPlace.length > 0)
-                                infoSummary += ', ';
-
-                            if (birthPlace.length > 0)
-                                infoSummary += birthPlace;
-
-                            if (infoSummary.length > 0 && occupations.length > 0)
-                                infoSummary += ', ';
-
-                            var len = occupations.length < 1 ? occupations.length : 1; // only the first one
-                            for (var i = 0; i < len; i++) {
-                                infoSummary += firstLettersUppercase(occupations[i].valueLabel);
-
-                                if (i != len - 1)
-                                    infoSummary += ',';
-                            }
-
-                            return infoSummary;
-                        }
-                    }
-
-                    function isPerson(entity) {
-                        var personProperty = _.filter(entity.properties, function (p) {
-                            return p.uri == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' &&
-                                (p.value == 'http://xmlns.com/foaf/0.1/Person' || p.value == 'http://dbpedia.org/ontology/Person');
-                        });
-
-                        return personProperty && personProperty.length > 0;
-                    }
-
-                    $ss.selectedEntity.infoSummary = getInfoSummary($scope.selectedEntity);
-
-                    $scope.$on('ngDialog.opened', function (e, $dialog) {
-                        autocompleteService.configureCustomObject($scope.entities, $http, $q, function (response) {
-                            setEditTopicMargin();
-
-                            if (response == null || response.entityType == 'non-semantic-web') {
-                                $scope.$apply(function () {
-                                    $ss.customObject = response;
-                                    $ss.selectedSideEntity = response;
-                                });
-                            } else {
-                                $ss.customObject = response;
-                                $ss.selectedSideEntity = response;
-                            }
-                        });
-
-                        autocompleteService.configureCustomProperty($http, $q, function (response) {
-                            $ss.customProperty = response;
-                        });
-
-
-                        if ($ss.filteredProperties().length == 0) {
-                            $ss.addCustomProperties();
-                        }
-                    });
-
-                    $ss.showCustomProperties = function () {
-                        $('.add-custom-properties').hide();
-                        $('.show-custom-properties').show();
-
-                        $('.custom-property-add-title .show').removeClass('not-selected');
-                        $('.custom-property-add-title .add').addClass('not-selected');
-                    };
-
-                    $ss.addCustomProperties = function () {
-                        $('.show-custom-properties').hide();
-                        $('.add-custom-properties').show();
-
-                        $('.custom-property-add-title .add').removeClass('not-selected');
-                        $('.custom-property-add-title .show').addClass('not-selected');
-                    };
-
-                    $ss.showProperties = 0; // 0: filtered, 1: all, 2: custom
-                    $ss.filteredProperties = function () {
-                        if (!$ss.selectedEntity || !$ss.selectedEntity.propertyGroups) {
-                            return [];
-                        }
-
-                        var props = [];
-                        if ($ss.showProperties == 1) {
-                            for (var i = 0; i < $ss.selectedEntity.propertyGroups.length; i++) {
-                                if ($ss.selectedEntity.propertyGroups[i].visibility != 0) {
-                                    props.push($ss.selectedEntity.propertyGroups[i]);
-                                }
-                            }
-                        } else if ($ss.showProperties == 0) {
-                            for (var i = 0; i < $ss.selectedEntity.propertyGroups.length; i++) {
-                                if ($ss.selectedEntity.propertyGroups[i].source == 'custom'
-                                    || $ss.selectedEntity.propertyGroups[i].visibility == 3) {
-                                    props.push($ss.selectedEntity.propertyGroups[i]);
-                                }
-                            }
-                        } else { // 2
-                            for (var i = 0; i < $ss.selectedEntity.propertyGroups.length; i++) {
-                                if ($ss.selectedEntity.propertyGroups[i].source == 'custom') {
-                                    props.push($ss.selectedEntity.propertyGroups[i]);
-                                }
-                            }
-                        }
-
-                        return props;
-                    };
-
-                    $ss.showMore = function () {
-                        $ss.descriptionShown = $ss.description;
-                        $ss.displayShowMore = false;
-                        $ss.displayShowLess = true;
-                    };
-
-                    $ss.showLess = function () {
-                        $ss.descriptionShown = $ss.description.slice(0, 1315);
-                        $ss.displayShowLess = false;
-                        $ss.displayShowMore = true;
-                    };
-
-                    $ss.showOnlyCustomProperties = function () {
-                        $('.show-add-custom-properties .filter a.custom').addClass('selected');
-                        $('.show-add-custom-properties .filter a.filtered').removeClass('selected');
-                        $('.show-add-custom-properties .filter a.all').removeClass('selected');
-
-                        $ss.showProperties = 2;
-                    };
-
-                    $ss.showOnlyFilteredProperties = function () {
-                        $('.show-add-custom-properties .filter a.custom').removeClass('selected');
-                        $('.show-add-custom-properties .filter a.filtered').addClass('selected');
-                        $('.show-add-custom-properties .filter a.all').removeClass('selected');
-
-                        $ss.showProperties = 0;
-                    };
-
-                    $ss.showAllProperties = function () {
-                        $('.show-add-custom-properties .filter a.custom').removeClass('selected');
-                        $('.show-add-custom-properties .filter a.filtered').removeClass('selected');
-                        $('.show-add-custom-properties .filter a.all').addClass('selected');
-
-                        $ss.showProperties = 1;
-                    };
-
-                    $ss.selectedSideEntityIndex = -1;
-                    $ss.openLastProperty = function() {
-                        $ss.selectedSideEntity = $ss.selectedSideEntities[--$ss.selectedSideEntityIndex];
-                    };
-
-                    $ss.openNextProperty = function() {
-                        $ss.selectedSideEntity = $ss.selectedSideEntities[++$ss.selectedSideEntityIndex];
-                    };
-
-                    $ss.popItemsUntilLastSelectedEntity = function() {
-                            for (var j = 0; j < $ss.selectedSideEntities.length - $ss.selectedSideEntityIndex - 1; j++) {
-                                $ss.selectedSideEntities.pop();
-                            }
-                    };
-
-                    // could be called through text (annotationitem index) or
-                    // through property box (property object)
-                    $ss.openProperty = function (parameter) {
-                        if (parameter && parameter.value) {
-                            var uri = parameter.value;
-                            source = parameter.source;
-                        } else {
-                            var uri = $ss.annotationEntities[parameter].uri;
-                            source = 'dbpedia';
-                        }
-
-                        if ($ss.selectedEntity.dbpediaUri == uri) {
-                            return;
-                        }
-
-                        $ss.popItemsUntilLastSelectedEntity();
-                        $ss.selectedSideEntityIndex++;
-
-                        var e = _.find($scope.entities, {dbpediaUri: uri}); // is property(entity) included in database?
-
-                        var ee = _.find($ss.selectedSideEntities, {dbpediaUri: uri}); // is it included in selected list?
-                        ee = ee ? ee : _.find($ss.selectedSideEntities, {wikidataId: uri});
-
-                        if (ee) {
-                            $ss.selectedSideEntities.push(ee);
-                            $ss.selectedSideEntity = ee;
-
-                            return;
-                        } else if (e) {
-
-                            $ss.annotationEntityLoading = true;
-
-                            $http.get('knowledgeBase/api/getEntityById/' + e.id)
-                                .then(function (response) {
-                                    var entity = response.data;
-
-                                    $ss.annotationEntityLoading = false;
-                                    $ss.selectedSideEntity = entity;
-                                    $ss.selectedSideEntities.push(entity);
-
-                                    setEditTopicMargin();
-                                }, function (err) {
-                                    printError(err);
-                                });
-                            return;
-                        } else {
-                            lodService.fetchPropertyFromRelevantSource($http, $q,
-                                {value: uri, source: source},
-                                function (response) {
-                                    setEditTopicMargin();
-
-                                    $ss.annotationEntityLoading = false;
-                                    $ss.selectedSideEntity = response;
-                                    $ss.selectedSideEntities.push(response);
-                                },
-                                function () {
-                                    $ss.annotationEntityLoading = false;
-                                });
-                        }
-
-                    };
-
-                    function setEditTopicMargin() {
-                        $timeout(function () {
-                            $(".sub-topic .info-image img").on('load', function () {
-                                var marginTop = $('.sub-topic').height() - $('.edit-topic').height() - $('.topic').height();
-                                if (marginTop < 0) marginTop = 0;
-                                $('.edit-topic').css('margin-top', marginTop);
-                            });
-                        }, 0);
-                    }
-
-                    $ss.isAnnotationEntitySaved = function () {
-                        if (!$ss.selectedSideEntity) {
-                            return true;
-                        }
-
-                        var e = _.find($scope.entities, {dbpediaUri: $ss.selectedSideEntity.dbpediaUri});
-
-                        return e !== null && e !== undefined;
-                    };
-
-                    var getSelected = function () {
-                        var t = '';
-                        if (window.getSelection) {
-                            t = window.getSelection();
-                        } else if (document.getSelection) {
-                            t = document.getSelection();
-                        } else if (document.selection) {
-                            t = document.selection.createRange().text;
-                        }
-                        return t;
-                    }
-
-                    var selectionX, selectionY, lastSelectedText = '';
-                    $(document).on("mousedown", function (e) {
-                        selectionX = e.pageX;
-                        selectionY = e.pageY;
-                    });
-
-                    $(document).bind("mouseup", function () {
-                        var selectedText = getSelected();
-                        if (selectedText != '' && selectedText.toString() != lastSelectedText) {
-                            lastSelectedText = selectedText.toString();
-
-                            dbpedia.prefixSearch($http, selectedText, function (results) {
-                                $('.custom-context-menu.annotation-results').css({
-                                    'left': selectionX + 5,
-                                    'top': selectionY - 55
-                                }).fadeIn(200);
-
-                                $ss.customAnnotationResults = results;
-                            });
-                        } else {
-                            $('.custom-context-menu.annotation-results').fadeOut(200);
-                        }
-                    });
-
-                    $ss.openCustomAnnotation = function (annotation) {
-                        $('.custom-annotation-results').fadeOut(200);
-                        $ss.openProperty({value: annotation.uri});
-                    };
-
-                    $ss.saveCustomAnnotation = function (item) {
-                        var annotation = {
-                            surfaceForm: lastSelectedText,
-                            label: item.label,
-                            uri: item.uri,
-                            referenced_entity_id: $ss.selectedEntity.id
-                        };
-
-                        $http.post('knowledgeBase/api/saveCustomAnnotation', annotation)
-                            .then(function (response) {
-
-                            }, printError);
-                    };
-
-
-                    if ($scope.selectedEntity.id) {
-                        $http.get('knowledgeBase/api/getAnnotationEntities/' + $scope.selectedEntity.id)
-                            .then(function (response) {
-                                $ss.annotationEntities = response.data;
-
-                                $ss.annotationEntities = $ss.annotationEntities.sort(function (a, b) {
-                                    if (a.offset > b.offset)
-                                        return 1;
-                                    else if (a.offset < b.offset) {
-                                        return -1
-                                    } else {
-                                        return 0;
-                                    }
-                                });
-
-                                if ($scope.selectedEntity.entityType == 'web-page-annotation')
-                                    $scope.selectedEntity.description = $scope.selectedEntity.webPageText;
-
-                                $ss.description = $ss.selectedEntity.description;
-                                for (var i = 0; i < $ss.annotationEntities.length; i++) {
-                                    console.log('');
-
-                                    var add = i == 0 ? 0 : 43;
-
-                                    var bugAdd = i >= 11 ? 1 : 0;
-
-                                    var before = $ss.description.slice(0, $ss.annotationEntities[i].offset + bugAdd * (i - 10) + add * i);
-                                    var after = $ss.description.slice($ss.annotationEntities[i].offset + bugAdd * (i - 10) + $ss.annotationEntities[i].surfaceForm.length + add * i, $ss.description.length);
-
-                                    $ss.description = before + '<a href="#" ng-click="openProperty(' + i + ')">' + $ss.annotationEntities[i].surfaceForm + '</a>' + after;
-                                }
-
-                                $ss.descriptionShown = $ss.description;
-//                        if ($ss.selectedEntity.description.length > 1315) {
-//                            $ss.descriptionShown = $ss.description.slice(0, 1315) + "...";
-//                            $ss.displayShowMore = true;
-//                        } else {
-//                            $ss.descriptionShown = $ss.description;
-//                            $ss.displayShowMore = false;
-//                        }
-
-//                        $scope.$digest();
-                            }, printError);
-                    } else {
-                        $ss.description = $ss.selectedEntity.description;
-                    }
-
-                    $ss.saveCustomProperty = function () {
-                        var subject = $.extend({}, $ss.selectedEntity);
-                        delete subject.propertyGroups;
-
-//                    if ($ss.customProperty.id) {
-//                        $ss.customProperty.metaPropertyId = $ss.customProperty.id;
-//                        $ss.customProperty.id = null;
-//                    }
-
-                        $http.post('knowledgeBase/api/saveCustomProperty', {subject: subject, predicate: $ss.customProperty, object: $ss.customObject})
-                            .then(function (response) {
-                                $('#custom-property-input').val('');
-                                $('#custom-object-input').val('');
-
-                                $ss.selectedEntity.properties.push(response.data);
-                                groupProperties($ss.selectedEntity);
-
-                                $ss.showCustomProperties();
-                                $ss.showOnlyCustomProperties();
-                            }, printError)
-                    };
-
-                    $ss.displayShowNotes = false;
-                    $ss.displayHideNotes = true;
-
-                    $scope.showNotes = function () {
-                        $('textarea').show();
-                        $('textarea').animate({height: '100px'}, 300);
-
-                        $ss.displayShowNotes = false;
-                        $ss.displayHideNotes = true;
-                    };
-
-                    $scope.hideNotes = function () {
-                        $('textarea').animate({height: '0px'}, 300);
-                        setTimeout(function () {
-                            $('textarea').show()
-                        }, 300);
-
-                        $ss.displayShowNotes = true;
-                        $ss.displayHideNotes = false;
-                    };
-
-                    $ss.getImageUrl = $scope.getImageUrl;
-
-                    $ss.updateEntity = function () {
-                        var pg = $ss.selectedEntity.propertyGroups;
-                        delete $ss.selectedEntity.propertyGroups;
-
-//                    if (!$scope.selectedEntity.categoryId || $scope.selectedEntity.categoryId == 0) {
-//                        $scope.selectedEntity.categoryId = 1;
-//                        $scope.selectedEntity.categoryName = "Other";
-//                    }
-
-                        $ss.propertiesLoading = true;
-                        $http.post('knowledgeBase/api/updateEntity', $ss.selectedEntity)
-                            .then(function (response) {
-                                $ss.saveResponse = 'Saved';
-                                $ss.propertiesLoading = false;
-
-                                $ss.selectedEntity.propertyGroups = pg;
-                                $scope.selectedEntity = $ss.selectedEntity;
-
-                                getEntitiesByCategory();
-                            }, function (err) {
-                                printError(err);
-                                $ss.saveResponse = err;
-                                $scope.propertiesLoading = false;
-                            });
-                    };
-
-                    $ss.openRemoveConfirmation = function () {
-                        ngDialog.open({
-                            template: 'confirmation-popup',
-                            controller: ['$scope', function ($sss) {
-
-                                $sss.closeWindow = function () {
-                                    $sss.closeThisDialog();
-                                };
-
-                                $sss.removeEntity = function () {
-
-                                    $http.get('knowledgeBase/api/removeEntity/' + $scope.selectedEntity.id)
-                                        .then(function (response) {
-                                            $sss.saveResponse = 'Saved';
-                                            $sss.propertiesLoading = false;
-
-                                            var index = -1;
-                                            for (var i = 0; i < $scope.entities.length; i++) {
-                                                if ($scope.entities[i].id == $scope.selectedEntity.id) {
-                                                    index = i;
-                                                }
-                                            }
-
-                                            window.location.reload(); // TODO without reloading.
-                                            $scope.entities.splice(index, 1);
-                                            $scope.selectedEntity = null;
-
-                                            getEntitiesByCategory();
-
-                                            $sss.closeThisDialog();
-                                            $ss.closeThisDialog();
-                                        }, function (err) {
-                                            printError(err);
-                                            $sss.saveResponse = err;
-                                        });
-                                };
-
-                            }]});
-                    };
-
-                }]});
+//            if (!$scope.selectedEntity.id) {
+//                return;
+//            }
+
+            detailPopup.open($scope, $http, $q, $timeout, ngDialog)
         };
 
         function groupProperties(entity) {
-            $scope.existing = [];
+            entity.propertyGroups = [];
             for (var i = 0; i < entity.properties.length; i++) {
                 var p = entity.properties[i];
-
-                if (!entity.propertyGroups)
-                    entity.propertyGroups = [];
 
                 var pp = _.find(entity.propertyGroups, {uri: p.uri});
                 if (pp) {
                     pp.values.push(p);
                 } else {
-                    entity.propertyGroups.push({uri: p.uri, name: p.name, visibility: p.visibility, values: [p], source: p.source});
+                    entity.propertyGroups.push({uri: p.uri, name: p.name, visibility: p.visibility, values: [p], source: p.source, datatype: p.datatype});
                 }
             }
 
@@ -1224,108 +951,4 @@ $(document).ready(function () {
     $('.wrapper').show();
 });
 
-app.directive('orientable', function () {
-    return {
-        link: function (scope, element, attrs) {
-
-            element.bind("load", function (e) {
-                var RATIO = 0.75;
-                var DISPLAY_HEIGHT = 240;
-
-                var parent = jQuery(this).parent().parent();
-                if (this.height <= DISPLAY_HEIGHT) {
-                    var pad = (DISPLAY_HEIGHT - this.height) / 2;
-                    parent.css("padding-top", pad);
-                    parent.css("padding-bottom", pad);
-                } else {
-                    //jQuery(this).css("height", 234);
-                }
-
-                if (this.naturalHeight > this.naturalWidth) {
-                    if (this.className.indexOf('vertical') == -1)
-                        this.className += " vertical";
-
-                    if (this.naturalWidth / this.naturalHeight < RATIO) {
-                        var expectedWidth = this.naturalHeight * RATIO;
-                        var naturalPad = (expectedWidth - this.naturalWidth) / 2;
-                        var pad = DISPLAY_HEIGHT / this.naturalHeight * naturalPad;
-
-                        parent.css("padding-right", pad);
-                        parent.css("padding-left", pad);
-
-                        if (this.height <= DISPLAY_HEIGHT) {
-                            var pad = (DISPLAY_HEIGHT - this.height);
-                            parent.css("padding-top", pad);
-                            parent.css("padding-bottom", 0);
-                        } else {
-                            //jQuery(this).css("height", 234);
-                        }
-                    }
-                } else {
-                    if (this.className.indexOf('horizontal') == -1)
-                        this.className += " horizontal";
-                }
-            });
-        }
-    }
-});
-
-app.directive('orientablediv', function () {
-    return {
-        link: function (scope, element, attrs) {
-
-            element.bind("load", function (e) {
-                var RATIO = 0.75;
-                var DISPLAY_HEIGHT = 240;
-
-                var parent = jQuery(this).parent();
-                if (this.height <= DISPLAY_HEIGHT) {
-                    var pad = (DISPLAY_HEIGHT - this.height) / 2;
-                    parent.css("padding-top", pad);
-                    parent.css("padding-bottom", pad);
-                } else {
-                    //jQuery(this).css("height", 234);
-                }
-
-                if (this.naturalHeight > this.naturalWidth) {
-                    if (this.className.indexOf('vertical') == -1)
-                        this.className += " vertical";
-
-                    if (this.naturalWidth / this.naturalHeight < RATIO) {
-                        var expectedWidth = this.naturalHeight * RATIO;
-                        var naturalPad = (expectedWidth - this.naturalWidth) / 2;
-                        var pad = DISPLAY_HEIGHT / this.naturalHeight * naturalPad;
-
-                        parent.css("padding-right", pad);
-                        parent.css("padding-left", pad);
-
-                        if (this.height <= DISPLAY_HEIGHT) {
-                            var pad = (DISPLAY_HEIGHT - this.height);
-                            parent.css("padding-top", pad);
-                            parent.css("padding-bottom", 0);
-                        } else {
-                            //jQuery(this).css("height", 234);
-                        }
-                    }
-                } else {
-                    if (this.className.indexOf('horizontal') == -1)
-                        this.className += " horizontal";
-                }
-            });
-        }
-    }
-});
-
-app.directive('compile', ['$compile', function ($compile) {
-    return function (scope, element, attrs) {
-        scope.$watch(
-            function (scope) {
-                return scope.$eval(attrs.compile);
-            },
-            function (value) {
-                element.html(value);
-                $compile(element.contents())(scope);
-            }
-        )
-    };
-}])
+directives.create(app)

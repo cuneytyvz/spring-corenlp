@@ -5,7 +5,9 @@ import com.gsu.knowledgebase.model.*;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
 import com.gsu.knowledgebase.service.DBPedia;
 import com.gsu.knowledgebase.service.DBpediaSpotlight;
+import com.gsu.knowledgebase.service.MailService;
 import com.gsu.knowledgebase.service.WebPageAnnotator;
+import com.gsu.knowledgebase.util.Constants;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -41,6 +43,89 @@ public class KnowledgeBaseApi {
     @Autowired
     private ServletContext servletContext;
 
+    @Autowired
+    private MailService mailService;
+
+    @RequestMapping(value = "/signup", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object signup(@RequestBody final User user) throws Exception {
+        User u = knowledgeBaseDao.findUserByUsername(user.getUsername());
+        if (u != null) {
+            return -1;
+        }
+
+        u = knowledgeBaseDao.findUserByEmail(user.getEmail());
+        if (u != null) {
+            return -2;
+        }
+
+        user.setRoleId(Constants.ROLE_USER);
+        user.setStatus(Constants.USER_STATUS_AWAITING_CONFIRMATION);
+
+        // Save User
+        Long userId = knowledgeBaseDao.saveUser(user);
+
+        // Create confirmation code and save
+        UUID uuid = UUID.randomUUID();
+
+        UserConfirmation uc = new UserConfirmation();
+        uc.setStatus(Constants.USER_CONFIRMATION_STATUS_AWAITING);
+        uc.setUserId(userId);
+        uc.setConfirmationCode(uuid.toString());
+
+        knowledgeBaseDao.saveUserConfirmation(uc);
+
+        // Send confirmation mail
+        Mail mail = new Mail();
+        mail.setMailTo(user.getEmail());
+        mail.setMailSubject("Confirmation Email");
+
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("firstName", user.getFirstName());
+        model.put("lastName", user.getLastName());
+        model.put("confirmationCode", uc.getConfirmationCode());
+
+        mail.setModel(model);
+
+        mailService.sendEmail(mail, "/templates/confirmation.vm");
+
+        return user;
+    }
+
+    @RequestMapping(value = "/confirmUser/{confirmationCode}", method = RequestMethod.GET)
+    public
+    String confirmUser(@PathVariable String confirmationCode) throws Exception {
+        UserConfirmation uc = knowledgeBaseDao.findAwaitingUserConfirmationByCode(confirmationCode);
+
+        if (uc == null) {
+            return "redirect:/knowledge-base/confirmation-code-not-found";
+        }
+
+        // Update user and confirmation status
+        knowledgeBaseDao.updateUserStatus(uc.getUserId(), Constants.USER_STATUS_CONFIRMED);
+        knowledgeBaseDao.updateUserConfirmationStatus(uc.getId(), Constants.USER_CONFIRMATION_STATUS_CONFIRMED);
+
+        User user = knowledgeBaseDao.findUserById(uc.getUserId());
+
+        // Send registration mail
+        Mail mail = new Mail();
+        mail.setMailTo(user.getEmail());
+        mail.setMailSubject("Registration Completed");
+
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("firstName", user.getFirstName());
+        model.put("lastName", user.getLastName());
+
+        mail.setModel(model);
+
+        mailService.sendEmail(mail, "/templates/registration.vm");
+
+        return  "redirect:/knowledge-base/user-confirmed";
+    }
+
     @ResponseBody
     @RequestMapping(value = "/image/{image:.*}", method = RequestMethod.GET, produces = MediaType.IMAGE_JPEG_VALUE)
     public byte[] getImage(@PathVariable("image") String image) throws IOException {
@@ -69,6 +154,17 @@ public class KnowledgeBaseApi {
         Long id = knowledgeBaseDao.updateEntity(entity);
 
         return id;
+    }
+
+    @RequestMapping(value = "/unexpectedError", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object unexpectedError(@RequestBody UnexpectedError error) throws Exception {
+        // TODO save unexpected error log
+
+        return 0;
     }
 
     @RequestMapping(value = "/saveCustomProperty", method = RequestMethod.POST,
@@ -129,6 +225,67 @@ public class KnowledgeBaseApi {
         return p;
     }
 
+    @RequestMapping(value = "/saveCustomProperties", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    void saveCustomProperties(@RequestBody CustomProperty[] customProperties) throws Exception {
+        for (CustomProperty customProperty : customProperties) {
+            Entity s = customProperty.getSubject();
+            MetaProperty mp = customProperty.getPredicate();
+            Entity o = customProperty.getObject();
+
+            if (mp.getId() == null) {
+                mp.setVisibility(3);
+                Long id = knowledgeBaseDao.saveMetaProperty(mp);
+                mp.setId(id);
+            }
+
+            if (o.getId() == null) {
+                Entity e = knowledgeBaseDao.findEntityByDbpediaUriWikidataId(o);
+
+                if (e == null) {
+                    o.setSource("custom");
+                    Long id = knowledgeBaseDao.saveEntity(o);
+
+                    o.setId(id);
+                } else {
+                    customProperty.setObject(e);
+                }
+            }
+
+            Property p = new Property(mp);
+            p.setSource("custom");
+
+            if (o.getEntityType().equals("semantic-web")) {
+                if (o.getDbpediaUri() != null && o.getDbpediaUri().length() > 0) {
+                    p.setValue(o.getDbpediaUri());
+                } else {
+                    p.setValue(o.getWikidataId());
+                }
+            } else { // custom entity
+                p.setValue(o.getName());
+                p.setCustomEntityId(o.getId());
+            }
+
+            p.setEntityId(customProperty.getSubject().getId());
+            p.setValueLabel(o.getName());
+
+            // if such a triple does not exists then save...
+            List<Property> results = knowledgeBaseDao.findPropertiesByTriples(s.getId(), p.getMetaPropertyId(), p.getValueLabel());
+            if (results == null || results.size() == 0) {
+                Long id = knowledgeBaseDao.saveProperty(p);
+                p.setId(id);
+            } else {
+                p.setId(results.get(0).getId());
+            }
+        }
+
+
+    }
+
+
     @RequestMapping(value = "/removeEntity/{id}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
@@ -147,7 +304,7 @@ public class KnowledgeBaseApi {
     Object saveEntity(@RequestBody final Entity entity) throws Exception {
         Entity pl = knowledgeBaseDao.findEntityByName(entity.getName());
         if (pl != null && !pl.getEntityType().equals("web-page-annotation")) {
-            return null;
+            return -1;
         }
 
         if (entity.getEntityType().equals("web-page")) {
@@ -251,7 +408,6 @@ public class KnowledgeBaseApi {
             }
         });
 
-
         return entity;
     }
 
@@ -344,6 +500,17 @@ public class KnowledgeBaseApi {
         return annotationItems;
     }
 
+    @RequestMapping(value = "/getAnnotationEntitiesByText", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getAnnotationEntitiesByText(@RequestBody AnnotationRequest text) throws Exception {
+        Collection<AnnotationItem> items = dbpediaSpotlight.annotateText(text.getText());
+
+        return items;
+    }
+
     @RequestMapping(value = "/getEntityList", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
@@ -358,6 +525,29 @@ public class KnowledgeBaseApi {
 //        }
 
         return entities;
+    }
+
+    @RequestMapping(value = "/getMainPageEntityList", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getEntitgetMainPageEntityListyList() throws Exception {
+        List<Entity> entities = new ArrayList<>(knowledgeBaseDao.findAllEntitiesLazy());
+
+//        for (Entity e : entities) {
+//            if (e.getEntityType().equals("web-page")) {
+//                e.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(e.getId()));
+//            }
+//        }
+
+        List<Entity> randomEntities = new ArrayList<>();
+        Random r = new Random();
+        for (int i = 0; i < 20; i++) {
+            int index = r.nextInt(entities.size());
+            randomEntities.add(entities.get(index));
+        }
+
+        return randomEntities;
     }
 
     @RequestMapping(value = "/addEntityToCategory", method = RequestMethod.GET,
@@ -398,6 +588,22 @@ public class KnowledgeBaseApi {
         knowledgeBaseDao.removeEntityFromSubCategory(entityId);
 
         return null;
+    }
+
+    @RequestMapping(value = "/saveCategory/{name}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object addCategory(@PathVariable String name) throws Exception {
+        return knowledgeBaseDao.saveCategory(name);
+    }
+
+    @RequestMapping(value = "/saveSubcategory/{categoryId}/{name}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object addSubcategory(@PathVariable Long categoryId, @PathVariable String name) throws Exception {
+        return knowledgeBaseDao.saveSubcategory(categoryId, name);
     }
 
     @RequestMapping(value = "/autocompleteProperty/{prefix}", method = RequestMethod.GET,

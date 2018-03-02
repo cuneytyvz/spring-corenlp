@@ -3,6 +3,7 @@ package com.gsu.knowledgebase.repository;
 import com.gsu.common.util.DateUtils;
 import com.gsu.common.util.MaxIdCalculator;
 import com.gsu.knowledgebase.model.*;
+import com.gsu.knowledgebase.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -462,6 +463,7 @@ public class KnowledgeBaseDao {
         }
     }
 
+
     public void updateProperties(List<Property> properties) {
 
         String sql = "update property set meta_property_id = ? where id = ?";
@@ -761,16 +763,16 @@ public class KnowledgeBaseDao {
 
             ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                entity = new Entity(rs);
-                String categoryName = rs.getString("c.name");
-                entity.setCategoryName(categoryName);
-
-                Long categoryId = rs.getLong("c.id");
-                entity.setCategoryId(categoryId);
-            }
-
             while (rs.next()) {
+                if (entity == null) {
+                    entity = new Entity(rs);
+                    String categoryName = rs.getString("c.name");
+                    entity.setCategoryName(categoryName);
+
+                    Long categoryId = rs.getLong("c.id");
+                    entity.setCategoryId(categoryId);
+                }
+
                 Property property = new Property(rs);
                 MetaProperty mp = new MetaProperty(rs);
                 property.setMetaProperty(mp);
@@ -801,7 +803,49 @@ public class KnowledgeBaseDao {
         String sql = "select * from entity e " +
                 " where entity_type <> 'web-page-annotation' " +
                 " and  entity_type <> 'non-semantic-web' " +
-                " and source = 'memory-item';";
+                " and (source = 'memory-item' or source = 'custom-memory-item');";
+
+        Connection conn = null;
+
+        HashMap<Long, Entity> map = new HashMap<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Long entityId = rs.getLong("e.id");
+
+                Entity entity;
+                if (!map.containsKey(entityId)) {
+                    entity = new Entity(rs);
+
+                    map.put(entityId, entity);
+                } else {
+                    entity = map.get(entityId);
+                }
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<Entity> findAllMainPageEntitiesLazy() {
+        String sql = "select * from entity e " +
+                " where entity_type <> 'custom' or entity_type = 'semantic-web' or " +
+                " and (source = 'memory-item' or source = 'custom-memory-item');";
 
         Connection conn = null;
 
@@ -1027,6 +1071,400 @@ public class KnowledgeBaseDao {
 
             ps.setLong(1, id);
             ps.setString(2, name);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public User findUserByUsername(String username) throws Exception {
+
+        String sql = "select * from user u where LOWER(u.username) = LOWER(?);";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            User user = null;
+            if (rs.next())
+                user = new User(rs);
+
+            ps.close();
+
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public User findUserById(Long id) throws Exception {
+
+        String sql = "select * from user u where u.id = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            User user = null;
+            if (rs.next())
+                user = new User(rs);
+
+            ps.close();
+
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public User findUserByEmail(String email) throws Exception {
+
+        String sql = "select * from user u where LOWER(u.email) = LOWER(?);";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, email);
+
+            ResultSet rs = ps.executeQuery();
+
+            User user = null;
+            if (rs.next())
+                user = new User(rs);
+
+            ps.close();
+
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+
+    public Long saveUser(User user) {
+
+        String sql = "insert into user set id = ?, username = ?, password= ?, email = LOWER(?), first_name = ?," +
+                " last_name = ?, role_id = ?, status = ?, login_try_count = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user", "id");
+
+            ps.setLong(1, id);
+            ps.setString(2, user.getUsername());
+            ps.setString(3, user.getPassword());
+            ps.setString(4, user.getEmail());
+            ps.setString(5, user.getFirstName());
+            ps.setString(6, user.getLastName());
+            ps.setLong(7, user.getRoleId());
+            ps.setInt(8, user.getStatus());
+            ps.setInt(9, 0);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void updateUser(User user) {
+
+        String sql = "update user set username = ?, password= ?, email = LOWER(?), first_name = ?," +
+                " last_name = ?, role_id = ?, status = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getPassword());
+            ps.setString(3, user.getEmail());
+            ps.setString(4, user.getFirstName());
+            ps.setString(5, user.getLastName());
+            ps.setLong(6, user.getRoleId());
+            ps.setInt(7, user.getStatus());
+            ps.setLong(8, user.getId());
+
+            ps.execute();
+
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void updateUserStatus(Long userId, Integer status) {
+
+        String sql = "update user set status = ? where id = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, status);
+            ps.setLong(2, userId);
+
+            ps.execute();
+
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void updateUserLoginTryCount(Long userId, Integer count) {
+
+        String sql = "update user set login_try_count = ? where id = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+
+            ps.setLong(1, count);
+            ps.setLong(2, userId);
+
+            ps.execute();
+
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveUserConfirmation(UserConfirmation userConfirmation) {
+
+        String sql = "insert into user_confirmation set id = ?, user_id = ?, confirmation_code = ?, status = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_confirmation", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, userConfirmation.getUserId());
+            ps.setString(3, userConfirmation.getConfirmationCode());
+            ps.setInt(4, userConfirmation.getStatus());
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void updateUserConfirmationStatus(Long id, Integer status) {
+        String sql = "update user_confirmation set  status = ? where id = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, status);
+            ps.setLong(2, id);
+
+            ps.execute();
+
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void deleteUserConfirmation(UserConfirmation userConfirmation) {
+
+        String sql = "delete from user_confirmation where confirmation_code = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setString(1, userConfirmation.getConfirmationCode());
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public UserConfirmation findAwaitingUserConfirmationByCode(String confirmationCode) throws  Exception{
+
+        String sql = "select * from user_confirmation uc where confirmation_code = ? and status = ?;";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setString(1, confirmationCode);
+            ps.setInt(2, Constants.USER_CONFIRMATION_STATUS_AWAITING);
+
+            ResultSet rs = ps.executeQuery();
+
+            UserConfirmation uc = null;
+            if(rs.next()) {
+                uc = new UserConfirmation(rs);
+            }
+
+            ps.close();
+
+            return uc;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveSubcategory(Long categoryId, String name) {
+
+        String sql = "insert into subcategory set id = ?, category_id = ?, name = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "subcategory", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, categoryId);
+            ps.setString(3, name);
 
             ps.execute();
 

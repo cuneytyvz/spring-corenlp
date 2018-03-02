@@ -16,6 +16,14 @@ function replaceTurkishCharacters(str) {
     return returnString;
 }
 
+function sendErrorReport($http, data) {
+    $http.post('knowledgeBase/api/unexpectedError', datadata)
+        .then(function (response) {
+        }, function(err){
+            printError('Error occured while trying to send error report : ' + err);
+        });
+}
+
 function printError(err) {
     console.log(err);
 }

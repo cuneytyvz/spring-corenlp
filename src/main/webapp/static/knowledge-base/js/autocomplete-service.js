@@ -26,6 +26,7 @@ var autocompleteService = (function () {
                 var e = _.find($scope.entities, {dbpediaUri: ui.item.uri}); // is property(entity) included in database?
 
                 $scope.propertiesLoading = true;
+                $('body').css('cursor', 'wait');
                 if (e) {
                     $http.get('knowledgeBase/api/getEntityById/' + e.id)
                         .then(function(response){
@@ -145,33 +146,33 @@ var autocompleteService = (function () {
 
     var configureCategory = function ($scope) {
 
-        $("#category-input").autocomplete({
-            minLength: 2,
-            source: function (request, response) {
-                var cats = [];
-                for (var i = 0; i < $scope.categories.length; i++) {
-                    var c = $scope.categories[i];
-
-                    if (c.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
-                        cats.push({id: c.id, label: c.name, value: c.name, subCategories: c.subCategories});
-                }
-
-                response(cats);
-            }, select: function (event, ui) {
-                $("#entity-category-input").val(ui.item.value);
-                this.value = ui.item.value;
-
-                $scope.selectedCategory = {id: ui.item.id, value: ui.item.value, subCategories: ui.item.subCategories};
-                $scope.selectedEntity.categoryId = ui.item.id;
-                $scope.selectedEntity.categoryName = ui.item.value;
-
-                console.log(JSON.stringify(ui.item));
-
-                return false;
-            }, change: function (event, ui) { // not-selected
-                $("#entity-category-input").val($("#category-input").val());
-            }
-        });
+//        $("#category-input").autocomplete({
+//            minLength: 2,
+//            source: function (request, response) {
+//                var cats = [];
+//                for (var i = 0; i < $scope.categories.length; i++) {
+//                    var c = $scope.categories[i];
+//
+//                    if (c.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
+//                        cats.push({id: c.id, label: c.name, value: c.name, subCategories: c.subCategories});
+//                }
+//
+//                response(cats);
+//            }, select: function (event, ui) {
+//                $("#entity-category-input").val(ui.item.value);
+//                this.value = ui.item.value;
+//
+//                $scope.selectedCategory = {id: ui.item.id, value: ui.item.value, subCategories: ui.item.subCategories};
+//                $scope.selectedEntity.categoryId = ui.item.id;
+//                $scope.selectedEntity.categoryName = ui.item.value;
+//
+//                console.log(JSON.stringify(ui.item));
+//
+//                return false;
+//            }, change: function (event, ui) { // not-selected
+//                $("#entity-category-input").val($("#category-input").val());
+//            }
+//        });
 
         $scope.$watch(function () {
                 if (angular.element("#entity-category-input").is(':visible')) {
@@ -213,33 +214,33 @@ var autocompleteService = (function () {
             , function () {
             });
 
-        $("#subcategory-input").autocomplete({
-            minLength: 2,
-            source: function (request, response) {
-                var subcats = [];
-                for (var i = 0; i < $scope.selectedCategory.subCategories.length; i++) {
-                    var sc = $scope.selectedCategory.subCategories[i];
-
-                    if (sc.categoryId == $scope.selectedCategory.id && sc.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
-                        subcats.push({id: sc.id, label: sc.name, value: sc.name});
-                }
-
-                response(subcats);
-            }, select: function (event, ui) {
-                $("#entity-subcategory-input").val(ui.item.value);
-                this.value = ui.item.value;
-
-                $scope.selectedSubCategory = {id: ui.item.id, value: ui.item.value};
-                $scope.selectedEntity.subCategoryId = ui.item.id;
-                $scope.selectedEntity.subCategoryName = ui.item.value;
-
-                console.log(JSON.stringify(ui.item));
-
-                return false;
-            }, change: function (event, ui) { // not-selected
-                $("#entity-subcategory-input").val($("#subcategory-input").val());
-            }
-        });
+//        $("#subcategory-input").autocomplete({
+//            minLength: 2,
+//            source: function (request, response) {
+//                var subcats = [];
+//                for (var i = 0; i < $scope.selectedCategory.subCategories.length; i++) {
+//                    var sc = $scope.selectedCategory.subCategories[i];
+//
+//                    if (sc.categoryId == $scope.selectedCategory.id && sc.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
+//                        subcats.push({id: sc.id, label: sc.name, value: sc.name});
+//                }
+//
+//                response(subcats);
+//            }, select: function (event, ui) {
+//                $("#entity-subcategory-input").val(ui.item.value);
+//                this.value = ui.item.value;
+//
+//                $scope.selectedSubCategory = {id: ui.item.id, value: ui.item.value};
+//                $scope.selectedEntity.subCategoryId = ui.item.id;
+//                $scope.selectedEntity.subCategoryName = ui.item.value;
+//
+//                console.log(JSON.stringify(ui.item));
+//
+//                return false;
+//            }, change: function (event, ui) { // not-selected
+//                $("#entity-subcategory-input").val($("#subcategory-input").val());
+//            }
+//        });
 
         $scope.$watch(function () {
                 if (angular.element("#entity-subcategory-input").is(':visible')) {
@@ -280,12 +281,70 @@ var autocompleteService = (function () {
             }
             , function () {
             });
+    };
+
+    var configureNewEntityCategory = function ($scope) {
+
+        $("#new-category-input").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var cats = [];
+                for (var i = 0; i < $scope.categories.length; i++) {
+                    var c = $scope.categories[i];
+
+                    if (c.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
+                        cats.push({id: c.id, label: c.name, value: c.name, subCategories: c.subCategories});
+                }
+
+                response(cats);
+            }, select: function (event, ui) {
+                this.value = ui.item.value;
+
+                $scope.selectedCategory = {id: ui.item.id, value: ui.item.value, subCategories: ui.item.subCategories};
+                $scope.entity.categoryId = ui.item.id;
+                $scope.entity.categoryName = ui.item.value;
+
+                console.log(JSON.stringify(ui.item));
+
+                return false;
+            }, change: function (event, ui) { // not-selected
+            }
+        });
+
+        $("#new-subcategory-input").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var subcats = [];
+                for (var i = 0; i < $scope.selectedCategory.subCategories.length; i++) {
+                    var sc = $scope.selectedCategory.subCategories[i];
+
+                    if (sc.categoryId == $scope.selectedCategory.id && sc.name.toLowerCase().indexOf(request.term.toLowerCase()) != -1)
+                        subcats.push({id: sc.id, label: sc.name, value: sc.name});
+                }
+
+                response(subcats);
+            }, select: function (event, ui) {
+                this.value = ui.item.value;
+
+                $scope.selectedSubCategory = {id: ui.item.id, value: ui.item.value};
+                $scope.entity.subCategoryId = ui.item.id;
+                $scope.entity.subCategoryName = ui.item.value;
+
+                console.log(JSON.stringify(ui.item));
+
+                return false;
+            }, change: function (event, ui) { // not-selected
+            }
+        });
+
+
     }
 
     return {
         configureCategory: configureCategory,
         configureEntity: configureEntity,
         configureCustomObject: configureCustomObject,
-        configureCustomProperty: configureCustomProperty
+        configureCustomProperty: configureCustomProperty,
+        configureNewEntityCategory: configureNewEntityCategory
     }
 })();
