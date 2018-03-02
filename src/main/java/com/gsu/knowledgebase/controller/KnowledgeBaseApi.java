@@ -62,7 +62,7 @@ public class KnowledgeBaseApi {
             return -2;
         }
 
-        user.setRoleId(Constants.ROLE_USER);
+        user.setRoleId(new Long(Constants.ROLE_USER));
         user.setStatus(Constants.USER_STATUS_AWAITING_CONFIRMATION);
 
         // Save User
@@ -96,8 +96,7 @@ public class KnowledgeBaseApi {
     }
 
     @RequestMapping(value = "/confirmUser/{confirmationCode}", method = RequestMethod.GET)
-    public
-    String confirmUser(@PathVariable String confirmationCode) throws Exception {
+    public String confirmUser(@PathVariable String confirmationCode) throws Exception {
         UserConfirmation uc = knowledgeBaseDao.findAwaitingUserConfirmationByCode(confirmationCode);
 
         if (uc == null) {
@@ -123,7 +122,7 @@ public class KnowledgeBaseApi {
 
         mailService.sendEmail(mail, "/templates/registration.vm");
 
-        return  "redirect:/knowledge-base/user-confirmed";
+        return "redirect:/knowledge-base/user-confirmed";
     }
 
     @ResponseBody

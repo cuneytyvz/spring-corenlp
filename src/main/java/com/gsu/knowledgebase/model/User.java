@@ -1,6 +1,7 @@
 package com.gsu.knowledgebase.model;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Created by cnytync on 01/03/2018.
@@ -20,7 +21,7 @@ public class User {
 
     }
 
-    public User(ResultSet rs) throws Exception {
+    public User(ResultSet rs) throws SQLException {
         this.id = rs.getLong("u.id");
         this.username = rs.getString("u.username");
         this.email = rs.getString("u.email");

@@ -1153,7 +1153,7 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public User findUserByEmail(String email) throws Exception {
+    public User findUserByEmail(String email) {
 
         String sql = "select * from user u where LOWER(u.email) = LOWER(?);";
 
@@ -1185,6 +1185,40 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public Long saveLogin(Login login) {
+
+        String sql = "insert into user set id = ?, user_id = ?, cr_date = ?, type = ?, success = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "login", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, login.getId());
+            ps.setTimestamp(3, new Timestamp(login.getCrDate().getMillis()));
+            ps.setInt(4,login.getType());
+            ps.setBoolean(5,login.isSuccess());
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
 
     public Long saveUser(User user) {
 
@@ -1415,7 +1449,7 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public UserConfirmation findAwaitingUserConfirmationByCode(String confirmationCode) throws  Exception{
+    public UserConfirmation findAwaitingUserConfirmationByCode(String confirmationCode) throws Exception {
 
         String sql = "select * from user_confirmation uc where confirmation_code = ? and status = ?;";
 
@@ -1431,7 +1465,7 @@ public class KnowledgeBaseDao {
             ResultSet rs = ps.executeQuery();
 
             UserConfirmation uc = null;
-            if(rs.next()) {
+            if (rs.next()) {
                 uc = new UserConfirmation(rs);
             }
 

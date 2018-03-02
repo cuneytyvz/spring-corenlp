@@ -67,19 +67,35 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                     $ss.validationMessage = '';
                     $ss.login = function () {
-                        if (!$ss.user || !$ss.user.username || !$ss.user.password) {
+                        if (!$ss.username || !$ss.password) {
                             $ss.validationMessage = 'All fields must be filled.';
                         }
 
                         if ($ss.validationMessage) {
                             $('.validation-message').css('display', 'block');
-//                            $('.validation-message').fadeOut(1500);
                             return;
                         }
 
-                        $http.post('knowledgeBase/api/login', $ss.entity)
-                            .then(function (response) {
-                            }, printError);
+                        $.ajax({
+                            type: "POST",
+                            url: 'knowledge-base/knowledgeBase/j_spring_security_check',
+                            data: jQuery("#login-form").serialize(), // serializes the form's elements.
+                            success: function (data) {
+                                window.location = "/knowledge-base/memory";
+                            },
+                            error: function (data, textStatus, jqXHR) {
+                                if (data.status == 410) {
+                                } else if (data.status == 409) {
+                                } else if (data.status == 406) {
+                                } else {
+                                }
+
+                                $scope.$digest();
+
+                                printError(textStatus);
+                            }
+                        });
+
                     }
                 }]});
         };
