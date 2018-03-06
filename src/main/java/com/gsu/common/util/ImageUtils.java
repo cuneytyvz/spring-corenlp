@@ -58,7 +58,7 @@ public class ImageUtils {
     public static int SCALED_IMAGE_WIDTH = 300;
     public static int SCALED_IMAGE_HEIGHT = 300;
 
-    public BufferedImage readImageFromUri(String urlString) throws Exception {
+    public BufferedImage readImageFromUri(String urlString)  {
         String str = "";
 
         if (urlString.contains("commons.wikimedia"))
@@ -70,10 +70,17 @@ public class ImageUtils {
         else
             str = urlString;
 
+        try {
         URL url = new URL(str);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
-        return ImageIO.read(urlConnection.getInputStream());
+
+            return ImageIO.read(urlConnection.getInputStream());
+        } catch(Exception e) {
+            System.err.println("ERROR : Exception thrown while reading image.");
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private String getRedirectUrl(String url) throws Exception {

@@ -20,11 +20,19 @@ public class KnowledgeBaseDao {
     @Autowired
     private DataSource kbDataSource;
 
+    public KnowledgeBaseDao() {
+    }
+
+    public KnowledgeBaseDao(MaxIdCalculator maxIdCalculator, DataSource kbDataSource) {
+        this.maxIdCalculator = maxIdCalculator;
+        this.kbDataSource = kbDataSource;
+    }
+
     public Long saveEntity(Entity entity) throws Exception {
 
         String sql = "insert into entity set id = ?, name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ?, subcategory_id = ?, source = ?," +
+                ",  cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?," +
+                " wikipedia_uri = ?,short_description = ?, small_image = ?, source = ?," +
                 " secondary_image = ?, small_secondary_image = ?, web_page_text = ?";
 
         Connection conn = null;
@@ -41,31 +49,23 @@ public class KnowledgeBaseDao {
             ps.setString(4, entity.getDbpediaUri());
             ps.setString(5, entity.getWikidataId());
 
-            if (entity.getCategoryId() == null) {
-                ps.setNull(6, Types.BIGINT);
-            } else {
-                ps.setLong(6, entity.getCategoryId());
-            }
-
-            ps.setTimestamp(7, DateUtils.getCurrentTimeStamp());
-            ps.setString(8, entity.getEntityType());
+            ps.setTimestamp(6, DateUtils.getCurrentTimeStamp());
+            ps.setString(7, entity.getEntityType());
             if (entity.getWebPageEntityId() == null) {
-                ps.setNull(9, Types.BIGINT);
+                ps.setNull(8, Types.BIGINT);
             } else {
-                ps.setLong(9, entity.getWebPageEntityId());
+                ps.setLong(8, entity.getWebPageEntityId());
             }
 
-            ps.setString(10, entity.getWebUri());
-            ps.setString(11, entity.getImage());
-            ps.setString(12, entity.getWikipediaUri());
-            ps.setString(13, entity.getShortDescription());
-            ps.setString(14, entity.getSmallImage());
-            ps.setString(15, entity.getNote());
-            ps.setLong(16, entity.getSubCategoryId());
-            ps.setString(17, entity.getSource());
-            ps.setString(18, entity.getSecondaryImage());
-            ps.setString(19, entity.getSmallSecondaryImage());
-            ps.setString(20, entity.getWebPageText());
+            ps.setString(9, entity.getWebUri());
+            ps.setString(10, entity.getImage());
+            ps.setString(11, entity.getWikipediaUri());
+            ps.setString(12, entity.getShortDescription());
+            ps.setString(13, entity.getSmallImage());
+            ps.setString(14, entity.getSource());
+            ps.setString(15, entity.getSecondaryImage());
+            ps.setString(16, entity.getSmallSecondaryImage());
+            ps.setString(17, entity.getWebPageText());
             ps.execute();
 
             ps.close();
@@ -170,8 +170,8 @@ public class KnowledgeBaseDao {
     public Long updateEntity(Entity entity) throws Exception {
 
         String sql = "update entity set name = ?, description = ?, dbpedia_uri = ?, wikidata_id = ?" +
-                ", category_id = ?, cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, " +
-                " wikipedia_uri = ?,short_description = ?, small_image = ?, note = ? where id = ?";
+                ",  cr_date = ?, entity_type = ?, web_page_entity_id = ?, web_uri = ?, image = ?, " +
+                " wikipedia_uri = ?,short_description = ?, small_image = ? where id = ?";
 
         Connection conn = null;
 
@@ -186,33 +186,56 @@ public class KnowledgeBaseDao {
             ps.setString(3, entity.getDbpediaUri());
             ps.setString(4, entity.getWikidataId());
 
-            if (entity.getCategoryId() == null) {
-                ps.setNull(5, Types.BIGINT);
-            } else {
-                ps.setLong(5, entity.getCategoryId());
-            }
-
-            ps.setTimestamp(6, DateUtils.getCurrentTimeStamp());
-            ps.setString(7, entity.getEntityType());
+            ps.setTimestamp(5, DateUtils.getCurrentTimeStamp());
+            ps.setString(6, entity.getEntityType());
             if (entity.getWebPageEntityId() == null) {
-                ps.setNull(8, Types.BIGINT);
+                ps.setNull(7, Types.BIGINT);
             } else {
-                ps.setLong(8, entity.getWebPageEntityId());
+                ps.setLong(7, entity.getWebPageEntityId());
             }
 
-            ps.setString(9, entity.getWebUri());
-            ps.setString(10, entity.getImage());
-            ps.setString(11, entity.getWikipediaUri());
-            ps.setString(12, entity.getShortDescription());
-            ps.setString(13, entity.getSmallImage());
-            ps.setString(14, entity.getNote());
-            ps.setLong(15, entity.getId());
+            ps.setString(8, entity.getWebUri());
+            ps.setString(9, entity.getImage());
+            ps.setString(10, entity.getWikipediaUri());
+            ps.setString(11, entity.getShortDescription());
+            ps.setString(12, entity.getSmallImage());
+            ps.setLong(13, entity.getId());
 
             ps.execute();
 
             ps.close();
 
             return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void updateUserEntity(UserEntity userEntity) throws Exception {
+
+        String sql = "update user_entity set note = ? where id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+
+            ps.setString(1, userEntity.getNote());
+            ps.setLong(2, userEntity.getId());
+            ps.execute();
+
+            ps.close();
+
+            return;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -350,17 +373,21 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public void addEntityToCategory(Long entityId, Long categoryId) {
+    public void addEntityToCategory(Long userEntityId, Long categoryId) {
 
-        String sql = "update entity set category_id = ? where id = ?";
+        String sql = "insert into user_entity_category set id = ?, user_entity_id = ?, category_id = ?";
 
         Connection conn = null;
 
         try {
             conn = kbDataSource.getConnection();
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity_category", "id");
+
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setLong(1, categoryId);
-            ps.setLong(2, entityId);
+            ps.setLong(1, id);
+            ps.setLong(2, userEntityId);
+            ps.setLong(3, categoryId);
 
             ps.execute();
             ps.close();
@@ -378,17 +405,21 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public void addEntityToSubCategory(Long entityId, Long subCategoryId) {
+    public void addEntityToSubCategory(Long userEntityId, Long subCategoryId) {
 
-        String sql = "update entity set subcategory_id = ? where id = ?";
+        String sql = "insert into user_entity_subcategory set id = ?, user_entity_id = ?, subcategory_id = ?";
 
         Connection conn = null;
 
         try {
             conn = kbDataSource.getConnection();
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity_subcategory", "id");
+
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setLong(1, subCategoryId);
-            ps.setLong(2, entityId);
+            ps.setLong(1, id);
+            ps.setLong(2, userEntityId);
+            ps.setLong(3, subCategoryId);
 
             ps.execute();
             ps.close();
@@ -406,18 +437,17 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public void removeEntityFromCategory(Long entityId) {
+    public void removeEntityFromCategory(Long userEntityId, Long categoryId) {
 
-        String sql = "update entity set category_id = ?, subcategory_id = ? where id = ?";
+        String sql = "delete from user_entity_category where user_entity_id = ? and category_id = ?";
 
         Connection conn = null;
 
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setLong(1, 1);
-            ps.setLong(2, entityId);
-            ps.setNull(3, Types.BIGINT);
+            ps.setLong(1, userEntityId);
+            ps.setLong(2, categoryId);
 
             ps.execute();
             ps.close();
@@ -435,17 +465,17 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public void removeEntityFromSubCategory(Long entityId) {
+    public void removeEntityFromSubCategory(Long userEntityId, Long subCategoryId) {
 
-        String sql = "update entity set subcategory_id = ? where id = ?";
+        String sql = "delete from user_entity_subcategory where user_entity_id = ? and subcategory_id = ?";
 
         Connection conn = null;
 
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setNull(1, Types.BIGINT);
-            ps.setLong(2, entityId);
+            ps.setLong(1, userEntityId);
+            ps.setLong(2, subCategoryId);
 
             ps.execute();
             ps.close();
@@ -748,8 +778,8 @@ public class KnowledgeBaseDao {
 
     public Entity findEntityById(Long id) {
         String sql = "select * from entity e left join property pr on pr.entity_id = e.id " +
-                " left join meta_property mp on pr.meta_property_id = mp.id " + // pr.uri = mp.uri
-                " left join category c on e.category_id = c.id   " + // and mp.visibility != 0
+                " left join meta_property mp on pr.meta_property_id = mp.id " + // pr.uri = mp.uri  and mp.visibility != 0
+                " left join user_entity ue on e.id = ue.entity_id " +
                 " where e.id = ?";
 
         Connection conn = null;
@@ -766,11 +796,6 @@ public class KnowledgeBaseDao {
             while (rs.next()) {
                 if (entity == null) {
                     entity = new Entity(rs);
-                    String categoryName = rs.getString("c.name");
-                    entity.setCategoryName(categoryName);
-
-                    Long categoryId = rs.getLong("c.id");
-                    entity.setCategoryId(categoryId);
                 }
 
                 Property property = new Property(rs);
@@ -798,6 +823,52 @@ public class KnowledgeBaseDao {
             }
         }
     }
+
+    public Collection<Entity> findAllUserEntitiesLazy(Long userId) {
+        String sql = "select * from entity e, user_entity ue " +
+                " where ue.entity_id = e.id and ue.user_id = ?  and entity_type <> 'web-page-annotation' " +
+                " and  entity_type <> 'non-semantic-web' " +
+                " and (source = 'memory-item' or source = 'custom-memory-item');";
+
+        Connection conn = null;
+
+        HashMap<Long, Entity> map = new HashMap<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Long entityId = rs.getLong("e.id");
+
+                Entity entity;
+                if (!map.containsKey(entityId)) {
+                    entity = new Entity(rs);
+
+                    map.put(entityId, entity);
+                } else {
+                    entity = map.get(entityId);
+                }
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
 
     public Collection<Entity> findAllEntitiesLazy() {
         String sql = "select * from entity e " +
@@ -1089,7 +1160,7 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public User findUserByUsername(String username) throws Exception {
+    public User findUserByUsername(String username) {
 
         String sql = "select * from user u where LOWER(u.username) = LOWER(?);";
 
@@ -1187,7 +1258,7 @@ public class KnowledgeBaseDao {
 
     public Long saveLogin(Login login) {
 
-        String sql = "insert into user set id = ?, user_id = ?, cr_date = ?, type = ?, success = ?";
+        String sql = "insert into login set id = ?, user_id = ?, cr_date = ?, type = ?, success = ?";
 
         Connection conn = null;
 
@@ -1198,10 +1269,111 @@ public class KnowledgeBaseDao {
             Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "login", "id");
 
             ps.setLong(1, id);
-            ps.setLong(2, login.getId());
-            ps.setTimestamp(3, new Timestamp(login.getCrDate().getMillis()));
-            ps.setInt(4,login.getType());
-            ps.setBoolean(5,login.isSuccess());
+            ps.setLong(2, login.getUserId());
+            ps.setTimestamp(3, DateUtils.fromDatetime(login.getCrDate()));
+            ps.setInt(4, login.getType());
+            ps.setBoolean(5, login.isSuccess());
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveUserEntity(UserEntity ue) {
+
+        String sql = "insert into user_entity set id = ?, user_id = ?, entity_id = ?, cr_date = ?, note = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, ue.getUserId());
+            ps.setLong(3, ue.getEntityId());
+            ps.setTimestamp(4, DateUtils.fromDatetime(ue.getCrDate()));
+            ps.setString(5, ue.getNote());
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveUserEntityCategory(Long userEntityId, Long categoryId) {
+
+        String sql = "insert into user_entity_category set id = ?, user_entity_id = ?, category_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity_category", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, userEntityId);
+            ps.setLong(3, categoryId);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveUserEntitySubcategory(Long userEntityId, Long subcategoryId) {
+
+        String sql = "insert into user_entity_subcategory set id = ?, user_entity_id = ?, subcategory_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity_subcategory", "id");
+
+            ps.setLong(1, id);
+            ps.setLong(2, userEntityId);
+            ps.setLong(3, subcategoryId);
 
             ps.execute();
 
@@ -1223,7 +1395,7 @@ public class KnowledgeBaseDao {
     public Long saveUser(User user) {
 
         String sql = "insert into user set id = ?, username = ?, password= ?, email = LOWER(?), first_name = ?," +
-                " last_name = ?, role_id = ?, status = ?, login_try_count = ?;";
+                " last_name = ?, role_id = ?, status = ?, login_try_count = ?, cr_date = ?;";
 
         Connection conn = null;
 
@@ -1242,6 +1414,7 @@ public class KnowledgeBaseDao {
             ps.setLong(7, user.getRoleId());
             ps.setInt(8, user.getStatus());
             ps.setInt(9, 0);
+            ps.setTimestamp(10, DateUtils.getCurrentTimeStamp());
 
             ps.execute();
 
@@ -1517,8 +1690,142 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public Collection<Category> findAllCategories() {
-        String sql = "select * from category c left join subcategory sc on c.id = sc.category_id;";
+    public Collection<UserEntityCategory> findAllUserEntityCategories(Long userId) {
+        String sql = "select * from user_entity_category uec, user_entity ue where ue.id = uec.user_entity_id and ue.user_id = ? ;";
+
+        Connection conn = null;
+
+        Collection<UserEntityCategory> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntityCategory(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<UserEntityCategory> findAllUserEntityCategories(Long userId, Long entityId) {
+        String sql = "select * from user_entity_category uec, user_entity ue where ue.id = uec.user_entity_id and ue.user_id = ? and ue.entity_id = ?;";
+
+        Connection conn = null;
+
+        Collection<UserEntityCategory> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, entityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntityCategory(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<UserEntitySubCategory> findAllUserEntitySubCategories(Long userId) {
+        String sql = "select * from user_entity_subcategory ues, user_entity ue where ues.user_entity_id = ue.id and ue.user_id = ? ;";
+
+        Connection conn = null;
+
+        Collection<UserEntitySubCategory> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntitySubCategory(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<UserEntitySubCategory> findAllUserEntitySubCategories(Long userId, Long entityId) {
+        String sql = "select * from user_entity_subcategory ues, user_entity ue where ues.user_entity_id = ue.id and ue.user_id = ? and ue.entity_id = ?;";
+
+        Connection conn = null;
+
+        Collection<UserEntitySubCategory> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, entityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntitySubCategory(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<Category> findAllCategories(Long userId) {
+        String sql = "select * from category c left join subcategory sc on c.id = sc.category_id where c.user_id = ? ;";
 
         Connection conn = null;
 
@@ -1526,6 +1833,8 @@ public class KnowledgeBaseDao {
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -1593,8 +1902,8 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public Collection<SubCategory> findAllSubCategories() {
-        String sql = "select * from subcategory sc;";
+    public Collection<SubCategory> findAllSubCategories(Long userId) {
+        String sql = "select * from subcategory sc where user_id = ?;";
 
         Connection conn = null;
 
@@ -1602,6 +1911,8 @@ public class KnowledgeBaseDao {
         try {
             conn = kbDataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -1658,6 +1969,41 @@ public class KnowledgeBaseDao {
             }
         }
     }
+
+    public UserEntity findUserEntity(Long userId, Long entityId) {
+        String sql = "select * from user_entity ue where ue.user_id = ? and entity_id = ?;";
+
+        Connection conn = null;
+
+        Entity entity = null;
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, entityId);
+
+            ResultSet rs = ps.executeQuery();
+            UserEntity ue = null;
+            while (rs.next()) {
+                ue = new UserEntity(rs);
+            }
+
+            rs.close();
+            ps.close();
+
+            return ue;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
 
     public Entity findEntityByDbpediaUriWikidataId(Entity e) {
         String sql = "select * from entity e left join property pr on pr.entity_id = e.id where ";

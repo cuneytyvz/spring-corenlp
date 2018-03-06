@@ -14,8 +14,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,10 +25,9 @@ import java.util.List;
 /**
  * Created by cnytync on 30/11/14.
  */
-@Service("userService")
+@Service
 public class UserService implements UserDetailsService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-
 
     private KnowledgeBaseDao knowledgeBaseDao;
 
@@ -34,8 +35,7 @@ public class UserService implements UserDetailsService {
         System.out.println();
     }
 
-    @Autowired
-    public UserService(KnowledgeBaseDao knowledgeBaseDao){
+    public UserService(KnowledgeBaseDao knowledgeBaseDao) {
         this.knowledgeBaseDao = knowledgeBaseDao;
     }
 
@@ -43,7 +43,7 @@ public class UserService implements UserDetailsService {
         logger.info("UserDetails Database Service : " + login);
 
         // check user exists in database
-        User user = knowledgeBaseDao.findUserByEmail(login);
+        User user = knowledgeBaseDao.findUserByUsername(login);
         if (user == null) {
             logger.warn("User({}) does not exist in system", login);
             throw new UsernameNotFoundException("There is no user with this username.");

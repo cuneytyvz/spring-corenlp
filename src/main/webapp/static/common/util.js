@@ -64,3 +64,56 @@ function firstLettersUppercase(string) {
 
     return returnStr;
 }
+
+var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+    }
+};
+
+function insertParam(key, value) {
+    key = encodeURI(key);
+    value = encodeURI(value);
+
+    var kvp = document.location.search.substr(1).split('&');
+
+    var i = kvp.length;
+    var x;
+    while (i--) {
+        x = kvp[i].split('=');
+
+        if (x[0] == key) {
+            x[1] = value;
+            kvp[i] = x.join('=');
+            break;
+        }
+    }
+
+    if (i < 0) {
+        kvp[kvp.length] = [key, value].join('=');
+    }
+
+    //this will reload the page, it's likely better to store this until finished
+    document.location.search = kvp.join('&');
+}
+
+var getBlogUsername = function () {
+    return window.location.href.split('blog/')[1].split('/')[0];
+};
+
+var convertJavaDateToJavascriptDate = function (jdate) {
+    return new Date(jdate.year, jdate.monthOfYear - 1, jdate.dayOfMonth, jdate.hourOfDay, jdate.minuteOfHour, jdate.secondOfMinute);
+}
+
+var printError = function (err) {
+    console.log(err);
+}

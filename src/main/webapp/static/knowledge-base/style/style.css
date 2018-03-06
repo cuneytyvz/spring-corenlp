@@ -617,6 +617,7 @@ div#columns:hover figure:not(:hover) {
 
 .detail-info .text .info-title {
     margin-top: 0;
+    font-size: 25px;
 }
 
 .popup .block .notes {
@@ -966,7 +967,6 @@ section.space {
     box-shadow: none;
     border-bottom-style: dashed;
     border-bottom-color: #8a887b;
-    cursor: default;
 }
 
 .pop-up-entity-text-input, .pop-up-entity-text-input[disabled] {
@@ -977,6 +977,14 @@ section.space {
     border-bottom-style: dashed;
     border-bottom-color: #8a887b;
     border-bottom-width: 1px;
+
+}
+
+.pop-up-entity-text-input[disabled] {
+    cursor: default;
+}
+
+.category-input input[disabled], .notes textarea[disabled] {
     cursor: default;
 }
 

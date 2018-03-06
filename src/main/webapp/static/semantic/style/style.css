@@ -272,7 +272,6 @@ html[xmlns] .clearfix {
     position: absolute;
     top: 350px;
     left: -290px;
-    opacity: 0.9;
     background-color: #4f9aff;
 }
 
@@ -300,6 +299,10 @@ html[xmlns] .clearfix {
 
 .side-menu.albums {
     top: 100px;
+}
+
+.side-menu.artists {
+    top: 200px;
 }
 
 .side-menu-edge {

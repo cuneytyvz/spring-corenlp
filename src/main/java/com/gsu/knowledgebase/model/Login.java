@@ -1,6 +1,6 @@
 package com.gsu.knowledgebase.model;
 
-import com.gsu.knowledgebase.util.DateUtils;
+import com.gsu.common.util.DateUtils;
 import org.joda.time.DateTime;
 
 import java.sql.ResultSet;

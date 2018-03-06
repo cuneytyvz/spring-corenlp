@@ -1,6 +1,6 @@
 var detailPopup = (function () {
 
-    var open = function($scope,$http,$q, $timeout,ngDialog) {
+    var open = function ($scope, $http, $q, $timeout, ngDialog) {
         ngDialog.open({
             template: '../static/knowledge-base/pop-ups/detail-pop-up.html',
             controller: ['$scope', function ($ss) {
@@ -431,6 +431,9 @@ var detailPopup = (function () {
 
                     $ss.descriptionShown = $ss.description;
 
+                    if ($ss.descriptionShown.indexOf("<<a href=\"#\" ng-click=\"openProperty(0)\">HTML</a>>") != -1)
+                        $ss.descriptionShown = $ss.descriptionShown.split("<<a href=\"#\" ng-click=\"openProperty(0)\">HTML</a>>")[0] + $ss.descriptionShown.split("<<a href=\"#\" ng-click=\"openProperty(0)\">HTML</a>>")[1];
+
                     if ($ss.descriptionShown.length < 150) {
                         for (i = 0; i < 200; i++) {
                             $ss.descriptionShown += ' ';
@@ -527,7 +530,7 @@ var detailPopup = (function () {
                             $ss.selectedEntity.propertyGroups = pg;
                             $scope.selectedEntity = $ss.selectedEntity;
 
-                            getEntitiesByCategory();
+                            $scope.getEntitiesByCategory();
                         }, function (err) {
                             printError(err);
                             $ss.saveResponse = err;
@@ -562,7 +565,7 @@ var detailPopup = (function () {
                                         $scope.entities.splice(index, 1);
                                         $scope.selectedEntity = null;
 
-                                        getEntitiesByCategory();
+                                        $scope.getEntitiesByCategory();
 
                                         $sss.closeThisDialog();
                                         $ss.closeThisDialog();

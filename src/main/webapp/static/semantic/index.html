@@ -29,6 +29,7 @@
     <script src="static/common/util.js"></script>
     <script src="static/semantic/js/util.js"></script>
     <script src="static/semantic/js/lib/jLouvain.js"></script>
+    <script src="static/semantic/js/side-menu.js"></script>
     <script src="static/semantic/js/semantic-space-1.0.4.js"></script>
     <script src="static/semantic/js/semantic.js"></script>
 
@@ -119,6 +120,26 @@
                                 <div class="side-menu albums">
                                     <div class="side-menu-edge">
                                         <p class="">Albums</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="graph-box-edge artists">
+                            <div class="graph-box">
+
+                                <button class="accordion" ng-repeat="n in getSavedNodes()"
+                                        ng-click="">
+                                    {{n.name}}
+                                </button>
+                                <!--<div class="panel" ng-repeat="t in a.tracks">-->
+                                    <!--<p>{{t.title}}</p>-->
+                                <!--</div>-->
+                            </div>
+                            <a href="#" ng-click="openArtistMenu()">
+                                <div class="side-menu artists">
+                                    <div class="side-menu-edge">
+                                        <p class="">Artists</p>
                                     </div>
                                 </div>
                             </a>

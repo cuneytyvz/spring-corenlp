@@ -34,40 +34,47 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             $('.space').animate({width: '80%'});
         };
 
-        $http.get('knowledgeBase/api/getEntityList')
+        $http.get('knowledgeBase/api/getLoggedInUser')
             .then(function (response) {
-                response.data.forEach(function (item) {
-//                groupProperties(item);
+                $scope.user = response.data;
 
-                    $scope.items.push(item);
+                $http.get('knowledgeBase/api/getEntityList/' + $scope.user.id)
+                    .then(function (response) {
+                        response.data.forEach(function (item) {
 
-                    if (item.entityType == 'web-page') {
-                        $scope.webPages.push(item);
-                        $scope.entities.push(item);
-                    } else {
-                        $scope.entities.push(item);
-                    }
+                            $scope.items.push(item);
 
-                    $http.get('knowledgeBase/api/getAllCategories')
-                        .then(function (response) {
-                            $scope.categories = response.data;
-                            $scope.categories[0].selected = 'selected';
-
-                            for (var i = 0; i < $scope.categories.length; i++) {
-                                if ($scope.categories[i].id != 1)
-                                    $scope.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
-
-                                $scope.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
+                            if (item.entityType == 'web-page') {
+                                $scope.webPages.push(item);
+                                $scope.entities.push(item);
+                            } else {
+                                $scope.entities.push(item);
                             }
+                        });
 
-                            $scope.selectedCategoryToShow = $scope.categories[0];
-                            $scope.selectedCategoryToShow.selectedSubCategory = $scope.categories[0].subCategories[0];
+                        $http.get('knowledgeBase/api/getAllCategories/' + $scope.user.id)
+                            .then(function (response) {
+                                $scope.categories = response.data;
+                                $scope.categories.unshift({id: -1, name: 'Other', subCategories: [], entities: []});
+                                $scope.categories[0].selected = 'selected';
 
-                            getEntitiesByCategory();
-                            getEntitiesBySubCategory();
-                        }, printError);
-                });
+                                for (var i = 0; i < $scope.categories.length; i++) {
+                                    if ($scope.categories[i].id != -1)
+                                        $scope.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
+
+                                    $scope.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
+                                }
+
+                                $scope.getEntitiesByCategory();
+                                $scope.getEntitiesBySubCategory();
+
+                                $scope.selectedCategoryToShow = $scope.categories[0];
+                                $scope.selectedCategoryToShow.selectedSubCategory = $scope.categories[0].subCategories[0];
+
+                            }, printError);
+                    }, printError);
             }, printError);
+
 
         function setSideMenuItemWidths() {
 
@@ -96,7 +103,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         $timeout(function () {
             setSideMenuItemWidths();
-        }, 0);
+        }, 500);
 
         autocompleteService.configureEntity($scope, $http, $q, afterEntityResponseFetched);
         autocompleteService.configureCategory($scope);
@@ -125,6 +132,11 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             $scope.existingElements = getExistingProperties();
 
             $scope.infoSummary = $scope.getInfoSummary($scope.selectedEntity);
+
+            if ($scope.selectedSubCategory)
+                $('#entity-subcategory-input').val($scope.selectedSubCategory.name);
+            if ($scope.selectedCategory)
+                $('#entity-category-input').val($scope.selectedCategory.name);
 
             $scope.showSelectedEntity();
         }
@@ -237,6 +249,13 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }, 300);
         };
 
+        $scope.categoryName = function () {
+            if (!$scope.selectedEntity.categories || $scope.selectedEntity.categories.length == 0)
+                return "Other";
+            else
+                return $scope.selectedEntity.categories[1];
+        };
+
         $scope.entityClicked = function (e) {
             setTimeout(function () {
                 if (!$scope.doubleClicked) {
@@ -285,13 +304,14 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             var pg = $scope.selectedEntity.propertyGroups;
             delete $scope.selectedEntity.propertyGroups;
 
-            if ($scope.selectedCategory) {
-                $scope.selectedEntity.categoryId = $scope.selectedCategory.id;
-                $scope.selectedEntity.categoryName = $scope.selectedCategory.value;
-            } else {
-                $scope.selectedEntity.categoryId = 1;
-                $scope.selectedEntity.categoryName = "Other";
-            }
+            $scope.selectedEntity.categories = [];
+            $scope.selectedEntity.subCategories = [];
+
+            if ($scope.selectedCategory)
+                $scope.selectedEntity.categories.push({id: $scope.selectedCategory.id, name: $scope.selectedCategory.name}); // id , value
+
+            if ($scope.selectedSubCategory)
+                $scope.selectedEntity.subCategories.push({id: $scope.selectedSubCategory.id, name: $scope.selectedSubCategory.name}); // id , value
 
             $scope.selectedEntity.source = "memory-item";
 
@@ -313,8 +333,8 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     if (callFromSubScope)
                         callFromSubScope($scope.selectedEntity);
 
-                    getEntitiesByCategory();
-                    getEntitiesBySubCategory();
+                    $scope.getEntitiesByCategory();
+                    $scope.getEntitiesBySubCategory();
                 }, function (err) {
                     printError(err);
                     $scope.saveResponse = err;
@@ -543,26 +563,40 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         };
 
         $scope.removeEntityFromCategory = function (category) {
+            var sc = $scope.selectedCategoryToShow;
+            var ssc = $scope.selectedCategoryToShow.selectedSubCategory;
 
-            if ($scope.clickedEntity.categoryId != 1 && ($scope.clickedEntity.subCategoryId == null || $scope.clickedEntity.subCategoryId == 0)) {
-                $http.get('knowledgeBase/api/removeEntityFromCategory?entityId=' + $scope.clickedEntity.id)
+            if (sc.id != -1 && (!ssc || ssc.id == 0 || ssc.id == -1 || ssc.id == -2)) {
+                $http.get('knowledgeBase/api/removeEntityFromCategory?userEntityId=' + $scope.clickedEntity.userEntityId + '&categoryId=' + sc.id)
                     .then(function (response) {
 
-                        $scope.clickedEntity.categoryId = 1;
+                        var index;
+                        for (var i = 0; i < $scope.clickedEntity.categories.length; i++) {
+                            if ($scope.clickedEntity.categories[i].id == sc.id)
+                                index = i;
+                        }
 
-                        getEntitiesByCategory();
-                        getEntitiesBySubCategory();
+                        $scope.clickedEntity.categories.splice(index, 1);
+
+                        $scope.getEntitiesByCategory();
+                        $scope.getEntitiesBySubCategory();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
                     });
-            } else if ($scope.clickedEntity.categoryId != 1 && !($scope.clickedEntity.subCategoryId == null || $scope.clickedEntity.subCategoryId == 0)) {
-                $http.get('knowledgeBase/api/removeEntityFromSubCategory?entityId=' + $scope.clickedEntity.id)
+            } else if (sc.id != -1 && !(ssc && ssc.id != 0 && ssc.id != -1 && ssc.id != -2)) {
+                $http.get('knowledgeBase/api/removeEntityFromSubCategory?userEntityId=' + $scope.clickedEntity.userEntityId + '&subCategoryId=' + ssc.id)
                     .then(function (response) {
-                        $scope.clickedEntity.subCategoryId = null;
+                        var index;
+                        for (var i = 0; i < $scope.selectedCategoryToShow.subCategories.length; i++) {
+                            if ($scope.selectedCategoryToShow.subCategories[i].id == scc.id)
+                                index = i;
+                        }
 
-                        getEntitiesByCategory();
-                        getEntitiesBySubCategory();
+                        $scope.selectedCategoryToShow.subCategories.splice(index, 1);
+
+                        $scope.getEntitiesByCategory();
+                        $scope.getEntitiesBySubCategory();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
@@ -575,24 +609,24 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         $scope.addEntityToCategory = function (category) {
 
             if (category.type == 'category') {
-                $http.get('knowledgeBase/api/addEntityToCategory?entityId=' + $scope.clickedEntity.id + "&categoryId=" + category.item.id)
+                $http.get('knowledgeBase/api/addEntityToCategory?userEntityId=' + $scope.clickedEntity.userEntityId + "&categoryId=" + category.item.id)
                     .then(function (response) {
 
-                        $scope.clickedEntity.categoryId = category.item.id;
+                        $scope.clickedEntity.categories.push(category.item);
 
-                        getEntitiesByCategory();
-                        getEntitiesBySubCategory();
+                        $scope.getEntitiesByCategory();
+                        $scope.getEntitiesBySubCategory();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
                     });
             } else if (category.type == 'subcategory') {
-                $http.get('knowledgeBase/api/addEntityToSubCategory?entityId=' + $scope.clickedEntity.id + "&subCategoryId=" + category.item.id)
+                $http.get('knowledgeBase/api/addEntityToSubCategory?userEntityId=' + $scope.clickedEntity.userEntityId + "&subCategoryId=" + category.item.id)
                     .then(function (response) {
-                        $scope.clickedEntity.subCategoryId = category.item.id;
+                        $scope.selectedCategoryToShow.subCategories.push(category.item.id);
 
-                        getEntitiesByCategory();
-                        getEntitiesBySubCategory();
+                        $scope.getEntitiesByCategory();
+                        $scope.getEntitiesBySubCategory();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
@@ -613,7 +647,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
             // set up initial memory box context menu items as all subcategories below this category
             $scope.memoryBoxContextMenuItems = [];
-            if ($scope.selectedCategoryToShow.id != 1) {
+            if ($scope.selectedCategoryToShow.id != -1) {
                 _.each($scope.selectedCategoryToShow.subCategories, function (sc) {
                     if (sc.id != -1 && sc.id != -2) {
                         $scope.memoryBoxContextMenuItems.push({type: 'subcategory', item: sc});
@@ -816,17 +850,31 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             return elements;
         };
 
-        function getEntitiesByCategory() {
-            for (var i = 0; i < $scope.categories.length; i++) {
+        $scope.getEntitiesByCategory = function () {
+            for (var j = 0; j < $scope.entities.length; j++) {
+                var e = $scope.entities[j];
+
+                if (!e.categories || e.categories.length == 0)
+                    $scope.categories[0].entities.push(e); // push to 'Other'
+
+            }
+
+
+            for (var i = 1; i < $scope.categories.length; i++) {
                 var c = $scope.categories[i];
                 c.entities = [];
 
                 for (var j = 0; j < $scope.entities.length; j++) {
                     var e = $scope.entities[j];
 
-                    if (e.categoryId == c.id) {
-                        c.entities.push(e);
+                    if (e.categories) {
+                        _.each(e.categories, function (ec) {
+                            if (ec.id == c.id) {
+                                c.entities.push(e);
+                            }
+                        });
                     }
+
                 }
             }
 
@@ -835,7 +883,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             $timeout(function () {
                 $scope.memoryBoxContextMenuItems = [];
                 _.each($scope.categories, function (c) {
-                    if (c.id != 1) {
+                    if (c.id != -1) {
                         $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
                     }
                 });
@@ -862,7 +910,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
         };
 
-        function getEntitiesBySubCategory() {
+        $scope.getEntitiesBySubCategory = function () {
             for (var i = 0; i < $scope.categories.length; i++) {
                 var c = $scope.categories[i];
 
@@ -873,11 +921,24 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     for (var j = 0; j < $scope.entities.length; j++) {
                         var e = $scope.entities[j];
 
-                        if (sc.id == -2 && c.id == e.categoryId && (e.subCategoryId == 0 || e.subCategoryId == null)) {
+                        var includedInCategory = false;
+                        _.each(e.categories, function (ec) {
+                            if (ec.id == c.id) includedInCategory = true;
+                        });
+
+                        if (e.categories.length == 0 && c.id == -1)
+                            includedInCategory = true;
+
+                        var includedInSubCategory = false;
+                        _.each(e.subCategories, function (esc) {
+                            if (esc.id == sc.id) includedInSubCategory = true;
+                        });
+
+                        if (sc.id == -2 && includedInCategory && (!e.subCategories || e.subCategories.length == 0)) { // Other
                             sc.entities.push(e);
-                        } else if (sc.id == -1 && c.id == e.categoryId) {
+                        } else if (sc.id == -1 && includedInCategory) { // All
                             sc.entities.push(e);
-                        } else if (e.subCategoryId == sc.id && c.id == e.categoryId) {
+                        } else if (includedInSubCategory) {
                             sc.entities.push(e);
                         }
                     }
@@ -940,8 +1001,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 //        $overlay = $($event.target).parent().find('.overlay').hide();
         };
     }
-)
-;
+);
 
 app.config(function ($sceDelegateProvider, $sceProvider) {
     $sceProvider.enabled(false);

@@ -10,6 +10,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
             }, printError);
 
+        $scope.nodes = [];
         $scope.search = function () {
             $('.album-box-edge').animate({left: '-290px'}, 300);
 
@@ -31,6 +32,28 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 fetchData($scope.searchInput.toLowerCase());
             }
         };
+
+        $(document).bind('nodeClicked', function (e, nodeName) {
+            $('.album-box-edge').animate({left: '-290px'}, 300);
+
+            if (nodeName != $scope.selectedNode.name) {
+                fetchData(nodeName.toLowerCase());
+//            $scope.selectedNode = _.find($scope.graph.nodes, {name: nodeName});
+            }
+        });
+
+        $scope.getSavedNodes = function () {
+            if (!$scope.graph || !$scope.graph.nodes)
+                return [];
+
+            var savedNodes = [];
+            _.each($scope.graph.nodes, function (n) {
+                if (n.saved)
+                    savedNodes.push(n);
+            });
+
+            return savedNodes;
+        }
 
         $scope.newGraph = function () {
             ngDialog.open({
@@ -149,80 +172,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
         }
 
-        var $graphsMenu = $('.graph-box-edge.graphs');
-        var $albumsMenu = $('.graph-box-edge.albums');
-
-        $scope.sideMenus = [];
-        $scope.sideMenus.push({$el: $graphsMenu, isOpen: false});
-        $scope.sideMenus.push({$el: $albumsMenu, isOpen: false});
-
-        $scope.openMenu = null;
-
-        $scope.openGraphMenu = function () {
-            putOtherMenusBack($graphsMenu);
-
-            if (isOpen($graphsMenu)) {
-                $('.graph-box-edge').animate({left: '-290px'}, 300);
-            }
-            else {
-                $('.graph-box-edge').animate({left: '0px'}, 300);
-            }
-
-            setOpen($graphsMenu, !isOpen($graphsMenu));
-        };
-
-        $scope.albumMenuOpen = false;
-        $scope.openAlbumMenu = function () {
-            putOtherMenusBack($albumsMenu);
-
-            if (isOpen($albumsMenu))
-                $('.graph-box-edge').animate({left: '-290px'}, 300);
-            else
-                $('.graph-box-edge').animate({left: '0px'}, 300);
-
-            setOpen($albumsMenu, !isOpen($albumsMenu));
-        };
-
-        function putOtherMenusBack($thisMenu) {
-            $thisMenu.css({'z-index': 999});
-
-            _.each($scope.sideMenus, function (menu) {
-                if ($thisMenu[0] != menu.$el[0]) {
-                    menu.$el.css({'z-index': 1});
-                    menu.isOpen = false;
-                }
-            });
-        }
-
-        function setOpen($el, isOpen) {
-            _.each($scope.sideMenus, function (item) {
-                if (item.$el[0] == $el[0]) {
-                    item.isOpen = isOpen;
-                }
-            });
-        }
-
-        function isOpen($el) {
-            var ret = false;
-            _.each($scope.sideMenus, function (item) {
-                if (item.$el[0] == $el[0]) {
-                    ret = item.isOpen;
-                }
-            });
-
-            return ret;
-        }
-
-        function lastOpenMenuItem() {
-            var lastItem = null;
-            _.each($scope.sideMenus, function (item) {
-                if (item.$el[0] == $el[0]) {
-                    if (item.isOpen) lastItem = item;
-                }
-            });
-
-            return lastItem;
-        }
+        sideMenu.create($scope);
 
         $scope.getSavedGraph = function (graph) {
             $('.album-box-edge').animate({left: '-290px'}, 300);
@@ -307,15 +257,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                 }, printError);
         };
-
-        $(document).bind('nodeClicked', function (e, nodeName) {
-            $('.album-box-edge').animate({left: '-290px'}, 300);
-
-            if (nodeName != $scope.selectedNode.name) {
-                fetchData(nodeName.toLowerCase());
-//            $scope.selectedNode = _.find($scope.graph.nodes, {name: nodeName});
-            }
-        });
 
         $scope.isNodeSaved = function () {
             return $scope.selectedNode.saved;

@@ -198,8 +198,6 @@ var autocompleteService = (function () {
                             this.value = ui.item.value;
 
                             $scope.selectedCategory = {id: ui.item.id, value: ui.item.value, subCategories: ui.item.subCategories};
-                            $scope.selectedEntity.categoryId = ui.item.id;
-                            $scope.selectedEntity.categoryName = ui.item.value;
 
                             console.log(JSON.stringify(ui.item));
 
@@ -258,16 +256,14 @@ var autocompleteService = (function () {
 
                             response(subcats);
                         }, select: function (event, ui) {
-                            if (!_.find($scope.categories, {name: ui.item.value})) {
-                                ui.item.value = _.find($scope.categories, {name: 'Other'}).name;
+                            if (!_.find($scope.selectedCategory.subCategories, {name: ui.item.value})) {
+                                ui.item.value = _.find($scope.selectedCategory.subCategories, {name: 'Other'}).name;
                             }
 
                             $("#subcategory-input").val(ui.item.value);
                             this.value = ui.item.value;
 
                             $scope.selectedSubCategory = {id: ui.item.id, value: ui.item.value};
-                            $scope.selectedEntity.subcategoryId = ui.item.id;
-                            $scope.selectedEntity.subcategoryName = ui.item.value;
 
                             console.log(JSON.stringify(ui.item));
 
@@ -301,8 +297,6 @@ var autocompleteService = (function () {
                 this.value = ui.item.value;
 
                 $scope.selectedCategory = {id: ui.item.id, value: ui.item.value, subCategories: ui.item.subCategories};
-                $scope.entity.categoryId = ui.item.id;
-                $scope.entity.categoryName = ui.item.value;
 
                 console.log(JSON.stringify(ui.item));
 
@@ -327,8 +321,6 @@ var autocompleteService = (function () {
                 this.value = ui.item.value;
 
                 $scope.selectedSubCategory = {id: ui.item.id, value: ui.item.value};
-                $scope.entity.subCategoryId = ui.item.id;
-                $scope.entity.subCategoryName = ui.item.value;
 
                 console.log(JSON.stringify(ui.item));
 

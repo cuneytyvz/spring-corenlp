@@ -9,6 +9,7 @@ import java.util.List;
 
 public class Entity implements Serializable {
     private Long id;
+    private Long userEntityId;
     private String name;
     private String description;
     private String shortDescription;
@@ -22,18 +23,14 @@ public class Entity implements Serializable {
     private String secondaryImage;
     private String smallSecondaryImage;
     private String note;
-    private Long categoryId = 1l;
-    private Long subCategoryId = 1l;
-    private String categoryName = "Other";
-    private String subCategoryName = "All";
     private String source;
     private String webPageText;
     private List<Property> properties = new ArrayList<>();
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
     private Long userId;
-    private List<Category> categories;
-    private List<SubCategory> subCategories;
+    private List<Category> categories = new ArrayList<>();
+    private List<SubCategory> subCategories = new ArrayList<>();
 
     public Entity() {
     }
@@ -44,20 +41,24 @@ public class Entity implements Serializable {
         description = rs.getString("e.description");
         shortDescription = rs.getString("e.short_description");
         dbpediaUri = rs.getString("e.dbpedia_uri");
-        categoryId = rs.getLong("e.category_id");
-        subCategoryId = rs.getLong("e.subcategory_id");
         wikidataId = rs.getString("e.wikidata_id");
         entityType = rs.getString("e.entity_type");
         webPageEntityId = rs.getLong("e.web_page_entity_id") == 0 ? null : rs.getLong("e.web_page_entity_id");
         webUri = rs.getString("e.web_uri");
         wikipediaUri = rs.getString("e.wikipedia_uri");
-        note = rs.getString("e.note");
         image = rs.getString("e.image");
         smallImage = rs.getString("e.small_image");
         secondaryImage = rs.getString("e.secondary_image");
         smallSecondaryImage = rs.getString("e.small_secondary_image");
         source = rs.getString("e.source");
         webPageText = rs.getString("e.web_page_text");
+
+        try {
+            userEntityId = rs.getLong("ue.id");
+            note = rs.getString("ue.note");
+        } catch (SQLException e) {
+
+        }
     }
 
     public Long getId() {
@@ -66,6 +67,14 @@ public class Entity implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserEntityId() {
+        return userEntityId;
+    }
+
+    public void setUserEntityId(Long userEntityId) {
+        this.userEntityId = userEntityId;
     }
 
     public String getName() {
@@ -98,14 +107,6 @@ public class Entity implements Serializable {
 
     public void setProperties(List<Property> properties) {
         this.properties = properties;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
     }
 
     public String getWikidataId() {
@@ -165,13 +166,6 @@ public class Entity implements Serializable {
         this.shortDescription = shortDescription;
     }
 
-    public String getCategoryName() {
-        return categoryName;
-    }
-
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
-    }
 
     public String getNote() {
         return note;
@@ -197,21 +191,6 @@ public class Entity implements Serializable {
         this.smallImage = smallImage;
     }
 
-    public Long getSubCategoryId() {
-        return subCategoryId;
-    }
-
-    public void setSubCategoryId(Long subCategoryId) {
-        this.subCategoryId = subCategoryId;
-    }
-
-    public String getSubCategoryName() {
-        return subCategoryName;
-    }
-
-    public void setSubCategoryName(String subCategoryName) {
-        this.subCategoryName = subCategoryName;
-    }
 
     public String getSource() {
         return source;
@@ -267,5 +246,13 @@ public class Entity implements Serializable {
 
     public void setSubCategories(List<SubCategory> subCategories) {
         this.subCategories = subCategories;
+    }
+
+    public void addCategory(Long categoryId) {
+        categories.add(new Category(categoryId));
+    }
+
+    public void addSubCategory(Long subCategoryId) {
+        subCategories.add(new SubCategory(subCategoryId));
     }
 }

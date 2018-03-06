@@ -13,11 +13,16 @@
         <beans:constructor-arg value="256"/>
     </beans:bean>
 
+    <beans:bean id="maxIdCalculator" class="com.gsu.common.util.MaxIdCalculator">
+    </beans:bean>
+
     <beans:bean id="knowledgeBaseDao" class="com.gsu.knowledgebase.repository.KnowledgeBaseDao">
+        <beans:constructor-arg ref="kbDataSource"/>
+        <beans:constructor-arg ref="maxIdCalculator"/>
     </beans:bean>
 
     <beans:bean id="userService" class="com.gsu.knowledgebase.service.UserService">
-        <!--<beans:constructor-arg ref="knowledgeBaseDao"/>-->
+        <beans:constructor-arg ref="knowledgeBaseDao"/>
     </beans:bean>
 
     <!-- Ajax Aware Handler -->
@@ -56,10 +61,14 @@
         <beans:property name="authenticationManager" ref="authenticationManager"/>
         <beans:property name="filterProcessesUrl" value="/knowledgeBase/j_spring_security_check"/>
         <beans:property name="authenticationSuccessHandler">
-            <beans:bean class="com.gsu.knowledgebase.spring.AuthenticationSuccessHandler"/>
+            <beans:bean class="com.gsu.knowledgebase.spring.AuthenticationSuccessHandler">
+                <beans:constructor-arg ref="knowledgeBaseDao"/>
+            </beans:bean>
         </beans:property>
         <beans:property name="authenticationFailureHandler">
-            <beans:bean class="com.gsu.knowledgebase.spring.AuthenticationFailureHandler"/>
+            <beans:bean class="com.gsu.knowledgebase.spring.AuthenticationFailureHandler">
+                <beans:constructor-arg ref="knowledgeBaseDao"/>
+            </beans:bean>
         </beans:property>
     </beans:bean>
 

@@ -1,18 +1,21 @@
 var lodService = (function () {
 
+    // to revert image change, delete "response.secondaryImage = item.image;" and decomment 15 and 18. lines, same for below 'fetch' method
     var getItem = function ($http, $q, uri, callback) {
         dbpedia.getItem($http, uri, function (item) {
             var response = item;
+
+            response.secondaryImage = item.image;
 
             wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                 if (wikidataItem) {
                     response.properties = response.properties.concat(wikidataItem.properties);
                     response.shortDescription = wikidataItem.description;
 
-                    if (!response.image)
+//                    if (!response.image)
                         response.image = wikidataItem.image;
 
-                    response.secondaryImage = wikidataItem.image;
+//                    response.secondaryImage = wikidataItem.image;
                 }
 
                 callback(response);
@@ -52,16 +55,17 @@ var lodService = (function () {
                 }
 
                 var response = item;
+                response.secondaryImage = item.image;
 
                 wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                     if (wikidataItem) {
                         response.properties = response.properties.concat(wikidataItem.properties);
                         response.shortDescription = wikidataItem.description;
 
-                        if (!response.image)
+//                        if (!response.image)
                             response.image = wikidataItem.image;
 
-                        response.secondaryImage = wikidataItem.image;
+//                        response.secondaryImage = wikidataItem.image;
                     }
 
                     callback(response);

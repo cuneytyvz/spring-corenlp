@@ -6,24 +6,25 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubCategory implements Serializable {
+
+public class Topic implements Serializable {
     private Long id;
-    private Long categoryId;
     private String name;
+    private Long userId;
+    private List<Category> categories = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
 
-    public SubCategory() {
+    public Topic() {
     }
 
-    public SubCategory(Long id) {
+    public Topic(Long id) {
         this.id = id;
     }
 
-
-    public SubCategory(ResultSet rs) throws SQLException {
-        id = rs.getLong("sc.id");
-        categoryId = rs.getLong("sc.category_id");
-        name = rs.getString("sc.name");
+    public Topic(ResultSet rs) throws SQLException {
+        id = rs.getLong("t.id");
+        name = rs.getString("t.name");
+        userId = rs.getLong("t.user_id");
     }
 
     public Long getId() {
@@ -42,12 +43,24 @@ public class SubCategory implements Serializable {
         this.name = name;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
+    }
+
+    public void addCategory(Category category) {
+        categories.add(category);
     }
 
     public List<Entity> getEntities() {
@@ -58,5 +71,3 @@ public class SubCategory implements Serializable {
         this.entities = entities;
     }
 }
-
-

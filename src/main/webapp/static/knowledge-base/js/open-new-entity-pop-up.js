@@ -183,8 +183,8 @@ var newEntityPopup = (function () {
                                         $ss.entity.saved = true;
                                         $ss.entity.propertyGroups = pg;
 
-                                        getEntitiesByCategory();
-                                        getEntitiesBySubCategory();
+                                        $scope.getEntitiesByCategory();
+                                        $scope.getEntitiesBySubCategory();
 
                                         $ss.closeThisDialog();
                                     }, function (err) {

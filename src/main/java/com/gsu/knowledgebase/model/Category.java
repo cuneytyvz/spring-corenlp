@@ -10,15 +10,23 @@ import java.util.List;
 public class Category implements Serializable {
     private Long id;
     private String name;
-    private List<Entity> properties = new ArrayList<>();
+    private Long userId;
+    private Boolean hidden;
     private List<SubCategory> subCategories = new ArrayList<>();
+    private List<Entity> entities = new ArrayList<>();
 
     public Category() {
+    }
+
+    public Category(Long id) {
+        this.id = id;
     }
 
     public Category(ResultSet rs) throws SQLException {
         id = rs.getLong("c.id");
         name = rs.getString("c.name");
+        userId = rs.getLong("c.user_id");
+        hidden = rs.getBoolean("c.hidden");
     }
 
     public Long getId() {
@@ -37,12 +45,12 @@ public class Category implements Serializable {
         this.name = name;
     }
 
-    public List<Entity> getProperties() {
-        return properties;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setProperties(List<Entity> properties) {
-        this.properties = properties;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public List<SubCategory> getSubCategories() {
@@ -55,5 +63,21 @@ public class Category implements Serializable {
 
     public void addSubCategory(SubCategory subCategory) {
         subCategories.add(subCategory);
+    }
+
+    public List<Entity> getEntities() {
+        return entities;
+    }
+
+    public void setEntities(List<Entity> entities) {
+        this.entities = entities;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
     }
 }

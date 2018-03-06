@@ -3,7 +3,7 @@ package com.gsu.knowledgebase.spring;
 import com.gsu.knowledgebase.model.Login;
 import com.gsu.knowledgebase.model.User;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
-import com.gsu.knowledgebase.util.DateUtils;
+import com.gsu.common.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
@@ -18,14 +18,14 @@ import java.io.IOException;
  */
 public class AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-
+    @Autowired
     private KnowledgeBaseDao knowledgeBaseDao;
 
     public AuthenticationFailureHandler() {
 
     }
 
-    @Autowired
+
     public AuthenticationFailureHandler(KnowledgeBaseDao knowledgeBaseDao) {
         this.knowledgeBaseDao = knowledgeBaseDao;
     }
@@ -94,7 +94,7 @@ public class AuthenticationFailureHandler extends SimpleUrlAuthenticationFailure
                 Login login = new Login();
                 login.setUserId(user.getId());
                 login.setSuccess(false);
-                login.setCrDate(DateUtils.getDateNowDate());
+                login.setCrDate(DateUtils.now());
 
                 knowledgeBaseDao.saveLogin(login);
             }

@@ -3,9 +3,7 @@ package com.gsu.knowledgebase.spring;
 import com.gsu.knowledgebase.model.Login;
 import com.gsu.knowledgebase.model.User;
 import com.gsu.knowledgebase.repository.KnowledgeBaseDao;
-import com.gsu.knowledgebase.util.Constants;
-import com.gsu.knowledgebase.util.DateUtils;
-import com.mysql.jdbc.StringUtils;
+import com.gsu.common.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,7 +12,6 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
@@ -55,13 +52,14 @@ public class AuthenticationSuccessHandler extends SavedRequestAwareAuthenticatio
         Login login = new Login();
         login.setUserId(user.getId());
         login.setSuccess(true);
-        login.setCrDate(DateUtils.getDateNowDate());
+        login.setCrDate(DateUtils.now());
 
 //        HttpSession session = request.getSession();
 //        String referer = (String) session.getAttribute(Constants.CUSTOMER_REDIRECT_URL_AFTER_LOGIN_SESSION_KEY);
 
         knowledgeBaseDao.saveLogin(login);
 
+        request.getSession().setAttribute("userId", user.getId());
         request.getSession().setAttribute("username", user.getUsername());
         request.getSession().setAttribute("email", user.getEmail());
         response.setStatus(HttpServletResponse.SC_OK);

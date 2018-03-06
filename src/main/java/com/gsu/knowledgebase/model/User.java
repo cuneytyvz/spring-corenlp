@@ -1,5 +1,8 @@
 package com.gsu.knowledgebase.model;
 
+import com.gsu.common.util.DateUtils;
+import org.joda.time.DateTime;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -16,21 +19,23 @@ public class User {
     private Long roleId;
     private Integer status;
     private Integer loginTryCount;
+    private DateTime crDate;
 
     public User(){
 
     }
 
     public User(ResultSet rs) throws SQLException {
-        this.id = rs.getLong("u.id");
-        this.username = rs.getString("u.username");
-        this.email = rs.getString("u.email");
-        this.password = rs.getString("u.password");
-        this.firstName = rs.getString("u.first_name");
-        this.lastName = rs.getString("u.last_name");
-        this.roleId = rs.getLong("u.role_id");
-        this.status = rs.getInt("u.status");
-        this.loginTryCount = rs.getInt("u.login_try_count");
+        id = rs.getLong("u.id");
+        username = rs.getString("u.username");
+        email = rs.getString("u.email");
+        password = rs.getString("u.password");
+        firstName = rs.getString("u.first_name");
+        lastName = rs.getString("u.last_name");
+        roleId = rs.getLong("u.role_id");
+        status = rs.getInt("u.status");
+        loginTryCount = rs.getInt("u.login_try_count");
+        crDate = DateUtils.millisToJodaTime(rs.getTimestamp("u.cr_date"));
     }
 
     public String getUsername() {
