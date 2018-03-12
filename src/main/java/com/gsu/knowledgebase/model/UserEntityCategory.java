@@ -10,6 +10,7 @@ public class UserEntityCategory {
     private Long id;
     private Long userEntityId;
     private Long categoryId;
+    private String categoryName;
 
     public UserEntityCategory() {
 
@@ -19,6 +20,7 @@ public class UserEntityCategory {
         id = rs.getLong("uec.id");
         userEntityId = rs.getLong("uec.user_entity_id");
         categoryId = rs.getLong("uec.category_id");
+        categoryName = rs.getString("c.name");
     }
 
     public Long getId() {
@@ -43,5 +45,13 @@ public class UserEntityCategory {
 
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }

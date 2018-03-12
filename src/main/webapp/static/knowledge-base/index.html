@@ -8,10 +8,12 @@
     <script src="static/knowledge-base/js/lib/d3.v3.min.js"></script>
 
     <link rel="stylesheet" href="static/knowledge-base/js/lib/jquery-ui.css">
+    <link rel="stylesheet" href="static/knowledge-base/js/lib/angular-ui/angular-ui.min.css">
     <script src="static/knowledge-base/js/lib/jquery.min.js"></script>
     <script src="static/knowledge-base/js/lib/jquery-ui.js"></script>
     <script src="static/knowledge-base/js/lib/underscore-min.js"></script>
     <script src="static/knowledge-base/js/lib/angular.min.js"></script>
+    <script src="static/knowledge-base/js/lib/angular-ui/angular-ui.min.js"></script>
 
     <!--Angular ngDialog-->
     <link href="static/knowledge-base/js/lib/ngDialog/ngDialog.min.css" rel="stylesheet"/>
@@ -29,6 +31,7 @@
     <script src="static/knowledge-base/js/lib/bootstrap.min.js"></script>
 
     <link rel="stylesheet" href="static/knowledge-base/style/style.css?v=1">
+    <!--<link rel="stylesheet" href="static/knowledge-base/style/themes-submarine.css">-->
     <link rel="stylesheet" href="static/knowledge-base/style/my-common.css?v=1">
     <script src="static/knowledge-base/js/lib/xml2json.js"></script>
     <script src="static/knowledge-base/js/lib/ImageResolver.0.5.4.js"></script>
@@ -40,6 +43,7 @@
     <script src="static/knowledge-base/js/dbpedia.js"></script>
     <script src="static/knowledge-base/js/lod-service.js"></script>
     <script src="static/knowledge-base/js/autocomplete-service.js"></script>
+    <script src="static/knowledge-base/js/directives.js"></script>
     <script src="static/knowledge-base/js/index.js"></script>
 </head>
 
@@ -216,18 +220,6 @@
         </div>
         <br>
 
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType == 'web-page'">
-            <label class="blue">
-                Existing Entities
-            </label>
-
-            <div ng-repeat="entity in existingEntities">
-                <label class="property-value">
-                    <a href ng-click="showEntity(entity)">{{entity.name}}</a>
-                </label>
-            </div>
-        </div>
-
         <br>
 
         <div ng-if="selectedEntity && selectedEntity.entityType != 'web-page'"
@@ -241,45 +233,6 @@
                 <a href="#" ng-click="showAllProperties()" class="all">All</a>
             </div>
             <!--</div>-->
-        </div>
-
-        <div class="col-md-3 property-box" ng-show="selectedEntity.entityType != 'web-page'"
-             ng-class="propertyBoxClass">
-            <div ng-if="propertiesLoading" class="overlay">
-                <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
-            </div>
-            <div ng-show="selectedEntity">
-                <label class="blue">
-                    Existing Entities
-                </label>
-
-                <br>
-
-                <div ng-repeat="property in existingElements">
-                    <label class="property-value">{{property.name}}</label>
-                    <br>
-
-                    <div ng-repeat="val in property.values">
-                        <label class="property-value"
-                               ng-if="!isPropertyLink(val)">{{val.value}}</label>
-                        <label class="property-value" ng-if="isPropertyLink(val)">
-                            <a ng-if="val.datatype != 'external-id' && isDbpediaResource(val)"
-                               href="#" ng-click="openProperty(val)">
-                                {{val.valueLabel}}
-                            </a>
-                            <a ng-if="val.datatype != 'external-id' && !isDbpediaResource(val)"
-                               href="#" ng-click="openProperty(val)">
-                                {{val.valueLabel}}
-                            </a>
-                            <a ng-if="val.datatype == 'external-id'"
-                               href="{{val.metaProperty.externalSourceUri}}{{val.value}}" target="_blank">
-                                {{val.metaProperty.externalSourceUri}}{{val.value}}
-                            </a>
-                        </label>
-                    </div>
-                    <hr class="property-divider">
-                </div>
-            </div>
         </div>
     </div>
 </div>

@@ -11,11 +11,76 @@ var detailPopup = (function () {
                 $ss.isPropertyLink = $scope.isPropertyLink;
                 $ss.isDbpediaResource = $scope.isDbpediaResource;
                 $ss.getExternalUrl = $scope.getExternalUrl;
+
                 $ss.saveEntity = function () {
+                    $('.pop-up').css('cursor', 'wait');
+                    $ss.annotationEntityLoading = true;
                     $scope.saveEntity(function (entity) {
+                        $('.pop-up').css('cursor', 'default');
+                        $ss.annotationEntityLoading = false;
                         $ss.entityImage = entity.image;
+                        $ss.selectedEntity = $scope.selectedEntity;
+                        autocompleteService.configureCategory($scope,$ss);
                     });
                 };
+
+                $ss.saveSideEntity = function () {
+                    var entity = $.extend({}, $ss.selectedSideEntity);
+
+                    delete entity.propertyGroups;
+                    delete entity.descriptionShown;
+
+                    entity.topics = [];
+                    entity.categories = [];
+                    entity.subCategories = [];
+
+                    if ($ss.selectedSideTopic)
+                        entity.topics.push({id: $ss.selectedSideTopic.id, name: $ss.selectedSideTopic.name}); // id , value
+
+                    if ($ss.selectedSideTopic && $ss.selectedSideTopic.selectedCategory)
+                        entity.categories.push({id: $ss.selectedSideTopic.selectedCategory.id, name: $ss.selectedSideTopic.selectedCategory.name}); // id , value
+
+                    if ($ss.selectedSideTopic && $ss.selectedSideTopic.selectedCategory && $ss.selectedSideTopic.selectedCategory.selectedSubCategory)
+                        entity.subCategories.push({id: $ss.selectedSideTopic.selectedCategory.selectedSubCategory.id, name: $ss.selectedSideTopic.selectedCategory.selectedSubCategory.name}); // id , value
+
+                    entity.source = "memory-item";
+
+                    $ss.annotationEntityLoading = true;
+                    $('.pop-up').css('cursor', 'wait');
+                    $http.post('knowledgeBase/api/saveEntity', entity)
+                        .then(function (response) {
+                            $ss.annotationEntityLoading = false;
+                            $('.pop-up').css('cursor', 'default');
+
+                            $scope.items.push(response.data);
+                            $scope.entities.push(response.data);
+
+                            $ss.selectedSideEntity = response.data;
+                            $ss.selectedSideEntity.saved = true;
+
+                            $ss.sideEntityImage = $ss.selectedSideEntity.image;
+
+                            $scope.categorizeEntities();
+                        }, function (err) {
+                            printError(err);
+                            $ss.annotationEntityLoading = false;
+                            $('.pop-up').css('cursor', 'default');
+                        });
+                };
+
+                $ss.isSideEntitySaved = function(){
+                    if (!$ss.selectedSideEntity) {
+                        return true;
+                    }
+
+                    var e = _.find($scope.entities, {dbpediaUri: $ss.selectedSideEntity.dbpediaUri});
+
+                    return e !== null && e !== undefined;
+                };
+
+                $ss.isLoggedIn =function() {
+                    return $scope.user;
+                }
 
                 $ss.selectedSideEntities = [];
 
@@ -57,6 +122,8 @@ var detailPopup = (function () {
                 $ss.infoSummary = $ss.getInfoSummary($scope.selectedEntity);
 
                 $scope.$on('ngDialog.opened', function (e, $dialog) {
+                    autocompleteService.configureCategory($scope,$ss);
+
                     autocompleteService.configureCustomObject($scope.entities, $http, $q, function (response) {
                         setEditTopicMargin();
 

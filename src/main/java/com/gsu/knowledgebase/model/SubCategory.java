@@ -12,6 +12,11 @@ public class SubCategory implements Serializable {
     private String name;
     private List<Entity> entities = new ArrayList<>();
 
+    public SubCategory(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     public SubCategory() {
     }
 

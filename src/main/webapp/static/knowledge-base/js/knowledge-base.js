@@ -52,29 +52,74 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                             }
                         });
 
-                        $http.get('knowledgeBase/api/getAllCategories/' + $scope.user.id)
+                        $http.get('knowledgeBase/api/getAllTopics/' + $scope.user.id)
                             .then(function (response) {
-                                $scope.categories = response.data;
-                                $scope.categories.unshift({id: -1, name: 'Other', subCategories: [], entities: []});
-                                $scope.categories[0].selected = 'selected';
+                                $scope.topics = response.data;
+                                $scope.topics.unshift({id: -1, name: 'Other', categories: [], entities: []});
+                                $scope.topics[0].selected = 'selected';
 
-                                for (var i = 0; i < $scope.categories.length; i++) {
-                                    if ($scope.categories[i].id != -1)
-                                        $scope.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
+                                _.each($scope.topics, function (t) {
+                                    if (t.id != -1) {
+                                        t.categories.unshift({id: -2, name: 'Other', subCategories: [], entities: []}); // second element
+                                        t.categories.unshift({id: -1, name: 'All', subCategories: [], entities: []}); // second element
+                                        t.categories[0].selected = 'selected';
+                                    }
 
-                                    $scope.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
-                                }
+                                    for (var i = 0; i < t.categories.length; i++) {
+                                        if (t.categories[i].id != -1 && t.categories[i].id != -2) {
+                                            t.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
+                                            t.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
+                                        }
+                                    }
+                                });
 
-                                $scope.getEntitiesByCategory();
-                                $scope.getEntitiesBySubCategory();
+                                $scope.categorizeEntities();
 
-                                $scope.selectedCategoryToShow = $scope.categories[0];
-                                $scope.selectedCategoryToShow.selectedSubCategory = $scope.categories[0].subCategories[0];
+                                // Initially context menu items are set to all topics, because initial selected topic is other
+                                // and has no subcategories...
+                                $timeout(function () {
+                                    $scope.memoryBoxContextMenuItems = [];
+                                    _.each($scope.topics, function (t) {
+                                        if (t.id != -1) {
+                                            $scope.memoryBoxContextMenuItems.push({type: 'topic', item: t});
+                                        }
+                                    });
+
+                                    configureMemoryBoxContextMenu();
+                                }, 0);
+
+                                $scope.selectedTopicToShow = $scope.topics[0];
+//                                $scope.selectedTopicToShow.selectedCategory = $scope.topics[0].categories[0];
+//                                $scope.selectedTopicToShow.selectedCategory.selectedSubCategory = $scope.topics[0].categories[0].subCategories[0];
 
                             }, printError);
                     }, printError);
             }, printError);
 
+        $scope.logout = function () {
+            $http.get('knowledge-base/knowledgeBase/j_spring_security_logout')
+                .then(function (response) {
+                    window.location.href = 'knowledge-base';
+                }, printError);
+        };
+
+        $scope.categorizeEntities = function () {
+            $scope.getEntitiesByTopic();
+            $scope.getEntitiesByCategory();
+            $scope.getEntitiesBySubCategory();
+        };
+
+        $scope.getEntities = function () {
+            if (!$scope.selectedTopicToShow) return;
+            if ($scope.selectedTopicToShow.id == -1) {
+                return $scope.selectedTopicToShow.entities;
+            } else if ($scope.selectedTopicToShow.selectedCategory.id == -1 || $scope.selectedTopicToShow.selectedCategory.id == -2) {
+                return $scope.selectedTopicToShow.selectedCategory.entities;
+            } else {
+                return $scope.selectedTopicToShow.selectedCategory.selectedSubCategory.entities;
+            }
+
+        };
 
         function setSideMenuItemWidths() {
 
@@ -203,14 +248,33 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
         };
 
+        $scope.addTopic = function () {
+            ngDialog.open({
+                template: '../static/knowledge-base/pop-ups/add-topic-pop-up.html',
+                controller: ['$scope', function ($ss) {
+                    $ss.add = function () {
+                        $http.get('knowledgeBase/api/saveTopic/' + $ss.topicName)
+                            .then(function (response) {
+                                $scope.topics.push({id: response.data, name: $ss.topicName});
+                                $ss.closeThisDialog();
+                                $timeout(function () {
+                                    setSideMenuItemWidths();
+                                }, 0);
+                            }, function (err) {
+                                printError(err);
+                            });
+                    }
+                }]});
+        };
+
         $scope.addCategory = function () {
             ngDialog.open({
                 template: '../static/knowledge-base/pop-ups/add-category-pop-up.html',
                 controller: ['$scope', function ($ss) {
                     $ss.add = function () {
-                        $http.get('knowledgeBase/api/saveCategory/' + $ss.categoryName)
+                        $http.get('knowledgeBase/api/saveCategory/' + $scope.selectedTopicToShow.id + '/' + $ss.categoryName)
                             .then(function (response) {
-                                $scope.categories.push({id: response.data, name: $ss.categoryName});
+                                $scope.selectedTopicToShow.categories.push({id: response.data, name: $ss.categoryName});
                                 $ss.closeThisDialog();
                                 $timeout(function () {
                                     setSideMenuItemWidths();
@@ -227,10 +291,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 template: '../static/knowledge-base/pop-ups/add-subcategory-pop-up.html',
                 controller: ['$scope', function ($ss) {
                     $ss.add = function () {
-                        $http.get('knowledgeBase/api/saveSubcategory/' + $scope.selectedCategoryToShow.id + '/' + $ss.subcategoryName)
+                        $http.get('knowledgeBase/api/saveSubcategory/' + $scope.selectedTopicToShow.selectedCategory.id + '/' + $ss.subcategoryName)
                             .then(function (response) {
-                                $scope.selectedCategoryToShow.subCategories.push(
-                                    {id: response.data, categoryId: $scope.selectedCategoryToShow.id, name: $ss.subcategoryName});
+                                $scope.selectedTopicToShow.selectedCategory.subCategories.push(
+                                    {id: response.data, categoryId: $scope.selectedTopicToShow.selectedCategory.id, name: $ss.subcategoryName});
                                 $ss.closeThisDialog();
                             }, function (err) {
                                 printError(err);
@@ -304,14 +368,18 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             var pg = $scope.selectedEntity.propertyGroups;
             delete $scope.selectedEntity.propertyGroups;
 
+            $scope.selectedEntity.topics = [];
             $scope.selectedEntity.categories = [];
             $scope.selectedEntity.subCategories = [];
 
-            if ($scope.selectedCategory)
-                $scope.selectedEntity.categories.push({id: $scope.selectedCategory.id, name: $scope.selectedCategory.name}); // id , value
+            if ($scope.selectedTopic)
+                $scope.selectedEntity.topics.push({id: $scope.selectedTopic.id, name: $scope.selectedTopic.value}); // id , value
 
-            if ($scope.selectedSubCategory)
-                $scope.selectedEntity.subCategories.push({id: $scope.selectedSubCategory.id, name: $scope.selectedSubCategory.name}); // id , value
+            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory)
+                $scope.selectedEntity.categories.push({id: $scope.selectedTopic.selectedCategory.id, name: $scope.selectedTopic.selectedCategory.value}); // id , value
+
+            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory && $scope.selectedTopic.selectedCategory.selectedSubCategory)
+                $scope.selectedEntity.subCategories.push({id: $scope.selectedTopic.selectedCategory.selectedSubCategory.id, name: $scope.selectedTopic.selectedCategory.selectedSubCategory.value}); // id , value
 
             $scope.selectedEntity.source = "memory-item";
 
@@ -333,8 +401,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     if (callFromSubScope)
                         callFromSubScope($scope.selectedEntity);
 
-                    $scope.getEntitiesByCategory();
-                    $scope.getEntitiesBySubCategory();
+                    $scope.categorizeEntities();
                 }, function (err) {
                     printError(err);
                     $scope.saveResponse = err;
@@ -563,10 +630,28 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
         };
 
         $scope.removeEntityFromCategory = function (category) {
-            var sc = $scope.selectedCategoryToShow;
-            var ssc = $scope.selectedCategoryToShow.selectedSubCategory;
+            var st = $scope.selectedTopicToShow;
+            var sc = st.selectedCategory;
+            var ssc = sc.selectedSubCategory;
 
-            if (sc.id != -1 && (!ssc || ssc.id == 0 || ssc.id == -1 || ssc.id == -2)) {
+            if (st.id != -1 && (!sc || sc.id == 0 || sc.id == -1 || sc.id == -2)) { // if not belonging to any category
+                $http.get('knowledgeBase/api/removeEntityFromTopic?userEntityId=' + $scope.clickedEntity.userEntityId + '&topicId=' + st.id)
+                    .then(function (response) {
+
+                        var index;
+                        for (var i = 0; i < $scope.clickedEntity.categories.length; i++) {
+                            if ($scope.clickedEntity.categories[i].id == sc.id)
+                                index = i;
+                        }
+
+                        $scope.clickedEntity.topics.splice(index, 1);
+
+                        $scope.categorizeEntities();
+                        $('.custom-context-menu.memory-box').fadeOut(200);
+                    }, function (err) {
+                        printError(err);
+                    });
+            } else if (st.id != -1 && sc.id != -1 && sc.id != -2 && (!ssc || ssc.id == 0 || ssc.id == -1 || ssc.id == -2)) { // if not belonging to any subcategory
                 $http.get('knowledgeBase/api/removeEntityFromCategory?userEntityId=' + $scope.clickedEntity.userEntityId + '&categoryId=' + sc.id)
                     .then(function (response) {
 
@@ -578,25 +663,23 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                         $scope.clickedEntity.categories.splice(index, 1);
 
-                        $scope.getEntitiesByCategory();
-                        $scope.getEntitiesBySubCategory();
+                        $scope.categorizeEntities();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
                     });
-            } else if (sc.id != -1 && !(ssc && ssc.id != 0 && ssc.id != -1 && ssc.id != -2)) {
+            } else if (sc.id != -1 && sc.id != -2 && (ssc && ssc.id != 0 && ssc.id != -1 && ssc.id != -2)) { // if belonging to any subcategory
                 $http.get('knowledgeBase/api/removeEntityFromSubCategory?userEntityId=' + $scope.clickedEntity.userEntityId + '&subCategoryId=' + ssc.id)
                     .then(function (response) {
                         var index;
-                        for (var i = 0; i < $scope.selectedCategoryToShow.subCategories.length; i++) {
-                            if ($scope.selectedCategoryToShow.subCategories[i].id == scc.id)
+                        for (var i = 0; i < $scope.clickedEntity.subCategories.length; i++) {
+                            if ($scope.clickedEntity.subCategories[i].id == ssc.id)
                                 index = i;
                         }
 
-                        $scope.selectedCategoryToShow.subCategories.splice(index, 1);
+                        $scope.clickedEntity.subCategories.splice(index, 1);
 
-                        $scope.getEntitiesByCategory();
-                        $scope.getEntitiesBySubCategory();
+                        $scope.categorizeEntities();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
@@ -608,14 +691,24 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         $scope.addEntityToCategory = function (category) {
 
-            if (category.type == 'category') {
+            if (category.type == 'topic') {
+                $http.get('knowledgeBase/api/addEntityToTopic?userEntityId=' + $scope.clickedEntity.userEntityId + "&topicId=" + category.item.id)
+                    .then(function (response) {
+
+                        $scope.clickedEntity.topics.push(category.item);
+
+                        $scope.categorizeEntities();
+                        $('.custom-context-menu.memory-box').fadeOut(200);
+                    }, function (err) {
+                        printError(err);
+                    });
+            } else if (category.type == 'category') {
                 $http.get('knowledgeBase/api/addEntityToCategory?userEntityId=' + $scope.clickedEntity.userEntityId + "&categoryId=" + category.item.id)
                     .then(function (response) {
 
                         $scope.clickedEntity.categories.push(category.item);
 
-                        $scope.getEntitiesByCategory();
-                        $scope.getEntitiesBySubCategory();
+                        $scope.categorizeEntities();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
@@ -623,10 +716,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             } else if (category.type == 'subcategory') {
                 $http.get('knowledgeBase/api/addEntityToSubCategory?userEntityId=' + $scope.clickedEntity.userEntityId + "&subCategoryId=" + category.item.id)
                     .then(function (response) {
-                        $scope.selectedCategoryToShow.subCategories.push(category.item.id);
+//                        $scope.selectedCategoryToShow.subCategories.push(category.item.id);
+                        $scope.clickedEntity.subCategories.push(category.item);
 
-                        $scope.getEntitiesByCategory();
-                        $scope.getEntitiesBySubCategory();
+                        $scope.categorizeEntities();
                         $('.custom-context-menu.memory-box').fadeOut(200);
                     }, function (err) {
                         printError(err);
@@ -636,26 +729,72 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
         };
 
+        $scope.showTopicItems = function ($event, t) {
+            _.each($scope.topics, function (tt) {
+                tt.selected = undefined;
+            });
+
+//            t.selected = 'selected';
+            $scope.selectedTopicToShow = t;
+            if (t.id != -1) {
+                $scope.selectedTopicToShow.selectedCategory = t.categories[0];
+                $scope.selectedTopicToShow.selectedCategory.selectedSubCategory = $scope.selectedTopicToShow.selectedCategory.subCategories[0];
+            }
+
+            // set up initial memory box context menu items as all subcategories below this category
+            $scope.memoryBoxContextMenuItems = [];
+            _.each($scope.selectedTopicToShow.categories, function (c) {
+                if (c.id != -1 && c.id != -2) {
+                    $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
+                }
+            });
+
+            $timeout(function () {
+                configureMemoryBoxContextMenu();
+                setSideMenuItemWidths();
+            }, 0);
+        };
+
+        $scope.showTopics = function () {
+            $scope.selectedTopicToShow = $scope.topics[0];
+            $scope.topics[0].selected = true;
+
+            $timeout(function () {
+                $scope.memoryBoxContextMenuItems = [];
+                _.each($scope.topics, function (t) {
+                    if (t.id != -1) {
+                        $scope.memoryBoxContextMenuItems.push({type: 'topic', item: t});
+                    }
+                });
+
+                configureMemoryBoxContextMenu();
+            }, 0);
+
+            $timeout(function () {
+                setSideMenuItemWidths();
+            }, 300);
+        };
+
         $scope.showCategoryItems = function ($event, c) {
-            $scope.categories.forEach(function (cc) {
+            $scope.selectedTopicToShow.categories.forEach(function (cc) {
                 cc.selected = undefined;
             });
 
             c.selected = 'selected';
-            $scope.selectedCategoryToShow = c;
-            $scope.selectedCategoryToShow.selectedSubCategory = c.subCategories[0];
+            $scope.selectedTopicToShow.selectedCategory = c;
+            $scope.selectedTopicToShow.selectedCategory.selectedSubCategory = c.subCategories[0];
 
             // set up initial memory box context menu items as all subcategories below this category
             $scope.memoryBoxContextMenuItems = [];
-            if ($scope.selectedCategoryToShow.id != -1) {
-                _.each($scope.selectedCategoryToShow.subCategories, function (sc) {
+            if ($scope.selectedTopicToShow.selectedCategory.id != -1 && $scope.selectedTopicToShow.selectedCategory.id != -2) {
+                _.each($scope.selectedTopicToShow.selectedCategory.subCategories, function (sc) {
                     if (sc.id != -1 && sc.id != -2) {
                         $scope.memoryBoxContextMenuItems.push({type: 'subcategory', item: sc});
                     }
                 });
             } else {
-                _.each($scope.categories, function (c) {
-                    if (c.id != 1) {
+                _.each($scope.selectedTopicToShow.categories, function (c) {
+                    if (c.id != -1 && c.id != -2) {
                         $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
                     }
                 });
@@ -697,10 +836,10 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     var l = $scope.memoryBoxContextMenuItems.length;
                     var height = 26 + 26 * l;
 
-                    if ($scope.memoryBoxContextMenuItems.length == 0 && $scope.selectedCategoryToShow.subCategories.length > 2)
+                    if ($scope.memoryBoxContextMenuItems.length == 0 && $scope.selectedTopicToShow.categories.length > 2)
                         height -= 21;
 
-                    if ($scope.selectedCategoryToShow.id != 1 && $scope.selectedCategoryToShow.subCategories.length > 2)
+                    if ($scope.selectedTopicToShow.id != 1 && $scope.selectedTopicToShow.categories.length > 2)
                         height += 26;
 
                     $('.custom-context-menu.memory-box').css('height', height);
@@ -730,18 +869,17 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         $scope.showSubCategoryItems = function ($event, sc) {
 
-            $scope.selectedCategoryToShow.subCategories.forEach(function (cc) {
+            $scope.selectedTopicToShow.selectedCategory.subCategories.forEach(function (cc) {
                 cc.selected = undefined;
             });
 
             sc.selected = 'selected';
-            $scope.selectedCategoryToShow.selectedSubCategory = sc;
+            $scope.selectedTopicToShow.selectedCategory.selectedSubCategory = sc;
 
             $scope.memoryBoxContextMenuItems = [];
-
-            $scope.memoryBoxContextMenuItems = [];
-            if ($scope.selectedCategoryToShow.id != 1) {
-                _.each($scope.selectedCategoryToShow.subCategories, function (sc) {
+            if ($scope.selectedTopicToShow.selectedCategory.id != -1 && $scope.selectedTopicToShow.selectedCategory.id != -2
+                && ($scope.selectedTopicToShow.selectedCategory.selectedSubCategory.id == -1 || $scope.selectedTopicToShow.selectedCategory.selectedSubCategory.id == -2)) {
+                _.each($scope.selectedTopicToShow.selectedCategory.subCategories, function (sc) {
                     if (sc.id != -1 && sc.id != -2) {
                         $scope.memoryBoxContextMenuItems.push({type: 'subcategory', item: sc});
                     }
@@ -850,46 +988,139 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             return elements;
         };
 
-        $scope.getEntitiesByCategory = function () {
+        $scope.getEntitiesByTopic = function () {
+            $scope.topics[0].entities = [];
+            // First add entities not belonging to any topic to the 'Other' topic
             for (var j = 0; j < $scope.entities.length; j++) {
                 var e = $scope.entities[j];
 
-                if (!e.categories || e.categories.length == 0)
-                    $scope.categories[0].entities.push(e); // push to 'Other'
+                if (!e.topics || e.topics.length == 0)
+                    $scope.topics[0].entities.push(e); // push to 'Other'
 
             }
+        };
 
+        $scope.getEntitiesByCategory = function () {
+            for (var i = 0; i < $scope.topics.length; i++) {
+                var t = $scope.topics[i];
 
-            for (var i = 1; i < $scope.categories.length; i++) {
-                var c = $scope.categories[i];
-                c.entities = [];
+                for (var k = 0; k < t.categories.length; k++) {
+                    var c = t.categories[k];
+                    c.entities = [];
 
-                for (var j = 0; j < $scope.entities.length; j++) {
-                    var e = $scope.entities[j];
+                    for (var j = 0; j < $scope.entities.length; j++) {
+                        var e = $scope.entities[j];
 
-                    if (e.categories) {
-                        _.each(e.categories, function (ec) {
-                            if (ec.id == c.id) {
-                                c.entities.push(e);
-                            }
+                        var includedInTopic = false;
+                        _.each(e.topics, function (et) {
+                            if (et.id == t.id) includedInTopic = true;
                         });
-                    }
 
+//                        if (e.topics.length == 0 && t.id == -1)
+//                            includedInTopic = true;
+
+                        var includedInCategory = false;
+                        _.each(e.categories, function (ec) {
+                            if (ec.id == c.id) includedInCategory = true;
+                        });
+
+                        if (c.id == -2 && includedInTopic && (!e.categories || e.categories.length == 0)) { // Other
+                            c.entities.push(e);
+                        } else if (c.id == -1 && includedInTopic) { // All
+                            c.entities.push(e);
+                        } else if (includedInCategory) {
+                            c.entities.push(e);
+                        }
+                    }
                 }
             }
+        };
 
-            // Initially context menu items are set to all categories, because initial selected category is other
-            // and has no subcategories...
-            $timeout(function () {
-                $scope.memoryBoxContextMenuItems = [];
-                _.each($scope.categories, function (c) {
-                    if (c.id != -1) {
-                        $scope.memoryBoxContextMenuItems.push({type: 'category', item: c});
+        $scope.getEntitiesBySubCategory = function () {
+
+            // Then put entities to their corresponding subcategory
+            for (var l = 0; l < $scope.topics.length; l++) {
+                var t = $scope.topics[l];
+
+                for (var i = 0; i < t.categories.length; i++) {
+                    var c = t.categories[i];
+
+                    for (var k = 0; k < c.subCategories.length; k++) {
+                        var sc = c.subCategories[k];
+                        sc.entities = [];
+
+                        for (var j = 0; j < $scope.entities.length; j++) {
+                            var e = $scope.entities[j];
+
+                            var includedInTopic = false;
+                            _.each(e.topics, function (et) {
+                                if (et.id == t.id) includedInTopic = true;
+                            });
+
+                            var includedInCategory = false;
+                            _.each(e.categories, function (ec) {
+                                if (ec.id == c.id) includedInCategory = true;
+                            });
+
+                            if (e.categories.length == 0 && c.id == -1)
+                                includedInCategory = true;
+
+                            var includedInSubCategory = false;
+                            _.each(e.subCategories, function (esc) {
+                                if (esc.id == sc.id) includedInSubCategory = true;
+                            });
+
+                            if (sc.id == -2 && includedInCategory && includedInTopic && (!e.subCategories || e.subCategories.length == 0)) { // Other
+                                sc.entities.push(e);
+                            } else if (sc.id == -1 && includedInCategory && includedInTopic) { // All  // && includedInCategory
+                                sc.entities.push(e);
+                            } else if (includedInSubCategory) {
+                                sc.entities.push(e);
+                            }
+                        }
                     }
-                });
+                }
+            }
+        };
 
-                configureMemoryBoxContextMenu();
-            }, 0);
+        $scope.getEntitiesBySubCategoryOld = function () {
+            for (var l = 0; l < $scope.topics.length; l++) {
+                var t = $scope.topics[l];
+
+                for (var i = 0; i < t.categories.length; i++) {
+                    var c = t.categories[i];
+
+                    for (var k = 0; k < c.subCategories.length; k++) {
+                        var sc = c.subCategories[k];
+                        sc.entities = [];
+
+                        for (var j = 0; j < $scope.entities.length; j++) {
+                            var e = $scope.entities[j];
+
+                            var includedInCategory = false;
+                            _.each(e.categories, function (ec) {
+                                if (ec.id == c.id) includedInCategory = true;
+                            });
+
+                            if (e.categories.length == 0 && c.id == -1)
+                                includedInCategory = true;
+
+                            var includedInSubCategory = false;
+                            _.each(e.subCategories, function (esc) {
+                                if (esc.id == sc.id) includedInSubCategory = true;
+                            });
+
+                            if (sc.id == -2 && includedInCategory && (!e.subCategories || e.subCategories.length == 0)) { // Other
+                                sc.entities.push(e);
+                            } else if (sc.id == -1 && includedInCategory) { // All
+                                sc.entities.push(e);
+                            } else if (includedInSubCategory) {
+                                sc.entities.push(e);
+                            }
+                        }
+                    }
+                }
+            }
         };
 
         $scope.getImageUrl = function (e) {
@@ -910,41 +1141,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             }
         };
 
-        $scope.getEntitiesBySubCategory = function () {
-            for (var i = 0; i < $scope.categories.length; i++) {
-                var c = $scope.categories[i];
-
-                for (var k = 0; k < c.subCategories.length; k++) {
-                    var sc = c.subCategories[k];
-                    sc.entities = [];
-
-                    for (var j = 0; j < $scope.entities.length; j++) {
-                        var e = $scope.entities[j];
-
-                        var includedInCategory = false;
-                        _.each(e.categories, function (ec) {
-                            if (ec.id == c.id) includedInCategory = true;
-                        });
-
-                        if (e.categories.length == 0 && c.id == -1)
-                            includedInCategory = true;
-
-                        var includedInSubCategory = false;
-                        _.each(e.subCategories, function (esc) {
-                            if (esc.id == sc.id) includedInSubCategory = true;
-                        });
-
-                        if (sc.id == -2 && includedInCategory && (!e.subCategories || e.subCategories.length == 0)) { // Other
-                            sc.entities.push(e);
-                        } else if (sc.id == -1 && includedInCategory) { // All
-                            sc.entities.push(e);
-                        } else if (includedInSubCategory) {
-                            sc.entities.push(e);
-                        }
-                    }
-                }
-            }
-        };
 
         $scope.mouseOver = function ($event, entity) {
             var $img = $($event.target);

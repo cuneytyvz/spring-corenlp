@@ -5,7 +5,8 @@ var lodService = (function () {
         dbpedia.getItem($http, uri, function (item) {
             var response = item;
 
-            response.secondaryImage = item.image;
+            if (item)
+                response.secondaryImage = item.image;
 
             wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                 if (wikidataItem) {
@@ -13,7 +14,7 @@ var lodService = (function () {
                     response.shortDescription = wikidataItem.description;
 
 //                    if (!response.image)
-                        response.image = wikidataItem.image;
+                    response.image = wikidataItem.image;
 
 //                    response.secondaryImage = wikidataItem.image;
                 }
@@ -36,7 +37,7 @@ var lodService = (function () {
         }
     }
 
-    var fetchPropertyFromRelevantSource = function ($http, $q, property, callback,errCallback) {
+    var fetchPropertyFromRelevantSource = function ($http, $q, property, callback, errCallback) {
         if (property.source == 'wikidata') {
             wikidata.getItem($http, $q, property.value, function (wikidataItem) {
                 if (!wikidataItem) {
@@ -55,7 +56,9 @@ var lodService = (function () {
                 }
 
                 var response = item;
-                response.secondaryImage = item.image;
+
+                if (item)
+                    response.secondaryImage = item.image;
 
                 wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
                     if (wikidataItem) {
@@ -63,7 +66,7 @@ var lodService = (function () {
                         response.shortDescription = wikidataItem.description;
 
 //                        if (!response.image)
-                            response.image = wikidataItem.image;
+                        response.image = wikidataItem.image;
 
 //                        response.secondaryImage = wikidataItem.image;
                     }

@@ -53,7 +53,7 @@ public class SemanticApi {
 
         Node node = lastfm.artistInfo(nodeName);
         List<Node> similarNodes = lastfm.similarArtists(nodeName);
-        similarNodes = similarNodes.subList(0, 5);
+        similarNodes = similarNodes.subList(0, similarNodes.size() < 5 ? similarNodes.size() : 5);
 
         List<Node> nodes = new ArrayList<>();
         nodes.add(node);

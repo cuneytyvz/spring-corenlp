@@ -21,6 +21,11 @@ public class Topic implements Serializable {
         this.id = id;
     }
 
+    public Topic(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     public Topic(ResultSet rs) throws SQLException {
         id = rs.getLong("t.id");
         name = rs.getString("t.name");
@@ -69,5 +74,28 @@ public class Topic implements Serializable {
 
     public void setEntities(List<Entity> entities) {
         this.entities = entities;
+    }
+
+    public boolean containsCategory(Long id) {
+        boolean contains = false;
+        for(Category c: categories){
+            if(c.getId().equals(id)) {
+                contains = true;
+            }
+        }
+
+        return contains;
+    }
+
+    public int indexOfCategory(Long id) {
+        int index = -1;
+        for(int i = 0; i < categories.size(); i++){
+            Category c = categories.get(i);
+            if(c.getId().equals(id)) {
+                index = i;
+            }
+        }
+
+        return index;
     }
 }

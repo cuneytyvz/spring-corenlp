@@ -373,6 +373,38 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public void addEntityToTopic(Long userEntityId, Long topicId) {
+
+        String sql = "insert into user_entity_topic set id = ?, user_entity_id = ?, topic_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "user_entity_topic", "id");
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, id);
+            ps.setLong(2, userEntityId);
+            ps.setLong(3, topicId);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public void addEntityToCategory(Long userEntityId, Long categoryId) {
 
         String sql = "insert into user_entity_category set id = ?, user_entity_id = ?, category_id = ?";
@@ -420,6 +452,34 @@ public class KnowledgeBaseDao {
             ps.setLong(1, id);
             ps.setLong(2, userEntityId);
             ps.setLong(3, subCategoryId);
+
+            ps.execute();
+            ps.close();
+
+            return;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public void removeEntityFromTopic(Long userEntityId, Long topicId) {
+
+        String sql = "delete from user_entity_topic where user_entity_id = ? and topic_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userEntityId);
+            ps.setLong(2, topicId);
 
             ps.execute();
             ps.close();
@@ -1128,9 +1188,42 @@ public class KnowledgeBaseDao {
         }
     }
 
-    public Long saveCategory(String name) {
+    public Long saveTopic(String name, Long userId) {
 
-        String sql = "insert into category set id = ?, name = ?";
+        String sql = "insert into topic set id = ?, name = ?, user_id = ?";
+
+        Connection conn = null;
+
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            Long id = maxIdCalculator.getMaxIdFromTable(conn, true, "topic", "id");
+
+            ps.setLong(1, id);
+            ps.setString(2, name);
+            ps.setLong(3, userId);
+
+            ps.execute();
+
+            ps.close();
+
+            return id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Long saveCategory(Long topicId, String name) {
+
+        String sql = "insert into category set id = ?, name = ?, topic_id = ?";
 
         Connection conn = null;
 
@@ -1142,6 +1235,7 @@ public class KnowledgeBaseDao {
 
             ps.setLong(1, id);
             ps.setString(2, name);
+            ps.setLong(3, topicId);
 
             ps.execute();
 
@@ -1690,8 +1784,75 @@ public class KnowledgeBaseDao {
         }
     }
 
+    public Collection<UserEntityTopic> findAllUserEntityTopics(Long userId) {
+        String sql = "select * from user_entity_topic uet, user_entity ue, topic t where ue.id = uet.user_entity_id and uet.topic_id = t.id and ue.user_id = ? ;";
+
+        Connection conn = null;
+
+        Collection<UserEntityTopic> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntityTopic(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
+    public Collection<UserEntityTopic> findAllUserEntityTopics(Long userId, Long entityId) {
+        String sql = "select * from user_entity_topic uet, user_entity ue, topic t where ue.id = uet.user_entity_id and uet.topic_id = t.id and ue.user_id = ? and ue.entity_id = ? ;";
+
+        Connection conn = null;
+
+        Collection<UserEntityTopic> list = new ArrayList<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, entityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(new UserEntityTopic(rs));
+            }
+
+            rs.close();
+            ps.close();
+
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public Collection<UserEntityCategory> findAllUserEntityCategories(Long userId) {
-        String sql = "select * from user_entity_category uec, user_entity ue where ue.id = uec.user_entity_id and ue.user_id = ? ;";
+        String sql = "select * from user_entity_category uec, user_entity ue, category c where ue.id = uec.user_entity_id and uec.category_id = c.id and ue.user_id = ? ;";
 
         Connection conn = null;
 
@@ -1724,7 +1885,7 @@ public class KnowledgeBaseDao {
     }
 
     public Collection<UserEntityCategory> findAllUserEntityCategories(Long userId, Long entityId) {
-        String sql = "select * from user_entity_category uec, user_entity ue where ue.id = uec.user_entity_id and ue.user_id = ? and ue.entity_id = ?;";
+        String sql = "select * from user_entity_category uec, user_entity ue, category c where ue.id = uec.user_entity_id and uec.category_id = c.id and ue.user_id = ? and ue.entity_id = ?;";
 
         Connection conn = null;
 
@@ -1758,7 +1919,7 @@ public class KnowledgeBaseDao {
     }
 
     public Collection<UserEntitySubCategory> findAllUserEntitySubCategories(Long userId) {
-        String sql = "select * from user_entity_subcategory ues, user_entity ue where ues.user_entity_id = ue.id and ue.user_id = ? ;";
+        String sql = "select * from user_entity_subcategory ues, user_entity ue, subcategory sc where ues.user_entity_id = ue.id and ues.subcategory_id = sc.id and ue.user_id = ? ;";
 
         Connection conn = null;
 
@@ -1791,7 +1952,7 @@ public class KnowledgeBaseDao {
     }
 
     public Collection<UserEntitySubCategory> findAllUserEntitySubCategories(Long userId, Long entityId) {
-        String sql = "select * from user_entity_subcategory ues, user_entity ue where ues.user_entity_id = ue.id and ue.user_id = ? and ue.entity_id = ?;";
+        String sql = "select * from user_entity_subcategory ues, user_entity ue, subcategory sc where ues.user_entity_id = ue.id and ues.subcategory_id = sc.id and ue.user_id = ? and ue.entity_id = ?;";
 
         Connection conn = null;
 
@@ -1823,6 +1984,69 @@ public class KnowledgeBaseDao {
             }
         }
     }
+
+    public Collection<Topic> findAllTopics(Long userId) {
+        String sql = "select * from topic t left join category c on t.id = c.topic_id " +
+                " left join subcategory sc on c.id = sc.category_id where t.user_id = ? ;";
+
+        Connection conn = null;
+
+        Map<Long, Topic> map = new HashMap<>();
+        try {
+            conn = kbDataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Long id = rs.getLong("t.id");
+
+                Category c = new Category(rs);
+                SubCategory sc = new SubCategory(rs);
+                if (map.containsKey(id)) {
+                    Topic t = map.get(id);
+                    if (c.getId() != 0 && t.indexOfCategory(c.getId()) == -1) {
+                        t.addCategory(c);
+                        if (sc.getId() != 0) {
+                            c.addSubCategory(sc);
+                        }
+                    } else if (t.indexOfCategory(c.getId()) != -1) {
+                        if (sc.getId() != 0) {
+                            t.getCategories().get(t.indexOfCategory(c.getId())).addSubCategory(sc);
+                        }
+                    }
+                } else {
+                    Topic t = new Topic(rs);
+                    if (c.getId() != 0) {
+                        if (c.getId() != 0) {
+                            t.addCategory(c);
+                            if (sc.getId() != 0) {
+                                c.addSubCategory(sc);
+                            }
+                        }
+                    }
+
+                    map.put(id, t);
+                }
+            }
+
+            rs.close();
+            ps.close();
+
+            return map.values();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
 
     public Collection<Category> findAllCategories(Long userId) {
         String sql = "select * from category c left join subcategory sc on c.id = sc.category_id where c.user_id = ? ;";

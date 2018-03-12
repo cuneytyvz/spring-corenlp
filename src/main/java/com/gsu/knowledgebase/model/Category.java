@@ -18,6 +18,11 @@ public class Category implements Serializable {
     public Category() {
     }
 
+    public Category(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     public Category(Long id) {
         this.id = id;
     }
@@ -79,5 +84,28 @@ public class Category implements Serializable {
 
     public void setHidden(Boolean hidden) {
         this.hidden = hidden;
+    }
+
+    public boolean containsSubCategory(Long id) {
+        boolean contains = false;
+        for(SubCategory sc: subCategories){
+            if(sc.getId().equals(id)) {
+                contains = true;
+            }
+        }
+
+        return contains;
+    }
+
+    public int indexOfSubCategory(Long id) {
+        int index = -1;
+        for(int i = 0; i < subCategories.size(); i++){
+            SubCategory sc = subCategories.get(i);
+            if(sc.getId().equals(id)) {
+                index = i;
+            }
+        }
+
+        return index;
     }
 }

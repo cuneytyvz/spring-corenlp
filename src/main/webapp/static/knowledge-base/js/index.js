@@ -65,8 +65,17 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 template: '../static/knowledge-base/pop-ups/login-pop-up.html',
                 controller: ['$scope', function ($ss) {
 
-                    $ss.validationMessage = '';
+                    $scope.$on('ngDialog.opened', function (e, $dialog) {
+                        $(document).keypress(function(e) {
+                            if(e.which == 13) {
+                                $ss.login();
+                            }
+                        });
+                    });
+
+
                     $ss.login = function () {
+                        $ss.validationMessage = '';
                         if (!$ss.username || !$ss.password) {
                             $ss.validationMessage = 'All fields must be filled.';
                         }
@@ -146,24 +155,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                         $scope.entities.push(item);
                     }
 
-                    $http.get('knowledgeBase/api/getAllCategories')
-                        .then(function (response) {
-                            $scope.categories = response.data;
-                            $scope.categories[0].selected = 'selected';
 
-                            for (var i = 0; i < $scope.categories.length; i++) {
-                                if ($scope.categories[i].id != 1)
-                                    $scope.categories[i].subCategories.unshift({id: -2, name: 'Other'}); // second element
-
-                                $scope.categories[i].subCategories.unshift({id: -1, name: 'All'}); // first element
-                            }
-
-                            $scope.selectedCategoryToShow = $scope.categories[0];
-                            $scope.selectedCategoryToShow.selectedSubCategory = $scope.categories[0].subCategories[0];
-
-                            getEntitiesByCategory();
-                            getEntitiesBySubCategory();
-                        }, printError);
                 });
             }, printError);
 

@@ -29,6 +29,7 @@ public class Entity implements Serializable {
     private Long webPageEntityId;
     private List<Entity> annotationEntities = new ArrayList<>();
     private Long userId;
+    private List<Topic> topics = new ArrayList<>();
     private List<Category> categories = new ArrayList<>();
     private List<SubCategory> subCategories = new ArrayList<>();
 
@@ -248,11 +249,23 @@ public class Entity implements Serializable {
         this.subCategories = subCategories;
     }
 
-    public void addCategory(Long categoryId) {
-        categories.add(new Category(categoryId));
+    public void addTopic(Topic t) {
+        topics.add(t);
     }
 
-    public void addSubCategory(Long subCategoryId) {
-        subCategories.add(new SubCategory(subCategoryId));
+    public void addCategory(Category c) {
+        categories.add(c);
+    }
+
+    public void addSubCategory(SubCategory sc) {
+        subCategories.add(sc);
+    }
+
+    public List<Topic> getTopics() {
+        return topics;
+    }
+
+    public void setTopics(List<Topic> topics) {
+        this.topics = topics;
     }
 }

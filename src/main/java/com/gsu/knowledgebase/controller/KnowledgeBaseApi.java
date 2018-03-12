@@ -344,6 +344,8 @@ public class KnowledgeBaseApi {
         ue.setNote(entity.getNote());
 
         Long id = knowledgeBaseDao.saveUserEntity(ue);
+        if (entity.getTopics().size() > 0)
+            knowledgeBaseDao.addEntityToTopic(id, entity.getTopics().get(0).getId());
         if (entity.getCategories().size() > 0)
             knowledgeBaseDao.addEntityToCategory(id, entity.getCategories().get(0).getId());
         if (entity.getSubCategories().size() > 0)
@@ -564,28 +566,29 @@ public class KnowledgeBaseApi {
     Object getEntityList(@PathVariable Long userId) throws Exception {
         Collection<Entity> entities = knowledgeBaseDao.findAllUserEntitiesLazy(userId);
 
+        Collection<UserEntityTopic> topics = knowledgeBaseDao.findAllUserEntityTopics(userId);
         Collection<UserEntityCategory> categories = knowledgeBaseDao.findAllUserEntityCategories(userId);
         Collection<UserEntitySubCategory> subCategories = knowledgeBaseDao.findAllUserEntitySubCategories(userId);
 
         for (Entity e : entities) {
+            for (UserEntityTopic t : topics) {
+                if (e.getUserEntityId() != null && e.getUserEntityId().equals(t.getUserEntityId())) {
+                    e.addTopic(new Topic(t.getTopicId(), t.getTopicName()));
+                }
+            }
+
             for (UserEntityCategory c : categories) {
                 if (e.getUserEntityId() != null && e.getUserEntityId().equals(c.getUserEntityId())) {
-                    e.addCategory(c.getCategoryId());
+                    e.addCategory(new Category(c.getCategoryId(), c.getCategoryName()));
                 }
             }
 
             for (UserEntitySubCategory sc : subCategories) {
                 if (e.getUserEntityId() != null && e.getUserEntityId().equals(sc.getUserEntityId())) {
-                    e.addSubCategory(sc.getSubcategoryId());
+                    e.addSubCategory(new SubCategory(sc.getSubcategoryId(), sc.getSubcategoryName()));
                 }
             }
         }
-
-//        for (Entity e : entities) {
-//            if (e.getEntityType().equals("web-page")) {
-//                e.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(e.getId()));
-//            }
-//        }
 
         return entities;
     }
@@ -623,12 +626,32 @@ public class KnowledgeBaseApi {
         return null;
     }
 
+    @RequestMapping(value = "/addEntityToTopic", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object addEntityToTopic(@RequestParam Long userEntityId, @RequestParam Long topicId) throws Exception {
+        knowledgeBaseDao.addEntityToTopic(userEntityId, topicId);
+
+        return null;
+    }
+
     @RequestMapping(value = "/addEntityToSubCategory", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
     Object addEntityToSubCategory(@RequestParam Long userEntityId, @RequestParam Long subCategoryId) throws Exception {
         knowledgeBaseDao.addEntityToSubCategory(userEntityId, subCategoryId);
+
+        return null;
+    }
+
+    @RequestMapping(value = "/removeEntityFromTopic", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object removeEntityFromTopic(@RequestParam Long userEntityId, @RequestParam Long topicId) throws Exception {
+        knowledgeBaseDao.removeEntityFromTopic(userEntityId, topicId);
 
         return null;
     }
@@ -647,18 +670,28 @@ public class KnowledgeBaseApi {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object removeEntityFromSubCategory(@RequestParam Long entityId, @RequestParam Long subCategoryId) throws Exception {
-        knowledgeBaseDao.removeEntityFromSubCategory(entityId, subCategoryId);
+    Object removeEntityFromSubCategory(@RequestParam Long userEntityId, @RequestParam Long subCategoryId) throws Exception {
+        knowledgeBaseDao.removeEntityFromSubCategory(userEntityId, subCategoryId);
 
         return null;
     }
 
-    @RequestMapping(value = "/saveCategory/{name}", method = RequestMethod.GET,
+    @RequestMapping(value = "/saveTopic/{name}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object addCategory(@PathVariable String name) throws Exception {
-        return knowledgeBaseDao.saveCategory(name);
+    Object saveTopic(@PathVariable String name, HttpServletRequest request) throws Exception {
+        Long userId = (Long) request.getSession().getAttribute("userId");
+
+        return knowledgeBaseDao.saveTopic(name, userId);
+    }
+
+    @RequestMapping(value = "/saveCategory/{topicId}/{name}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object saveCategory(@PathVariable Long topicId, @PathVariable String name, HttpServletRequest request) throws Exception {
+        return knowledgeBaseDao.saveCategory(topicId, name);
     }
 
     @RequestMapping(value = "/saveSubcategory/{categoryId}/{name}", method = RequestMethod.GET,
@@ -711,17 +744,26 @@ public class KnowledgeBaseApi {
             entity.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(entity.getId()));
         }
 
-        List<Category> categories = new ArrayList<>();
-        for (UserEntityCategory uec : knowledgeBaseDao.findAllUserEntityCategories(userId, id)) {
-            categories.add(new Category(uec.getCategoryId()));
-        }
+        if (userId != null) {
+            List<Topic> topics = new ArrayList<>();
+            for (UserEntityTopic uet : knowledgeBaseDao.findAllUserEntityTopics(userId, id)) {
+                topics.add(new Topic(uet.getTopicId(), uet.getTopicName()));
+            }
 
-        List<SubCategory> subCategories = new ArrayList<>();
-        for (UserEntitySubCategory ues : knowledgeBaseDao.findAllUserEntitySubCategories(userId, id)) {
-            subCategories.add(new SubCategory(ues.getSubcategoryId()));
-        }
+            List<Category> categories = new ArrayList<>();
+            for (UserEntityCategory uec : knowledgeBaseDao.findAllUserEntityCategories(userId, id)) {
+                categories.add(new Category(uec.getCategoryId(), uec.getCategoryName()));
+            }
 
-        entity.setSubCategories(subCategories);
+            List<SubCategory> subCategories = new ArrayList<>();
+            for (UserEntitySubCategory ues : knowledgeBaseDao.findAllUserEntitySubCategories(userId, id)) {
+                subCategories.add(new SubCategory(ues.getSubcategoryId(), ues.getSubcategoryName()));
+            }
+
+            entity.setTopics(topics);
+            entity.setCategories(categories);
+            entity.setSubCategories(subCategories);
+        }
 
         return entity;
     }
@@ -734,6 +776,16 @@ public class KnowledgeBaseApi {
         Collection<MetaProperty> metaProperties = knowledgeBaseDao.findAllMetaproperties();
 
         return metaProperties;
+    }
+
+    @RequestMapping(value = "/getAllTopics/{userId}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object getAllTopics(@PathVariable Long userId) throws Exception {
+        Collection<Topic> topics = knowledgeBaseDao.findAllTopics(userId);
+
+        return topics;
     }
 
     @RequestMapping(value = "/getAllCategories/{userId}", method = RequestMethod.GET,
