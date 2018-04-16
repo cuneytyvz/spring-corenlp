@@ -425,5 +425,13 @@
 
 <div class="footer"></div>
 
+<div class="custom-context-menu annotation-results" ng-if="customAnnotationResults.length > 0">
+    <ul>
+        <a ng-repeat="result in customAnnotationResults" href="#" ng-click="openCustomAnnotation(result)">
+            <li>{{result.label}}</li>
+        </a>
+    </ul>
+</div>
+
 </body>
 </html>

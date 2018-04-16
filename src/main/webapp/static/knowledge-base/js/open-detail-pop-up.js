@@ -437,7 +437,7 @@ var detailPopup = (function () {
                         dbpedia.prefixSearch($http, selectedText, function (results) {
                             $('.custom-context-menu.annotation-results').css({
                                 'left': selectionX + 5,
-                                'top': selectionY - 55
+                                'top': selectionY
                             }).fadeIn(200);
 
                             $ss.customAnnotationResults = results;
@@ -486,7 +486,7 @@ var detailPopup = (function () {
                     for (var i = 0; i < $ss.annotationEntities.length; i++) {
                         console.log('');
 
-                        var add = i == 0 ? 0 : 43;
+                        var add = 43;
 
                         var bugAdd = i >= 11 ? 1 : 0;
 

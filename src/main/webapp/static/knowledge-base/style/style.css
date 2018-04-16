@@ -301,7 +301,7 @@ label {
 .memory-box {
     max-height: 600px;
     height: 600px;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding-left: 0;
 }
 
@@ -447,7 +447,7 @@ div#columns:hover figure:not(:hover) {
     padding-left: 0;
     padding-right: 0;
     /*display: table;*/
-    overflow-y: scroll;
+    overflow-y: auto;
     max-height: 550px;
 }
 

@@ -29,7 +29,7 @@ public class UserEntity {
 
     public UserEntity(ResultSet rs) throws SQLException{
         id=rs.getLong("ue.id");
-        userId = rs.getLong("ue.userId");
+        userId = rs.getLong("ue.user_id");
         entityId = rs.getLong("ue.entity_id");
         note = rs.getString("ue.note");
         crDate = DateUtils.fromResultSet(rs,"ue.cr_date");

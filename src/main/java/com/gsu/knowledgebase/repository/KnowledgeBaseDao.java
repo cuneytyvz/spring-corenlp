@@ -1785,7 +1785,7 @@ public class KnowledgeBaseDao {
     }
 
     public Collection<UserEntityTopic> findAllUserEntityTopics(Long userId) {
-        String sql = "select * from user_entity_topic uet, user_entity ue, topic t where ue.id = uet.user_entity_id and uet.topic_id = t.id and ue.user_id = ? ;";
+        String sql = "select * from user_entity_topic uet, user_entity ue, topic t where ue.id = uet.user_entity_id and uet.topic_id = t.id and ue.user_id = ?";
 
         Connection conn = null;
 
@@ -1987,7 +1987,7 @@ public class KnowledgeBaseDao {
 
     public Collection<Topic> findAllTopics(Long userId) {
         String sql = "select * from topic t left join category c on t.id = c.topic_id " +
-                " left join subcategory sc on c.id = sc.category_id where t.user_id = ? ;";
+                " left join subcategory sc on c.id = sc.category_id where t.user_id = ?  order by t.order desc;";
 
         Connection conn = null;
 

@@ -148,7 +148,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
         $timeout(function () {
             setSideMenuItemWidths();
-        }, 500);
+        }, 1000);
 
         autocompleteService.configureEntity($scope, $http, $q, afterEntityResponseFetched);
         autocompleteService.configureCategory($scope);
@@ -274,7 +274,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                     $ss.add = function () {
                         $http.get('knowledgeBase/api/saveCategory/' + $scope.selectedTopicToShow.id + '/' + $ss.categoryName)
                             .then(function (response) {
-                                $scope.selectedTopicToShow.categories.push({id: response.data, name: $ss.categoryName});
+                                $scope.selectedTopicToShow.categories.push({id: response.data, name: $ss.categoryName, subCategories:[]});
                                 $ss.closeThisDialog();
                                 $timeout(function () {
                                     setSideMenuItemWidths();
@@ -375,19 +375,21 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
             if ($scope.selectedTopic)
                 $scope.selectedEntity.topics.push({id: $scope.selectedTopic.id, name: $scope.selectedTopic.value}); // id , value
 
-            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory)
+            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory && $scope.selectedTopic.selectedCategory.id != -1 && $scope.selectedTopic.selectedCategory.id != -2)
                 $scope.selectedEntity.categories.push({id: $scope.selectedTopic.selectedCategory.id, name: $scope.selectedTopic.selectedCategory.value}); // id , value
 
-            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory && $scope.selectedTopic.selectedCategory.selectedSubCategory)
+            if ($scope.selectedTopic && $scope.selectedTopic.selectedCategory && $scope.selectedTopic.selectedCategory.selectedSubCategory && $scope.selectedTopic.selectedCategory.selectedSubCategory.id != -1 && $scope.selectedTopic.selectedCategory.selectedSubCategory.id != -2)
                 $scope.selectedEntity.subCategories.push({id: $scope.selectedTopic.selectedCategory.selectedSubCategory.id, name: $scope.selectedTopic.selectedCategory.selectedSubCategory.value}); // id , value
 
             $scope.selectedEntity.source = "memory-item";
 
             $scope.propertiesLoading = true;
+            setTimeout(function () {
+                $scope.propertiesLoading = false;
+            }, 1000);
             $http.post('knowledgeBase/api/saveEntity', $scope.selectedEntity)
                 .then(function (response) {
                     $scope.saveResponse = 'Saved';
-                    $scope.propertiesLoading = false;
 
                     $scope.items.push(response.data);
                     $scope.entities.push(response.data);

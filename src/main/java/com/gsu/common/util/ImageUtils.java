@@ -194,6 +194,15 @@ public class ImageUtils {
         return base64.split(":")[1].split(";")[0];
     }
 
+
+    public String getImageFilename(String uuid){
+        return uuid + ".jpg";
+    }
+
+    public String getScaledImageFilename(String uuid){
+        return uuid + "_k." + "jpg";
+    }
+
     public String saveScaledJpegPngImage(BufferedImage bufferedImage, String uuid) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         javax.imageio.ImageIO.write(bufferedImage, "jpg", baos);

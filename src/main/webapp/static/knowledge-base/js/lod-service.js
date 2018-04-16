@@ -8,19 +8,20 @@ var lodService = (function () {
             if (item)
                 response.secondaryImage = item.image;
 
-            wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
-                if (wikidataItem) {
-                    response.properties = response.properties.concat(wikidataItem.properties);
-                    response.shortDescription = wikidataItem.description;
+            if (item.wikidataId)
+                wikidata.getItem($http, $q, item.wikidataId, function (wikidataItem) {
+                    if (wikidataItem) {
+                        response.properties = response.properties.concat(wikidataItem.properties);
+                        response.shortDescription = wikidataItem.description;
 
 //                    if (!response.image)
-                    response.image = wikidataItem.image;
+                        response.image = wikidataItem.image;
 
 //                    response.secondaryImage = wikidataItem.image;
-                }
+                    }
 
-                callback(response);
-            });
+                    callback(response);
+                });
         });
     };
 

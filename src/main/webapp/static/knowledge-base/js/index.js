@@ -583,9 +583,6 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                 });
             }
 
-            $timeout(function () {
-                configureMemoryBoxContextMenu();
-            }, 0);
         };
 
         $scope.openDetailPopup = function () {
@@ -643,6 +640,7 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
 
                     $ss.infoSummary = $ss.getInfoSummary($scope.selectedEntity);
 
+
                     $scope.$on('ngDialog.opened', function (e, $dialog) {
                         autocompleteService.configureCustomObject($scope.entities, $http, $q, function (response) {
                             setEditTopicMargin();
@@ -675,6 +673,47 @@ app.controller('Controller', function ($scope, $http, $q, $sce, $timeout, ngDial
                             $ss.showCustomProperties();
                         }
                     });
+
+                    var getSelected = function () {
+                        var t = '';
+                        if (window.getSelection) {
+                            t = window.getSelection();
+                        } else if (document.getSelection) {
+                            t = document.getSelection();
+                        } else if (document.selection) {
+                            t = document.selection.createRange().text;
+                        }
+                        return t;
+                    };
+
+                    var selectionX, selectionY, lastSelectedText = '';
+                    $(document).on("mousedown", function (e) {
+                        selectionX = e.pageX;
+                        selectionY = e.pageY;
+                    });
+
+                    $(document).bind("mouseup", function () {
+                        var selectedText = getSelected();
+                        if (selectedText != '' && selectedText.toString() != lastSelectedText) {
+                            lastSelectedText = selectedText.toString();
+
+                            dbpedia.prefixSearch($http, selectedText, function (results) {
+                                $('.custom-context-menu.annotation-results').css({
+                                    'left': selectionX + 5,
+                                    'top': selectionY - 55
+                                }).fadeIn(200);
+
+                                $ss.customAnnotationResults = results;
+                            });
+                        } else {
+                            $('.custom-context-menu.annotation-results').fadeOut(200);
+                        }
+                    });
+
+                    $ss.openCustomAnnotation = function (annotation) {
+                        $('.custom-annotation-results').fadeOut(200);
+                        $ss.openProperty({value: annotation.uri});
+                    };
 
                     $ss.openImage = function (entity, image) {
                         if (!entity || !(entity.image || entity.smallImage))

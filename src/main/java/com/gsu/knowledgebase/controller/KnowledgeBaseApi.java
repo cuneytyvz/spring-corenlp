@@ -392,18 +392,29 @@ public class KnowledgeBaseApi {
             }
         }
 
-        if (entity.getSecondaryImage() != null && !entity.getSecondaryImage().isEmpty()) {
-            BufferedImage bf = imageUtils.readImageFromUri(entity.getSecondaryImage());
+        final ExecutorService executor3 = Executors.newSingleThreadExecutor();
+        executor3.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (entity.getSecondaryImage() != null && !entity.getSecondaryImage().isEmpty()) {
+                        BufferedImage bf = imageUtils.readImageFromUri(entity.getSecondaryImage());
 
-            if (bf != null) {
-                String filename = imageUtils.saveJpegPngImage(bf, entity.getName().replace(" ", "_") + "_" + entity.getWikidataId() + "_secondary");
-                entity.setSecondaryImage(filename);
+                        if (bf != null) {
+                            String filename = imageUtils.saveJpegPngImage(bf, entity.getName().replace(" ", "_") + "_" + entity.getWikidataId() + "_secondary");
+                            entity.setSecondaryImage(filename);
 
-                BufferedImage scaledImage = imageUtils.getScaledImage(bf, ImageUtils.SCALED_IMAGE_WIDTH, ImageUtils.SCALED_IMAGE_HEIGHT);
-                String smallFilename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId() + "_secondary");
-                entity.setSmallSecondaryImage(smallFilename);
+                            BufferedImage scaledImage = imageUtils.getScaledImage(bf, ImageUtils.SCALED_IMAGE_WIDTH, ImageUtils.SCALED_IMAGE_HEIGHT);
+                            String smallFilename = imageUtils.saveScaledJpegPngImage(scaledImage, entity.getName() + "_" + entity.getWikidataId() + "_secondary");
+                            entity.setSmallSecondaryImage(smallFilename);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        });
+
 
         final Long id = knowledgeBaseDao.saveEntity(entity);
         entity.setId(id);
@@ -597,7 +608,7 @@ public class KnowledgeBaseApi {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Object getEntitgetMainPageEntityListyList() throws Exception {
+    Object getMainPageEntityList() throws Exception {
         List<Entity> entities = new ArrayList<>(knowledgeBaseDao.findAllEntitiesLazy());
 
 //        for (Entity e : entities) {
@@ -606,14 +617,31 @@ public class KnowledgeBaseApi {
 //            }
 //        }
 
+        List<Integer> numbers = new ArrayList<>();
         List<Entity> randomEntities = new ArrayList<>();
-        Random r = new Random();
+
         for (int i = 0; i < 20; i++) {
-            int index = r.nextInt(entities.size());
-            randomEntities.add(entities.get(index));
+            int index = getRandomNumber(entities.size(), numbers);
+
+            if (numbers.contains(index))
+                randomEntities.add(entities.get(index));
+
+
         }
 
         return randomEntities;
+    }
+
+    public int getRandomNumber(Integer max, List<Integer> numbers) {
+        Random r = new Random();
+        int num = r.nextInt(max);
+
+        if (numbers.contains(num))
+            num = getRandomNumber(max, numbers);
+
+        numbers.add(num);
+
+        return num;
     }
 
     @RequestMapping(value = "/addEntityToCategory", method = RequestMethod.GET,
@@ -672,6 +700,37 @@ public class KnowledgeBaseApi {
     @ResponseBody
     Object removeEntityFromSubCategory(@RequestParam Long userEntityId, @RequestParam Long subCategoryId) throws Exception {
         knowledgeBaseDao.removeEntityFromSubCategory(userEntityId, subCategoryId);
+
+        return null;
+    }
+
+    @RequestMapping(value = "/annotateOldEntities", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public
+    @ResponseBody
+    Object annotateOldEntities() throws Exception {
+        Collection<Entity> entities = knowledgeBaseDao.findAllUserEntitiesLazy(1l);
+
+        for (Entity entity : entities) {
+            if (entity.getEntityType().equals("web-page")) {
+                entity.getAnnotationEntities().addAll(knowledgeBaseDao.findAnnotationEntities(entity.getId()));
+            }
+
+            if (entity.getAnnotationEntities().size() == 0 && entity.getDescription() != null && entity.getDescription().length() > 0) {
+                Collection<AnnotationItem> items = dbpediaSpotlight.annotateText(entity.getDescription());
+
+                for (AnnotationItem i : items) {
+                    i.setReferencedEntityId(entity.getId());
+                }
+
+                try {
+                    knowledgeBaseDao.saveAnnotationItems(new ArrayList<AnnotationItem>(items));
+                } catch (Exception e) {
+                    System.err.println("ERROR at dbpediaspotlight, saving annotation items...");
+                    e.printStackTrace();
+                }
+            }
+        }
 
         return null;
     }
